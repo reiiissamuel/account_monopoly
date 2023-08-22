@@ -1,0 +1,292 @@
+{
+  "events": [
+    {
+      "name": "",
+      "id": 1,
+      "description": "Você foi multado por desrespeitar regras fiscais",
+      "effect": -200000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 2,
+      "description": "Seus amigos fizeram uma vaquinha para lhe ajudar a pagar o casamento",
+      "effect": 150000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 3,
+      "description": "Reformou seu escritório.\nAliás, ficou horrível!",
+      "effect": -50000,
+      "iconimg": null,
+      "isbenefit": false
+    },{
+      "name": "",
+      "id": 4,
+      "description": "Você acaba de publiclar sua biografia\nBem, pelo menos sua familia e amigos se importam",
+      "effect": 50000,
+      "iconimg": null,
+      "isbenefit": false,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "Habeas Corpus",
+      "id": 5,
+      "description": "Habeas Corpus\nSaia livremente da cadeia na próxima vez que cair.\n\"Não faça disso um hábito!\"",
+      "effect": 0,
+      "iconimg": "icons/habeascorpus.png",
+      "isbenefit": true
+    },
+    {
+      "name": "Mandato de Prizão",
+      "id": 6,
+      "description": "Só é crime se te pegarem, certo?\n...\n\"Então, pegaram! Vá para prizão!\"",
+      "effect": 0,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "Términando a rodada",
+      "id": 7,
+      "description": "Avance para o início",
+      "effect": 0,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 8,
+      "description": "Suas ações na bolsa lhe renderam um bom lucro",
+      "effect": 100000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 9,
+      "description": "Você precisará fazer um novo curso de especialização",
+      "effect": -20000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 10,
+      "description": "Você saírá de férias com toda a família.\nTinha que ser um revéz",
+      "effect": -20000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 11,
+      "description": "Ganhou o prêmio de investidor do ano.",
+      "effect": 110000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 12,
+      "description": "Nasceu de 6 meses, afobado?\nJogue novamente.",
+      "effect": 0,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "Compra Livre",
+      "id": 13,
+      "description": "Compra Livre. Compre qualquer propriedade, sem construções e que não foram compradas com outro compra livre, pelo valor do tabuleiro!",
+      "effect": 0,
+      "iconimg": "icons/compralivre.png",
+      "isbenefit": true
+    },
+    {
+      "name": "",
+      "id": 14,
+      "description": "Sua empresa irá investir em expedições marítimas.\n\"Tá inventando ideia!\"",
+      "effect": -50000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 15,
+      "description": "Você conseguiu novos investidores para seus negócios.",
+      "effect": 75000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 16,
+      "description": "Você fez uma aposta certeira na última luta do IFC.",
+      "effect": 100000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 17,
+      "description": "A falta de chuvas prejudicou seus investimentos nas fazendas de grãos.",
+      "effect": -45000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 18,
+      "description": "Seu avô morreu e lhe deixou uma herança.\n\"Nem ouse dizer que não torceu por isso!",
+      "effect": 75000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 19,
+      "description": "Seu filhou fará um intercambio. Advinha quem vai bancar?",
+      "effect": -20000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 20,
+      "description": "Um de seus imóveis sobreu danos por conta de um obra da prefeitura, mas você receberá uma indenização",
+      "effect": 60000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 21,
+      "description": "Uma de suas empresas venceu uma licitação para fazer uma obra com a prefeitua\n\"hum!!! a PF tá de olho, hein!\"",
+      "effect": 150000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 22,
+      "description": "A seguradora do seu carro pagou o prejuizo do seu ultimo acidente.",
+      "effect": 25000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 23,
+      "description": "Uma greve dos seus funcionários lhe doeu no bolso\n\"Talvez seja uma boa ideia deixar de ser mão de vaca!\"",
+      "effect": -30000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 24,
+      "description": "Seus investimentos em uma galeria de artes não lhe trouxeram boas notícias.",
+      "effect": -22000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 25,
+      "description": "Se tirou número par, pague 100.000.\nSe tirou número ímpar, TAMBÉM!\n:)",
+      "effect": -100000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 26,
+      "description": "Era melhor ter chamado um eletricista!\n Pague a fatura do hospital.",
+      "effect": -9000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "id": 27,
+      "description": "Seu jatinho precisa de uma manutenção. \"Sério que você Você tem um jatinho\"?",
+      "effect": -100000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 28,
+      "description": "Ganhou na loteria\n \"De verdade\"!",
+      "effect": 1000000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 29,
+      "description": "Comprou novos computadores para sua empresa.\n\"Quero ver qual vai ser a desculpa do TI agora!\"",
+      "effect": -80000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 30,
+      "description": "Um navio afundou com as suas encomendas\nQuem mandou comprar da China!",
+      "effect": -40000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 31,
+      "description": "A crise ecônomica chegou até você.\n \"Culpa do Dilma!\"",
+      "effect": -60000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "",
+      "id": 32,
+      "description": "Ficou em primeiro lugar no torneio de golfe de empresário.\nSeu burguês!",
+      "effect": 100000,
+      "iconimg": null,
+      "isbenefit": false
+    },
+    {
+      "name": "10% OFF",
+      "id": 33,
+      "description": "Ganhou 10% de desconto na compra de uma propriedade do banco.",
+      "effect": 0,
+      "iconimg": "icons/20off.png",
+      "isbenefit": true
+    },
+    {
+      "name": "20% OFF",
+      "id": 34,
+      "description": "Ganhou 20% de desconto na compra de uma propriedade do banco.",
+      "effect": 0,
+      "iconimg": "icons/20off.png",
+      "isbenefit": true
+    },
+    {
+      "name": "30% OFF",
+      "id": 35,
+      "description": "Ganhou 30% de desconto na compra de uma propriedade do banco.",
+      "effect": 0,
+      "iconimg": "icons/30off.png",
+      "isbenefit": true
+    },
+    {
+      "name": "Investimento Pesado",
+      "id": 36,
+      "description": "Faça um investimento pesado!\nCompre qualquer propriedade do banco\n pelo dobro do valor do tabuleiro.",
+      "effect": 0,
+      "iconimg": "icons/paydouble.png",
+      "isbenefit": true
+    }
+  ]
+}
