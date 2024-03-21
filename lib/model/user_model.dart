@@ -76,7 +76,7 @@ class UserModelController extends Model{
     notifyListeners();
 
     UserModelDTO userModelDTO = UserModelDTO(
-        peerId: StringUtils().generateUUID(),
+        peerId: StringUtils().generateUUID(size: 10),
         name: name,
         username: username,
         lastLogged: DateTime.now(),

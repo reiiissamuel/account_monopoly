@@ -31,47 +31,47 @@ class HomeScreenState extends State<HomeScreen> {
             onWillPop: () async => false,
             child: Scaffold(
               appBar: AppBar(
-                  title: const Text("Home"),
+                  backgroundColor: Theme.of(context).primaryColor,
+                  title: const Text("Conta Móvel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   centerTitle: true,
                   automaticallyImplyLeading: false,
                   actions: <Widget>[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-                      child: model.isLoggedIn()
-                          ? GestureDetector(
-                          child: Row(
-                            children: <Widget>[
-                              const Icon(Icons.person),
-                              Text(model.user!.username)
-                            ],
-                          ),
-                          onTap: () => _userOptionsDialog(context))
-                          : GestureDetector(
-                            child: Text(
-                                model.allUsers.isEmpty
-                                    ? "Novo usuário"
-                                    : "Entrar",
-                                style: const TextStyle(
-                                fontSize: 17.0, fontWeight: FontWeight.bold)
-                            ),
-                            onTap: () {
-                              if(model.allUsers.isEmpty){
-                                model.signOut();
-                                showDialog(context: context, builder: (BuildContext context){
-                                  return const NewUserDialog();
-                                });
-                              } else {
-                                model.getAllLocalUsers();
-                                showDialog(context: context, builder: (BuildContext context){
-                                  return const LoadUserDialog();
-                                }
-                            );
-                              }
-                            }
-                          ),
-                    ),
+                      child: GestureDetector(
+                          child: const Icon(Icons.question_mark_rounded, color: Colors.white),
+                          onTap: () => {}))
                   ]
                     ),
+              floatingActionButton: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16.0),
+                  child: model.isLoggedIn()
+                      ? IconButton(
+                          icon: const Icon(Icons.supervised_user_circle_rounded), color: Colors.white, iconSize: 30, onPressed: () => _userOptionsDialog(context),
+                       )
+                      : TextButton(
+                        child: Text(
+                            model.allUsers.isEmpty
+                                ? "Novo usuário"
+                                : "Entrar",
+                            style: const TextStyle(fontSize: 13.0, fontWeight: FontWeight.bold, color: Colors.white)
+                        ),
+                        onPressed: () {
+                          if(model.allUsers.isEmpty){
+                            model.signOut();
+                            showDialog(context: context, builder: (BuildContext context){
+                              return const NewUserDialog();
+                            });
+                          } else {
+                            model.getAllLocalUsers();
+                            showDialog(context: context, builder: (BuildContext context){
+                              return const LoadUserDialog();
+                            }
+                        );
+                          }
+                        }
+                      ),
+                ),
               backgroundColor: Colors.black,
               body: Stack(
                 children: <Widget>[
@@ -112,23 +112,23 @@ class HomeScreenState extends State<HomeScreen> {
                                 width: 200.0,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).primaryColor,
+                                    backgroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20.0)
                                     ),
                                     splashFactory: InkRipple.splashFactory,
                                   ),
-                                  child: const Text("Criar novo jogo",
+                                  child: const Text("Novo Jogo",
                                       style: TextStyle(
                                           fontWeight: FontWeight.w500,
                                           fontSize: 20.0,
-                                        color: Colors.white
+                                        color: Colors.black
                                       )),
                                   onPressed: () {
                                     if (!model.isLoggedIn()) {
                                       return _showNonLoggedDialog(context);
                                     }
-                                   // Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewGameScreen()));
+                                   //Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewGameScreen()));
                                   },
                                 ),
                               ),
@@ -143,10 +143,10 @@ class HomeScreenState extends State<HomeScreen> {
                                     backgroundColor: Colors.black,
                                     splashFactory: InkRipple.splashFactory,
                                   ),
-                                  child: const Text("Entrar com código",
+                                  child: const Text("Entrar com Código",
                                       style: TextStyle(
                                           fontWeight: FontWeight.w500,
-                                          fontSize: 20.0,
+                                          fontSize: 15.0,
                                           color: Colors.white)),
                                   onPressed: () {
                                     if (!model.isLoggedIn()) {
@@ -167,7 +167,7 @@ class HomeScreenState extends State<HomeScreen> {
                                       backgroundColor: Colors.black,
                                       splashFactory: InkRipple.splashFactory,
                                     ),
-                                    child: const Text("Jogos ativos",
+                                    child: const Text("Jogos Ativos",
                                         style: TextStyle(
                                             fontWeight: FontWeight.w500,
                                             fontSize: 20.0,
@@ -178,7 +178,7 @@ class HomeScreenState extends State<HomeScreen> {
                                       }
                                       //Navigator.push(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
                                     },
-                                  ))
+                                  )),
                             ],
                           )))
                 ],

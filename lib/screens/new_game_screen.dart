@@ -1,4 +1,4 @@
-import 'package:account_monopoly/utils/string_utils.dart';
+/* import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -325,6 +325,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
 
   Future<void> _onSuccess() async {
     Navigator.of(context).pop();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModelController.of(context).exitGame());
+    //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModelController.of(context).exitGame());
   }
 }
+ */

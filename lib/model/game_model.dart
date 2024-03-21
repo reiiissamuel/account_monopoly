@@ -252,7 +252,7 @@ class GameModelController extends Model {
     }
   }
 
-  void getGameById({required String peerId, required Function onFail, required Function onSuccess}) async {
+ /*  void getGameById({required String peerId, required Function onFail, required Function onSuccess}) async {
     isLoading = true;
     notifyListeners();
     DocumentSnapshot docGame = await db.collection("games")
@@ -275,9 +275,9 @@ class GameModelController extends Model {
       notifyListeners();
       onSuccess();
     }
-  }
+  } */
 
-  void _loadGamePlayers() async {
+  /* void _loadGamePlayers() async {
     QuerySnapshot query = await db.collection("games")
         .document(gameCode)
         .collection("players")
@@ -288,7 +288,7 @@ class GameModelController extends Model {
       players.removeWhere((player) => player.playerId == user.firebaseUser.uid);
     } //se tirando da lista
     //notifyListeners();
-  }
+  } */
 
   //in game methods
   bool hasRoundsAccount(int round) {
@@ -300,7 +300,7 @@ class GameModelController extends Model {
     return false;
   }
 
-  void exitGame() {
+  /* void exitGame() {
     isLoading = true;
     notifyListeners();
 
@@ -315,7 +315,7 @@ class GameModelController extends Model {
 
     isLoading = false;
     notifyListeners();
-  }
+  } */
 
   bool hasEnoughBalance(int value) {
     if (value <= gameModelDTO!.currentGameBalance) {

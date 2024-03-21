@@ -1,7 +1,10 @@
+import 'package:account_monopoly/service/google_login.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 
 import '../model/user_model.dart';
 
@@ -62,26 +65,48 @@ class NewUserDialogState extends State<NewUserDialog> {
                 ),
                 const SizedBox(height: 16.0),
                 SizedBox(
-                    height: 50.0,
+                    height: 38.0,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black
-                      ),
+                          backgroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.0)
+                          )),
                       onPressed:  () {
-                        if (_formKey.currentState!.validate()) {}
-                        setState(() {
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
                           UserModelController.of(context).signUp(
-                              name: _nameController.text,
-                              username: _usernameController.text,
-                              context: context,
-                              onSuccess: _onSuccess,
-                              onFail: _onFail
+                            name: _nameController.text,
+                            username: _usernameController.text,
+                            context: context,
+                            onSuccess: _onSuccess,
+                            onFail: _onFail
                           );
                         });
+                        }
                       },
                       child: const Text("Prosseguir",
-                          style: TextStyle(fontSize: 18.0, color:Colors.white)),
-                    ))
+                          style: TextStyle(fontSize: 14.0, color:Colors.white)),
+                    )),
+                    
+                const SizedBox(height: 16.0),
+                SignInButton(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0)
+                ),
+                  Buttons.Google,
+                  text: "Entrar com Google",
+                  onPressed: () async {
+                    var googleUser = await GoogleLogin.login();
+                    /* UserModelController.of(context).signUp(
+                      name: googleUser?.displayName,
+                      username: googleUser?.displayName,
+                      context: context,
+                      onSuccess: _onSuccess,
+                      onFail: _onFail
+                    ); */
+                  },
+                )
               ],
             ),
           ))
