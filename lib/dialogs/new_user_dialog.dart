@@ -1,9 +1,6 @@
 import 'package:account_monopoly/service/google_login.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:scoped_model/scoped_model.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
 import '../model/user_model.dart';

@@ -2,9 +2,7 @@ import 'dart:math';
 
 class StringUtils {
 
-  StringUtils ();
-
-  String currencyFormat(String ns){
+  static String currencyFormat(String ns){
     String s = ns.replaceAll(".", "");
 
     //[1.000 10.000 100.000] [1.000.000 10.000.000 100.000.000]
@@ -16,7 +14,7 @@ class StringUtils {
       return s;
   }
 
-  String generateUUID({required int size}) {
+  static String generateUUID({required int size}) {
     final random = Random();
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     String result = '';

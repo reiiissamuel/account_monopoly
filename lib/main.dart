@@ -1,5 +1,7 @@
 import 'package:account_monopoly/model/user_model.dart';
 import 'package:account_monopoly/screens/splash_screen.dart';
+import 'package:account_monopoly/teste/teste.dart';
+import 'package:account_monopoly/teste/teste2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -28,6 +30,17 @@ class _AccountmonopolyAppState extends State<AccountmonopolyApp> {
       //systemNavigationBarDividerColor: Colors.white,
     ));
 
+    return MaterialApp(
+                          title: 'Account Monopoly',
+                          theme: ThemeData(
+                            primarySwatch: Colors.blue,
+                            primaryColor: const Color.fromARGB(
+                                255, 70, 130, 180),
+                          ),
+                          debugShowCheckedModeBanner: false,
+                          home: ConnectionExample() //SplashScreen(),
+                      );
+
     return FutureBuilder(
       future: _init,
       builder: (context, snapshot) {
@@ -45,7 +58,7 @@ class _AccountmonopolyAppState extends State<AccountmonopolyApp> {
                                 255, 70, 130, 180),
                           ),
                           debugShowCheckedModeBanner: false,
-                          home: SplashScreen() //SplashScreen(),
+                          home: SplashScreen(),
                       ));
                 },
               ));

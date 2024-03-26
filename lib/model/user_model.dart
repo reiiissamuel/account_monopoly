@@ -9,17 +9,15 @@ import 'package:scoped_model/scoped_model.dart';
 
 class UserModelDTO{
   final int? id;
-  final String peerId;
   final String name;
   final String username;
   final DateTime lastLogged;
   final List<GameModelDTO> games;
 
-  UserModelDTO({this.id, required this.peerId, required this.name, required this.username, required this.lastLogged, required this.games});
+  UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged, required this.games});
 
   Map<String, dynamic> toMap() {
     return {
-      'peerId':  peerId,
       'name': name,
       'username': username,
       'lastLogged': lastLogged.toIso8601String(),
@@ -30,7 +28,6 @@ class UserModelDTO{
   factory UserModelDTO.fromMap(int id, Map<String, dynamic> map) {
     return UserModelDTO(
         id: id,
-        peerId: map['peerId'] as String,
         name: map['name'] as String,
         username: map['username'] as String,
         lastLogged: DateTime.parse(map['lastLogged']  as String),
@@ -41,7 +38,6 @@ class UserModelDTO{
   UserModelDTO copyWith({String? name, String? peerId, String? username, DateTime? lastLogged, List<GameModelDTO>? games}){
     return UserModelDTO(
         id: id,
-        peerId: peerId ?? this.peerId,
         name: name ?? this.name,
         username: username ?? this.username,
         lastLogged: lastLogged ?? this.lastLogged,
@@ -76,7 +72,6 @@ class UserModelController extends Model{
     notifyListeners();
 
     UserModelDTO userModelDTO = UserModelDTO(
-        peerId: StringUtils().generateUUID(size: 10),
         name: name,
         username: username,
         lastLogged: DateTime.now(),
@@ -157,28 +152,24 @@ class UserModelController extends Model{
     notifyListeners();
   }
 
-  Future<Null> deleteGame(String gameCode) async {
-    /*isLoading = true;
+  Future<void> deleteGame(String gameId) async {
+    isLoading = true;
     notifyListeners();
-    var db = Firestore.instance;
-    var batch = db.batch();
-    QuerySnapshot query = await Firestore.instance.collection("games").document(gameCode).collection("players").getDocuments();
+    user!.games.removeWhere((game) => game.id == gameId);
+    userRepository.updateUser(user!);
+    isLoading = false;
+    notifyListeners();
+  }
 
-    //verifiry if the currety player.dart is the last at game wich ill be excluded
-    if(query.documents.length ==1)
-      batch.delete(db.collection("games").document(gameCode));
-    batch.delete(db.collection("games").document(gameCode).collection("players").document(firebaseUser.uid));
-    batch.delete(db.collection("users").document(firebaseUser.uid).collection("games").document(gameCode));
-
-    return batch.commit().then((value){
-      games.removeWhere((game) => game["gameCode"] == gameCode);
-      isLoading = false;
-      notifyListeners();
-    }).catchError((e){
-      isLoading = false;
-      notifyListeners();
-    });*/
-
+  checkHasGameById(String gameId){
+    if(user!.games.isNotEmpty){
+      try {
+        GameModelDTO game = user!.games.firstWhere((game) => game.id == gameId);
+        return true;
+      } on StateError {
+        return false;
+      }
+    }
   }
 
 }

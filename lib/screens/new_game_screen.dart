@@ -1,4 +1,4 @@
-/* import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -284,17 +284,12 @@ class _NewGameScreenState extends State<NewGameScreen> {
             TextButton(
               onPressed: !_enableConfirmButton ? null : () async {
                 _enableConfirmButton = false;
-
-                Player player = Player.empty();
-                player.peerId = StringUtils().generateUUID(size: 8);
-                player.peerId = UserModelController.of(context).user!.peerId;
-                player.username = UserModelController.of(context).user!.username;
-
+                String generatedGameId = StringUtils.generateUUID(size: 8); 
                 GameModelDTO gameData = GameModelDTO(
-                    //gameCode: StringUtils().generateUUID(), //TODO implementar senha
+                    id: generatedGameId,
                     currentGameBalance: int.parse(_initialBalanceController.text),
                     limitPlayer: dropdownValue,
-                    players: [player],
+                    players: [],
                     loanTax: int.parse(dropdownLoanTax),
                     faturaTax: int.parse(dropdownFaturaTax), roundBonus: int.parse(dropdownBonusValue.replaceAll(".", "")),
                     initalGameBalance:  int.parse(_initialBalanceController.text)
@@ -328,4 +323,3 @@ class _NewGameScreenState extends State<NewGameScreen> {
     //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModelController.of(context).exitGame());
   }
 }
- */

@@ -7,7 +7,6 @@ import 'package:scoped_model/scoped_model.dart';
 import '../dialogs/load_user_dialog.dart';
 import '../model/game_model.dart';
 import '../model/user_model.dart';
-import 'new_game_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -176,7 +175,7 @@ class HomeScreenState extends State<HomeScreen> {
                                       if (!model.isLoggedIn()) {
                                         return _showNonLoggedDialog(context);
                                       }
-                                      //Navigator.push(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
                                     },
                                   )),
                             ],
@@ -234,7 +233,8 @@ class HomeScreenState extends State<HomeScreen> {
               TextButton(
                 child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0)),
                 onPressed: () {
-                  //GameModel.of(context).enterNewGameById(gameCode: controller.text, onFail: _onFail, onSuccess: _onSuccess);
+
+                  GameModelController.of(context).enterNewGameByIdRequest(destinationPeerId: controller.text, context: context, onFail: _onFail, onSuccess: _onSuccess);
                 },
               ),
             ],
@@ -318,7 +318,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSuccess(){
-    //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModel.of(context).exitGame());;
+    //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModel.of(context).exitGame());
   }
 
 }

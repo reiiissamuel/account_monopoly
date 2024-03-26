@@ -1,5 +1,4 @@
-/*
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -15,30 +14,34 @@ class MyGamesScreen extends StatelessWidget {
 
   final _scafoldKey = GlobalKey<ScaffoldState>();
 
+  MyGamesScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return ScopedModelDescendant<UserModel>(
+    return ScopedModelDescendant<UserModelController>(
       builder: (context, child, model) {
-        if (model.isLoading && GameModel.of(context).isLoading) return Center(child: CircularProgressIndicator());
+        if (model.isLoading && GameModelController.of(context).isLoading) return const Center(child: CircularProgressIndicator());
         return Scaffold(
             key: _scafoldKey,
             appBar: AppBar(
-              title: Text("Jogos Ativo", style: TextStyle(letterSpacing: 2)),
+              title: const Text("Jogos Ativo", style: TextStyle(letterSpacing: 2)),
               centerTitle: true,
               actions: [
-                IconButton(icon: Icon(Icons.refresh), onPressed: (){
-                  model.loadUserGamesResume();
-                },),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                  child: GestureDetector(
+                      child: const Icon(Icons.question_mark_rounded, color: Colors.white),
+                      onTap: () => {}))
               ],
             ),
             backgroundColor: Colors.black,
-            body: model.games.isNotEmpty
+            body: model.user?.games != null || model.user!.games.isNotEmpty
                 ?
             ListView.builder(
-                padding: EdgeInsets.all(10.0),
-                itemCount: model.games.length,
+                padding: const EdgeInsets.all(10.0),
+                itemCount: model.user!.games.length,
                 itemBuilder: (context, index) {
-                  return _gameTile(context, model.games[index]);
+                  return _gameTile(context, model.user!.games[index]);
                 })
                 :
             Center(
@@ -49,27 +52,26 @@ class MyGamesScreen extends StatelessWidget {
     );
   }
 
-  Widget _gameTile(BuildContext context, GameModel game){
-    StringFormatter sf = StringFormatter();
+  Widget _gameTile(BuildContext context, GameModelDTO game){
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8.0),
+      margin: const EdgeInsets.only(bottom: 8.0),
       height: 210.0,
-      decoration: BoxDecoration(
-        color: const Color(0xff0087a8),
+      decoration: const BoxDecoration(
+        color:  Color(0xff0087a8),
         borderRadius: BorderRadius.all(Radius.circular(15.0)),
       ),
       child: Container(
         padding: const EdgeInsets.all(20.0),
         margin: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(15.0)),
+          borderRadius: const BorderRadius.all(Radius.circular(15.0)),
           color: Theme.of(context).primaryColor,
         ),
         child: Stack(
           children: <Widget>[
             Text(
-              'Criador: ' + game["creatorNick"],
+              'Criador: ${game.player.username}',
               style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -78,8 +80,8 @@ class MyGamesScreen extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Saldo Inicial: ' + sf.currencyFormat(game["initialBalance"].toString()) + " R\$",
-                style: TextStyle(color: Colors.white, fontSize: 20.0),
+                "Saldo Inicial: ${StringUtils.currencyFormat(game.initalGameBalance.toString())} R\$",
+                style: const TextStyle(color: Colors.white, fontSize: 20.0),
               ),
             ),
             Align(
@@ -89,13 +91,13 @@ class MyGamesScreen extends StatelessWidget {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        shape: CircleBorder(),
+                        shape: const CircleBorder(),
                         backgroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        GameModel.of(context).getGameById(gameCode: game["gameCode"], onFail: _onFail, onSuccess: _onSuccess);
+                        GameModelController.of(context).getGameById( onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: game);
                       },
-                      child: Icon(
+                      child: const Icon(
                         Icons.arrow_forward,
                         color: Colors.green,
                         size: 50.0,
@@ -103,19 +105,19 @@ class MyGamesScreen extends StatelessWidget {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        shape: CircleBorder(),
+                        shape: const CircleBorder(),
                         backgroundColor: Colors.white,
                       ),
                       onPressed: () {
                         showDialog(context: context, builder: (BuildContext context){
                           return ConfirmActionDialog(title: "Alerta de Exclusão!", textContent: "As informações referentes a essa partida "
                               "serão excluídas permanentemente", onConfirm: () async {
-                            UserModel.of(context).deleteGame(game["gameCode"]);
+                            UserModelController.of(context).deleteGame(game.id);
                             Navigator.pop(context);
                           });
                         });
                       },
-                      child: Icon(
+                      child: const Icon(
                         Icons.delete,
                         color: Colors.red,
                         size: 50.0,
@@ -149,4 +151,3 @@ class MyGamesScreen extends StatelessWidget {
      //   .then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());
   }
 }
-*/

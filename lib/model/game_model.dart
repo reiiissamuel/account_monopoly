@@ -1,11 +1,11 @@
-import 'dart:async';
-import 'dart:io';
 import 'package:account_monopoly/configuration/peer_connection_controller.dart';
+import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
+import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/dto/player.dart';
 import 'package:account_monopoly/model/user_model.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:peerdart/peerdart.dart';
 import 'package:scoped_model/scoped_model.dart';
 
@@ -19,6 +19,7 @@ import '../enums/enums.dart';
 
 class GameModelController extends Model {
   UserModelController userModelController;
+  late Player player;
   PeerConnectionController? peerConnectionController;
   AuctionController auctionController = AuctionController();
   GameModelDTO? gameModelDTO;
@@ -26,8 +27,8 @@ class GameModelController extends Model {
   bool isThereAuction = false;
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
-
   bool youWon = false;
+
 
   GameModelController({required this.userModelController}) {
     /*if(userModelController.isLoggedIn()){
@@ -45,6 +46,7 @@ class GameModelController extends Model {
   processComingEvent(EventDTO event) {
     isLoading = true;
     notifyListeners();
+
     if(events.isEmpty || event.eventId != lastEventReceived?.eventId){
       lastEventReceived = event;
       events.add(event);
@@ -55,21 +57,18 @@ class GameModelController extends Model {
     notifyListeners();
   }
 
-  /*void _loadStreamSubscription() {
-    _eventListStreamController.stream.listen((event) {
-      _eventEntranceManager(event);
-    });
-  }*/
-
   void _eventEntranceManager(EventDTO event) {
     int? value = event.value;
     Player sourceplayer = event.sourcePlayer;
+    Player ?destinationPlayer = event.destinationPlayer;
     switch (event.type) {
       case LogMsgType.TRANSFER:
-        _updateBalance(value!);
+        if(destinationPlayer != null || destinationPlayer!.id == userModelController.user!.id.toString()) {
+          _updateBalance(value!);
+        }
         gameModelDTO!.players
-            .firstWhere((p) => p.peerId == sourceplayer.peerId)
-            .receivedFrom += value;
+            .firstWhere((p) => p.id == sourceplayer.id)
+            .receivedFrom += value!;
         break;
       case LogMsgType.AUCTION_START:
         isThereAuction = true;
@@ -89,72 +88,69 @@ class GameModelController extends Model {
         auctionController.raise(value!, sourceplayer.username);
         break;
       case LogMsgType.JOIN_TABLE:
-        gameModelDTO!.players.add(sourceplayer);
-        peerConnectionController!.candidatesPeersId.add(sourceplayer.peerId);
+        int i = gameModelDTO!.players.indexWhere((p) => p.id == sourceplayer.id);
+        i >= 0 ? gameModelDTO!.players[i] = sourceplayer : gameModelDTO!.players.add(sourceplayer);
         break;
       case LogMsgType.SERVER_HAND_SHAKE:
-        gameModelDTO = event.gameData;
-        for (var p in gameModelDTO!.players) {
-          peerConnectionController!.candidatesPeersId.add(p.peerId);
-        }
+        _dealCameHandShakeEvent(event);
         break;
       case LogMsgType.BANKRUPTCY:
-        if (event.playerAndHost) {
+        if (event.sourcePlayer.isHost) {
           //todo vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
         }
         gameModelDTO!.players.removeWhere((p) =>
-        p.peerId == sourceplayer.peerId);
+        p.id == sourceplayer.id);
         break;
+      case LogMsgType.LOST_CONNECTION:
+        gameModelDTO!.players.removeWhere((p) =>
+        p.id == sourceplayer.id);
       default:
         break;
     }
     _logComposer(event);
   }
 
-  void eventComposer({required LogMsgType type, required Player destinationPlayer, required int value}) {
+  void eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value, Player ?sourcePlayer}) {
     isLoading = true;
     notifyListeners();
 
-    Player sourcePlayer = gameModelDTO!.players.first;
     EventDTO event =
     EventDTO(
-        ///generate event id hash
-        eventId: StringUtils().generateUUID(size: 8) + userModelController.user!.username,
         type: type,
         destinationPlayer: destinationPlayer,
-        sourcePlayer: sourcePlayer,
-        value: value,
-        playerAndHost: peerConnectionController!.isServer);
+        sourcePlayer: sourcePlayer ?? player,
+        value: value);
 
     switch (event.type) {
       case LogMsgType.TRANSFER:
-        gameModelDTO!.account.transferOut += value;
+        gameModelDTO!.account.transferOut += value!;
+        _updateBalance(-value);
         gameModelDTO!.players
-            .firstWhere((p) => p.peerId == destinationPlayer.peerId)
+            .firstWhere((p) => p.id == destinationPlayer!.id)
             .payedTo += value;
         break;
       case LogMsgType.BUY:
-        gameModelDTO!.account.qtdPurchases += value;
+        gameModelDTO!.account.qtdPurchases += value!;
         break;
       case LogMsgType.PAY_BANK:
-        gameModelDTO!.account.otherPaymentsOut += value;
+        gameModelDTO!.account.otherPaymentsOut += value!;
         _updateBalance(-value);
         break;
       case LogMsgType.RECEIVE_FROM_BANK:
-        _updateBalance(value);
+        _updateBalance(value!);
         break;
       case LogMsgType.BUILD_HOUSE:
-        gameModelDTO!.account.qtdHome += value;
+        gameModelDTO!.account.qtdHome += value!;
         break;
       case LogMsgType.BUILD_HOTEL:
-        gameModelDTO!.account.qtdHotel += value;
+        gameModelDTO!.account.qtdHotel += value!;
         break;
       case LogMsgType.HIPOTECA:
-        gameModelDTO!.account.hipotecasIn += value;
+        gameModelDTO!.account.hipotecasIn += value!;
         _updateBalance(value);
         break;
       case LogMsgType.LOAN:
-        gameModelDTO!.account.loanIn += value;
+        gameModelDTO!.account.loanIn += value!;
         _updateBalance(value);
         break;
       case LogMsgType.AUCTION_START:
@@ -169,10 +165,10 @@ class GameModelController extends Model {
         auctionController.endAuction();
         break;
       case LogMsgType.AUCTION_PAY:
-        auctionController.payMinimmun(sourcePlayer.username);
+        auctionController.payMinimmun(event.sourcePlayer.username);
         break;
       case LogMsgType.AUCTION_RAISE:
-        auctionController.raise(value, sourcePlayer.username);
+        auctionController.raise(value!, event.sourcePlayer.username);
         break;
       case LogMsgType.BANKRUPTCY:
         if (gameModelDTO!.players.isNotEmpty) {
@@ -181,6 +177,15 @@ class GameModelController extends Model {
         break;
       case LogMsgType.IWON:
         gameModelDTO!.youWon = true;
+        break;
+      case LogMsgType.SERVER_HAND_SHAKE:
+        player.isHost = true;
+        int i = gameModelDTO!.players.indexWhere((p) => p.id == player.id);
+        i >= 0 ? gameModelDTO!.players[i] = player : gameModelDTO!.players.add(player);
+        event.gameData = gameModelDTO!.toInitialTemplate();
+        break;
+      case LogMsgType.LOST_CONNECTION:
+        gameModelDTO!.players.removeWhere((p) => p.id == event.sourcePlayer.id);
         break;
       default:
         break;
@@ -195,7 +200,6 @@ class GameModelController extends Model {
     isLoading = true;
     notifyListeners();
 
-    peerConnectionController!.checkConnectivity();
     peerConnectionController!.send(event);
     processComingEvent(event);
 
@@ -214,81 +218,118 @@ class GameModelController extends Model {
     }
   }
 
-  void createNewGame({required GameModelDTO gameData ,required Function onFail, required Function onSuccess}) async {
+  void createNewGame({required GameModelDTO gameData, required Function onFail, required Function onSuccess}) async {
     isLoading = true;
     notifyListeners();
-    userModelController.user!.games.add(gameData);
+
+    String usermodelname = userModelController.user!.username;
+    int usermodelId = userModelController.user!.id!;
+    String generatedGameId = StringUtils.generateUUID(size: 8);
+
+    player = Player.of(
+      userModelId: usermodelId,
+      gameId: generatedGameId,
+      username: usermodelname,
+      isHost: true
+    );
+
     gameModelDTO = gameData;
+    try{
+      _createPeerConnectionController(peerId: player.id);
+      peerConnectionController!.openConnectionsAsHost();
+      userModelController.user!.games.add(gameData);
+      _updateUserModel();
+    } catch (e) {
+      onFail("Algo deu errado!");
+    } finally{
+      onSuccess();
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void getGameById({required GameModelDTO gameModelDTO,  required Function onFail, required Function onSuccess}){
+    isLoading = true;
+    notifyListeners();
+    try {
+      this.gameModelDTO = gameModelDTO;
+      _createPeerConnectionController(peerId: this.gameModelDTO!.player.id);
+
+      peerConnectionController!.connectToHost(gameModelDTO.players.firstWhere((p) => p.isHost).id);
+    } on PeerUnavailableException catch(e){
+      onFail(e);
+    }
+    isLoading = false;
+    notifyListeners();
+
+  }
+
+  void enterNewGameByIdRequest(
+      {required String destinationPeerId, required BuildContext context, required Function onFail, required Function onSuccess}) async {
+    isLoading = true;
+    notifyListeners();
+
+    String gameId = destinationPeerId.split("-").last;
+
+    try{
+      if(userModelController.checkHasGameById(gameId)){
+        throw GameAlreadyInPlayerListException;
+      }
+      
+      _createPeerConnectionController(
+          peerId: GameModelController._generatePlayerId(
+              usermodelname: userModelController.user!.username,
+              usermodelId: userModelController.user!.id!,
+              gameId: gameId)
+      );
+      peerConnectionController!.connectToHost(destinationPeerId);
+      onSuccess;
+    } on GameAlreadyInPlayerListException catch(g) {
+          onFail(g);
+          Navigator.push(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
+    } catch (e){
+      onFail("Algo de errado ao criar a conexão.");
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void _createPeerConnectionController({required String peerId}){
     peerConnectionController = PeerConnectionController(
-        gameModelController: this, peer: Peer(id: gameModelDTO!.players[0].peerId), myPeerId: gameModelDTO!.players[0].peerId);
-    userModelController.updateUser().then((value) => {
-        onSuccess()
-    }).catchError((e) => {
-      onFail("Algo deu errado!")
+        gameModelController: this, peer: Peer(id: peerId), myPeerId: peerId);
+  }
+
+  void _updateUserModel(){
+    userModelController.updateUser().catchError((e) => {
+      throw e
     });
+  }
+
+  static _generatePlayerId({required usermodelname, required usermodelId, required gameId}){
+    return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
+  }
+
+  void _dealCameHandShakeEvent(EventDTO event){
+    if(gameModelDTO == null){
+      gameModelDTO = event.gameData;
+    } else {
+      gameModelDTO!.players.clear();
+      gameModelDTO!.players.addAll(event.gameData!.players);
+    }
+
+    Player player = Player.ofDefinedId(
+      id: peerConnectionController!.myPeerId,
+      username: userModelController.user!.username
+    );
+    _sendEvent(EventDTO(
+        type: LogMsgType.JOIN_TABLE,
+        destinationPlayer: event.sourcePlayer,
+        sourcePlayer: player,
+        value: 0));
     isLoading = false;
     notifyListeners();
   }
-
-  ///essa requisição será respondida com um EventDTO do tipo JOIN_TABLE
-  void enterNewGameByIdRequest(
-      {required String peerId, required String gameCode, required Function onFail, required Function onSuccess}) async {
-    userModelController.isLoading = true;
-    userModelController.notifyListeners();
-    try{
-      peerConnectionController!.connectToServer(peerId);
-      _sendEvent(EventDTO(
-          eventId: StringUtils().generateUUID(size: 8) + userModelController.user!.username,
-          type: LogMsgType.JOIN_TABLE,
-          destinationPlayer: null,
-          sourcePlayer: Player(peerId: peerId, username: userModelController.user!.username, receivedFrom: 0, payedTo: 0),
-          value: 0,
-          playerAndHost: peerConnectionController!.isServer));
-      onSuccess;
-    } catch (e){
-      userModelController.isLoading = false;
-      userModelController.notifyListeners();
-      onFail;
-    }
-  }
-
- /*  void getGameById({required String peerId, required Function onFail, required Function onSuccess}) async {
-    isLoading = true;
-    notifyListeners();
-    DocumentSnapshot docGame = await db.collection("games")
-        .document(gameCode)
-        .get();
-    if (docGame.data == null) {
-      onFail('Jogo não existe ou pode estar corrompido!');
-      isLoading = false;
-      notifyListeners();
-    } else {
-      this.gameCode = gameCode;
-      gameData = docGame.data;
-      currentGameBalance = docGame.data["initialBalance"];
-      _loadGamePlayers(); // ver a possibilidade de colocar esse metodo com retorno future null
-      await db.collection("games").document(gameCode).updateData(
-          {"log": user.userData["nick"] + " voltou para o jogo!"});
-     // _loadStreamSubscription();
-
-      isLoading = false;
-      notifyListeners();
-      onSuccess();
-    }
-  } */
-
-  /* void _loadGamePlayers() async {
-    QuerySnapshot query = await db.collection("games")
-        .document(gameCode)
-        .collection("players")
-        .getDocuments();
-    if (query.documents.isNotEmpty) {
-      players =
-          query.documents.map((doc) => GamePlayer.fromDocument(doc)).toList();
-      players.removeWhere((player) => player.playerId == user.firebaseUser.uid);
-    } //se tirando da lista
-    //notifyListeners();
-  } */
 
   //in game methods
   bool hasRoundsAccount(int round) {
@@ -331,13 +372,14 @@ class GameModelController extends Model {
 }
 
 class GameModelDTO{
-  //String? gameCode; //TODO implementar senha
+  String id = "";
   int currentGameBalance = 0;
   int initalGameBalance = 0;
   int limitPlayer = 0;
   int faturaTax = 0;
   int loanTax = 0;
   int roundBonus = 0;
+  Player player = Player.empty();
   Account account = Account.empty();
   Balance balance = Balance.empty();
   List<Player> players = List<Player>.empty();
@@ -350,14 +392,29 @@ class GameModelDTO{
   bool youBankrupt = false;
 
   GameModelDTO.empty();
-  GameModelDTO({required int initalGameBalance, required int currentGameBalance, required this.roundBonus, required this.loanTax, required this.faturaTax, required this.limitPlayer, required this.players});
-  GameModelDTO.initAllFields({required int initalGameBalance, required int currentGameBalance, required Account account, required Balance balance, required List<Player> players, required List<Hipoteca> hipotecas, required List<String> logs, required List<Event> benefits, required int roundBonus});
+  GameModelDTO({Player ?player, required id, required int initalGameBalance, required int currentGameBalance, required this.roundBonus, required this.loanTax, required this.faturaTax, required this.limitPlayer, required this.players});
+  GameModelDTO.initAllFields({required id, required int initalGameBalance, required int currentGameBalance, required Account account, required Balance balance, required List<Player> players, required List<Hipoteca> hipotecas, required List<String> logs, required List<Event> benefits, required int roundBonus});
+ 
+  GameModelDTO toInitialTemplate(){
+    return GameModelDTO(
+      id: id,
+      initalGameBalance: initalGameBalance,
+      currentGameBalance: initalGameBalance,
+      roundBonus: roundBonus,
+      player: player,
+      loanTax: loanTax,
+      faturaTax: faturaTax,
+      limitPlayer: limitPlayer, 
+      players: players);
+  }
+
   Map<String, dynamic> toMap() {
     return {
-      //'gameCode': gameCode,
+      'id': id,
       'currentGameBalance': currentGameBalance,
       'account': account.toMap(),
       'balance': balance.toMap(),
+      'player' : player.toMap(),
       'players': players.map((player) => player.toMap()).toList(),
       'hipotecas': hipotecas.map((hipoteca) => hipoteca.toMap()).toList(),
       'logs': logs,
@@ -365,10 +422,23 @@ class GameModelDTO{
       'initalGameBalance': initalGameBalance
     };
   }
+ 
+  /*factory GameModelDTO.fromGameModelDto(GameModelDTO template){
+    return GameModelDTO(
+      id: template.id,
+      initalGameBalance: template.initalGameBalance,
+      currentGameBalance: template.currentGameBalance,
+      roundBonus: template.roundBonus,
+      loanTax: template.loanTax,
+      faturaTax: template.faturaTax,
+      limitPlayer: template.limitPlayer, 
+      players: template.players);
+
+  }*/
 
   factory GameModelDTO.fromMap(Map<String, dynamic> map) {
     return GameModelDTO.initAllFields(
-        //gameCode: map['gameCode'] as String,
+        id: map['id'] as String,
         currentGameBalance: map['currentGameBalance'] as int,
         account: Account.fromMap(map['account']),
         balance: Balance.fromMap(map['balance']),

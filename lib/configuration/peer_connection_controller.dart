@@ -1,10 +1,11 @@
-import 'dart:io';
-
 import 'package:account_monopoly/dto/event_dto.dart';
+import 'package:account_monopoly/dto/player.dart';
 import 'package:account_monopoly/enums/enums.dart';
+import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
 import 'package:account_monopoly/model/game_model.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:peerdart/peerdart.dart';
+import 'dart:developer';
 
 import '../utils/string_utils.dart';
 
@@ -15,117 +16,128 @@ class PeerConnectionController {
   bool isConnected = false;
   bool isServer = false;
   GameModelController gameModelController;
-  List<String> candidatesPeersId = List<String>.empty();
+  //Set<String> candidatesPeersId = <String>{};
 
   List<DataConnection> serverActiveConnections = List<DataConnection>.empty();
 
+  static const String OPENED_CONNECTION_MSG = "Peer aberto para conexões.";
+  static const String CONNECTION_RECEIVED_MSG = "Nova conexão recebida do peer:";
+  static const String PEER_CONNECTION_CLOSED = "Jogador offline:";
+  static const String HOST_CONNECTION_CLOSED = "Jogador e host offline:";
   PeerConnectionController({required this.gameModelController, required this.peer, required this.myPeerId});
+  
 
-  openForConnectionsAsServer(){
-    peer.on("open").listen((id) {});
+  openConnectionsAsHost(){
+    peer.on("open").listen((id) {
+      isConnected = true;
+      log(OPENED_CONNECTION_MSG);
+    });
 
     peer.on("close").listen((id) {
-      isConnected = false;
+      closeConnection();
     });
 
     peer.on<DataConnection>("connection").listen((event) {
       isServer = true;
       serverActiveConnections.add(event);
 
+      event.on("open").listen((data) {
+        log('$CONNECTION_RECEIVED_MSG $data');
+        gameModelController.eventComposer(
+            type: LogMsgType.SERVER_HAND_SHAKE,
+            destinationPlayer: Player.ofDefinedId(username: "", id: data)
+        );
+      });
+
       event.on("data").listen((data) {
         gameModelController.processComingEvent(EventDTO.fromMap(data));
       });
 
       event.on("close").listen((event) {
-        //serverActiveConnections.removeWhere((c) => c.open == false);
-        //
+        DataConnection closedNode = serverActiveConnections.firstWhere((c) => !c.open);
+        serverActiveConnections.removeWhere((c) => c.connectionId == closedNode.peer);
+        log('$PEER_CONNECTION_CLOSED $closedNode');
+        gameModelController.eventComposer(type: LogMsgType.LOST_CONNECTION, sourcePlayer: gameModelController.gameModelDTO!.players.firstWhere((p) => p.id == closedNode.peer));
+      });
+
+      event.on('disconnected').listen((event) {
+        print("Desconectado");
       });
 
       isConnected = true;
     });
   }
 
-  connectToServer(String peerSourceId){
+  connectToHost(String peerSourceId){
     connWithServer = peer.connect(peerSourceId);
     connWithServer.on("open").listen((event) {
       isConnected = true;});
 
     connWithServer.on("close").listen((event) {
-      isConnected = false;
+      log(HOST_CONNECTION_CLOSED);
+      closeConnection();
+      late DataConnection closedNode;
+      closedNode = serverActiveConnections.firstWhere((c) => !c.open);
+      gameModelController.processComingEvent(
+        EventDTO(
+            type: LogMsgType.LOST_CONNECTION,
+            sourcePlayer: gameModelController.gameModelDTO!.players.firstWhere((p) => p.id == closedNode.peer))
+      );
+      String nextPeerId = _getNextServerCandidatePeerId();
+      peer = Peer(id: myPeerId);
+      if(myPeerId == nextPeerId){
+        openConnectionsAsHost();
+      } else {
+        connectToHost(nextPeerId);
+      }
     });
 
     connWithServer.on("data").listen((data) {
       gameModelController.processComingEvent(EventDTO.fromMap(data));
     });
+
+    connWithServer.on('disconnected').listen((event) {
+      //todo tratar desonexão
+      print("Desconectado");
+    });
+
+    connWithServer.on('peer-unavailable').listen((event) {
+      throw PeerUnavailableException;
+    });
   }
 
-  _hasInternet() async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
+  Future<bool> _hasInternet() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult.contains(ConnectivityResult.none)) {
       closeConnection();
     }
+    return isConnected;
   }
-   checkConnectivity() async {
-    if(await _hasInternet()){
-      if(isServer){
-        late DataConnection closedNode;
-        closedNode = serverActiveConnections.firstWhere((c) => !c.open);
-        if(closedNode.open != null){
-          serverActiveConnections.removeWhere((c) => c.connectionId == closedNode.connectionId);
-          send(
-              EventDTO(eventId: StringUtils().generateUUID(size: 8),
-                  type: LogMsgType.LOST_CONNECTION,
-                  sourcePlayer: gameModelController.gameModelDTO!.players.firstWhere((p) => p.peerId == closedNode.peer),
-                  playerAndHost: false));
-        }
-      } else {
-        if (!connWithServer.open){
-          String nextPeerId = _getNextServerCandidatePeerId();
-          if(myPeerId == nextPeerId){
-            openForConnectionsAsServer();
-          }else{
-            connectToServer(nextPeerId);
-          }
-        }
-      }
-    } else {
-      closeConnection();
-    }
-  }
-
+  
   String _getNextServerCandidatePeerId(){
-    for (var i = 0; i < candidatesPeersId.length; i++) {
-      if(connWithServer.peer == candidatesPeersId[i]){
-        if(i == candidatesPeersId.length - 1){
-          return candidatesPeersId[0];
-        }
-        return candidatesPeersId[i + 1];
-      }
-    }
-    throw Exception("Não existem peer id na lista");
+    return gameModelController.gameModelDTO!.players.firstWhere((p) => !p.isHost).id;
   }
 
   closeConnection(){
-    serverActiveConnections = [];
-    //candidatesPeersId = [];
-    isConnected = false;
-    connWithServer == null;
-    isServer = false;
-    peer.dispose();
-  }
+    if(isServer){
+      serverActiveConnections = [];
+      isServer = false;
+    } else {
+      connWithServer.close();
+    }
 
-  /*reconnectToDestination(String nextPeerSourceId){
-    serverActiveConnections = [];
-    peer = Peer(id: myPeerId);
-    connectToServer(nextPeerSourceId);
-  }*/
+    peer.dispose();
+    isConnected = false;
+  }
 
   send(EventDTO event){
     if(isServer){
-      for (var e in serverActiveConnections) {
-        e.send(event.toMap());
+      for(DataConnection dataConnection in serverActiveConnections){
+        if(dataConnection.peer != event.sourcePlayer.id){
+          dataConnection.send(event.toMap());
+        }
       }
-    } else{
+    } else {
       connWithServer.send(event.toMap());
     }
   }
