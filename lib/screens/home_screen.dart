@@ -7,6 +7,7 @@ import 'package:scoped_model/scoped_model.dart';
 import '../dialogs/load_user_dialog.dart';
 import '../model/game_model.dart';
 import '../model/user_model.dart';
+import 'new_game_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -127,7 +128,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     if (!model.isLoggedIn()) {
                                       return _showNonLoggedDialog(context);
                                     }
-                                   //Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewGameScreen()));
+                                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewGameScreen()));
                                   },
                                 ),
                               ),
@@ -206,7 +207,7 @@ class HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(20.0)),
             backgroundColor: Colors.black,
             title:
-            const Text("Insira o código!", style: TextStyle(color: Colors.white)),
+            const Text("Insira o código", style: TextStyle(color: Colors.white)),
             content: TextField(
                 controller: controller,
                 autofocus: true,
@@ -215,23 +216,30 @@ class HomeScreenState extends State<HomeScreen> {
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
                     fontSize: 20.0),
-                decoration: const InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20))),
+                decoration: InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 3.0),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.white, width: 5.0
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(20))
+                    ),
                     helperText: "Código",
-                    helperStyle: TextStyle(
+                    helperStyle: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
                         fontSize: 13.0))),
             actions: <Widget>[
               TextButton(
-                child: const Text("Cancelar", style: TextStyle(fontSize: 17.0)),
+                child: const Text("Cancelar", style: TextStyle(fontSize: 17.0, color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
               TextButton(
-                child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0)),
+                child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0, color: Colors.white)),
                 onPressed: () {
 
                   GameModelController.of(context).enterNewGameByIdRequest(destinationPeerId: controller.text, context: context, onFail: _onFail, onSuccess: _onSuccess);

@@ -92,7 +92,7 @@ class _ConnectionExampleState extends State<ConnectionExample> {
 
     connWithServer.on("open").listen((event) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Coneccao aberta aqui")));
+          .showSnackBar(const SnackBar(content: Text("Coneccao aberta aqui")));
       setState(() {
         connected = true;
       });

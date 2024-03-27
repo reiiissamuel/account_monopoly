@@ -30,7 +30,7 @@ class _AccountmonopolyAppState extends State<AccountmonopolyApp> {
       //systemNavigationBarDividerColor: Colors.white,
     ));
 
-    return MaterialApp(
+    /*return MaterialApp(
                           title: 'Account Monopoly',
                           theme: ThemeData(
                             primarySwatch: Colors.blue,
@@ -39,7 +39,7 @@ class _AccountmonopolyAppState extends State<AccountmonopolyApp> {
                           ),
                           debugShowCheckedModeBanner: false,
                           home: ConnectionExample() //SplashScreen(),
-                      );
+                      );*/
 
     return FutureBuilder(
       future: _init,

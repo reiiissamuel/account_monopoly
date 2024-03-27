@@ -376,8 +376,7 @@ class GameModelDTO{
   int currentGameBalance = 0;
   int initalGameBalance = 0;
   int limitPlayer = 0;
-  int faturaTax = 0;
-  int loanTax = 0;
+  int levelTax = 0;
   int roundBonus = 0;
   Player player = Player.empty();
   Account account = Account.empty();
@@ -392,8 +391,9 @@ class GameModelDTO{
   bool youBankrupt = false;
 
   GameModelDTO.empty();
-  GameModelDTO({Player ?player, required id, required int initalGameBalance, required int currentGameBalance, required this.roundBonus, required this.loanTax, required this.faturaTax, required this.limitPlayer, required this.players});
-  GameModelDTO.initAllFields({required id, required int initalGameBalance, required int currentGameBalance, required Account account, required Balance balance, required List<Player> players, required List<Hipoteca> hipotecas, required List<String> logs, required List<Event> benefits, required int roundBonus});
+  GameModelDTO({Player ?player, required id, required int initalGameBalance, required int currentGameBalance, required this.roundBonus, required this.levelTax, required this.limitPlayer, required this.players});
+  GameModelDTO.initAllFields({required id, required int initalGameBalance, required int currentGameBalance, required Account account, required Balance balance, required List<Player> players,
+    required List<Hipoteca> hipotecas, required List<String> logs, required List<Event> benefits, required int roundBonus, required this.youBankrupt});
  
   GameModelDTO toInitialTemplate(){
     return GameModelDTO(
@@ -402,11 +402,11 @@ class GameModelDTO{
       currentGameBalance: initalGameBalance,
       roundBonus: roundBonus,
       player: player,
-      loanTax: loanTax,
-      faturaTax: faturaTax,
+      levelTax: levelTax,
       limitPlayer: limitPlayer, 
       players: players);
   }
+
 
   Map<String, dynamic> toMap() {
     return {
@@ -419,7 +419,8 @@ class GameModelDTO{
       'hipotecas': hipotecas.map((hipoteca) => hipoteca.toMap()).toList(),
       'logs': logs,
       'benefits': benefits.map((benefits) => benefits.toMap()).toList(),
-      'initalGameBalance': initalGameBalance
+      'initalGameBalance': initalGameBalance,
+      'youBankrupt': youBankrupt
     };
   }
  
@@ -447,7 +448,8 @@ class GameModelDTO{
         logs: (map['logs'] as List<dynamic>).cast<String>(),
         benefits: (map['benefits'] as List<dynamic>).map((b) => Event.fromMap(b as Map<String, dynamic>)).toList(),
         roundBonus:  map['roundBonus'] as int,
-        initalGameBalance: map['initalGameBalance'] as int
+        initalGameBalance: map['initalGameBalance'] as int,
+        youBankrupt: map['youBankrupt'] as bool
     );
   }
 }

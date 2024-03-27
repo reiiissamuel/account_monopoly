@@ -8,7 +8,6 @@ class Player {
   int payedTo= 0;
   bool isHost = false;
 
-  //TODO avaliar beneficioes de adicionar o gameId como atributo 
   Player.empty();
 
 
