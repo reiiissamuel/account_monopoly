@@ -16,7 +16,7 @@ class Account{
   //dados somente para armazenamento todo ver possibilidade de usar dto separado
   int transferIn = 0;
   int transferOut = 0;
-  int hipotecasIn = 0; //
+  int mortgagesIn = 0; //
   int otherReceives = 0;//
   int otherPaymentsOut = 0; //
   int loanIn = 0;  //
@@ -39,7 +39,7 @@ class Account{
         required this.isParcelada,
         required this.transferIn,
         required this.transferOut,
-        required this.hipotecasIn,
+        required this.mortgagesIn,
         required this.otherReceives,
         required this.otherPaymentsOut,
         required this.loanIn,
@@ -67,7 +67,7 @@ class Account{
       'isParcelada':  isParcelada,
       'transferIn': transferIn,
       'transferOut': transferOut,
-      'hipotecasIn': hipotecasIn,
+      'mortgagesIn': mortgagesIn,
       'otherReceives':  otherReceives,
       'otherPaymentsOut': otherPaymentsOut,
       'loanIn': loanIn,
@@ -90,7 +90,7 @@ class Account{
         restituicao: map['restituicao'] as int,
         isParcelada: map['isParcelada'] as bool,
         transferIn: map['transferIn']  as int,
-        hipotecasIn: map['hipotecasIn']  as int,
+        mortgagesIn: map['mortgagesIn']  as int,
         transferOut: map['transferOut'] as int,
         otherReceives: map['otherReceives'] as int,
         otherPaymentsOut: map['otherPaymentsOut']  as int,

@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:flutter/services.dart';
 
 class Chance {
   int? id;
@@ -8,9 +5,9 @@ class Chance {
   String? description;
   int? effect;
   String? incoming;
-  bool? isbenefit;
+  bool isbenefit;
 
-  Chance({required int id, required String name, required String description, required int effect, required String incoming, required bool isbenefit});
+  Chance({required this.id, required this.name, required this.description, required this.effect, required this.incoming, required this.isbenefit});
 
   factory Chance.fromJson(dynamic json) {
     return Chance(

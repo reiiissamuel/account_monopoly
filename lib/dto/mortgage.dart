@@ -1,6 +1,6 @@
 
-class Hipoteca{
-   int? id;
+class Mortgage{
+   String id="";
    String name = "";
    int value = 0;
    int valueToPay = 0;
@@ -8,12 +8,12 @@ class Hipoteca{
    int auctionMinValue = 0;
    bool alreadySetAuctionThisRound = false;
 
-   Hipoteca({required this.id, required this.name, required this.value, required this.valueToPay, required this.deadline,
+   Mortgage({required this.id, required this.name, required this.value, required this.valueToPay, required this.deadline,
       required this.auctionMinValue,
       required this.alreadySetAuctionThisRound});
 
 
-   Hipoteca.empty();
+   Mortgage.empty();
 
    Map<String, dynamic> toMap() {
       return {
@@ -27,9 +27,9 @@ class Hipoteca{
       };
    }
 
-   factory Hipoteca.fromMap(Map<String, dynamic> map) {
-      return Hipoteca(
-          id: map['id'] as int,
+   factory Mortgage.fromMap(Map<String, dynamic> map) {
+      return Mortgage(
+          id: map['id'] as String,
           name: map['name'] as String,
           value: map['value'] as int,
           valueToPay: map['valueToPay'] as int,

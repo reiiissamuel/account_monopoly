@@ -1,0 +1,128 @@
+import 'package:account_monopoly/model/game_model.dart';
+import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
+
+import '../dialogs/confirm_action_dialog.dart';
+import '../dialogs/new_mortgage_dialog.dart';
+import '../dto/mortgage.dart';
+import '../enums/log_msg_type.dart';
+import '../utils/string_utils.dart';
+
+
+class MortgageScreen extends StatelessWidget {
+  const MortgageScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ScopedModelDescendant<GameModelController>(
+      builder: (context, child, model) {
+        if (model.isLoading) return const Center(child: CircularProgressIndicator());
+        return Scaffold(
+            appBar: AppBar(
+              title: const Text("Hipotécas", style: TextStyle(letterSpacing: 2)),
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: (){
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const NewMortgageDialog();
+                        });
+                  },
+                )
+              ],
+            ),
+            backgroundColor: Colors.black,
+            body: model.gameModelDTO!.mortgages.isEmpty ?
+                Center(
+                  child: IconButton(icon: const Icon(Icons.add, size: 60.0), color: Theme.of(context).primaryColor, onPressed: (){
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const NewMortgageDialog();
+                        });
+                  },),
+                )
+
+          : ListView.builder(
+                padding: const EdgeInsets.all(10.0),
+                itemCount: model.gameModelDTO!.mortgages.length,
+                itemBuilder: (context, index) {
+                  //if(model.mortgages[index].deadline > 0)
+                    return _mortgageTile(context, model.gameModelDTO!.mortgages[index]);
+                }),
+        );
+      },
+    );
+  }
+
+  Widget _mortgageTile(BuildContext context, Mortgage mortgage){
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8.0),
+      height: 210.0,
+      decoration: const BoxDecoration(
+        color: Color(0xff0087a8),
+        borderRadius: BorderRadius.all(Radius.circular(15.0)),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        margin: const EdgeInsets.all(10.0),
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.all(Radius.circular(15.0)),
+          color: Theme.of(context).primaryColor,
+        ),
+        child: Stack(
+          children: <Widget>[
+            Text(
+              'Posse: ${mortgage.name}',
+              style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Valor Recebido: ${StringUtils.currencyFormat(mortgage.value.toString())} R\$\n"
+                    " Total a Pagar: ${StringUtils.currencyFormat(mortgage.valueToPay.toString())} R\$\n"
+                    "Prazo(Rodadas): ${mortgage.deadline.toString()}",
+                style: TextStyle(color: Colors.white, fontSize: 20.0),
+              ),
+            ),
+            Align(
+                alignment: Alignment.bottomRight,
+                child: mortgage.deadline > 0 ?
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0), side: const BorderSide(color: Colors.black)),
+                    backgroundColor: Theme.of(context).primaryColor,
+                  ),
+                  onPressed: GameModelController.of(context).hasEnoughBalance(mortgage.valueToPay) ? () {
+                    showDialog(context: context, builder: (BuildContext context){
+                      return ConfirmActionDialog(
+                          title: "Resgate de propriedade",
+                          textContent: "Confirma o pagamento de  ${StringUtils.currencyFormat(mortgage.valueToPay.toString())} R\$ ?" ,
+                          onConfirm: (){
+
+                            GameModelController.of(context).eventComposer(type: LogMsgType.PAY_BANK, value: mortgage.valueToPay);
+                            GameModelController.of(context).gameModelDTO!.mortgages.removeWhere((h) => h.id == mortgage.id);
+                            Navigator.of(context).pop();
+                          });
+                    });
+                  } : null,
+                  child: const Text("Resgatar", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w500, letterSpacing: 2, color: Colors.green))
+                ) : const Text("Confiscado",
+                    style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w500, color: Colors.red, letterSpacing: 2))
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+
+}
+

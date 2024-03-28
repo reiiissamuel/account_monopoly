@@ -6,7 +6,7 @@ enum LogMsgType{
   BUILD_HOUSE(messageScope: '{SOURCE} construiu uma casa avaliada em {VALUE}.'),
   BUILD_HOTEL(messageScope: '{SOURCE} construiu um hotal avaliada em {VALUE}.'),
   LOAN(messageScope: '{SOURCE} pegou um empréstimo no valor de {VALUE}.'),
-  HIPOTECA(messageScope: '{SOURCE} recebeu {VALUE} através de uma hipoteca.'),
+  MORTGAGE(messageScope: '{SOURCE} recebeu {VALUE} através de uma hipoteca.'),
   BANKRUPTCY(messageScope: '{SOURCE} declarou falência'),
   AUCTION_START(messageScope: '{SOURCE} iniciou um leilão de uma propriedade com lance mínimo de {VALUE}.'),
   AUCTION_RAISE(messageScope: '{SOURCE} aumenta o lance.'),

@@ -14,7 +14,7 @@ import '../dto/auction.dart';
 import '../dto/balance.dart';
 import '../dto/chance.dart';
 import '../dto/event_dto.dart';
-import '../dto/hipoteca.dart';
+import '../dto/mortgage.dart';
 import '../enums/log_msg_type.dart';
 
 class GameModelController extends Model {
@@ -143,7 +143,7 @@ class GameModelController extends Model {
         gameModelDTO!.account.qtdHotel += value!;
         break;
       case LogMsgType.HIPOTECA:
-        gameModelDTO!.account.hipotecasIn += value!;
+        gameModelDTO!.account.mortgagesIn += value!;
         _updateBalance(value);
         break;
       case LogMsgType.LOAN:
@@ -358,7 +358,7 @@ class GameModelController extends Model {
     currentGameBalance = null;
     account = Account();
     balance = Balance();
-    hipotecas = [];
+    mortgages = [];
 
     isLoading = false;
     notifyListeners();
@@ -388,7 +388,7 @@ class GameModelDTO{
   Account account = Account.empty();
   Balance balance = Balance.empty();
   List<Player> players = List<Player>.empty();
-  List<Hipoteca> hipotecas = [];
+  List<Mortgage> mortgages = [];
   List<String> logs = [];
   //List<Investment> investments= List<Investment>();
   List<Chance> chances = [];
@@ -400,7 +400,7 @@ class GameModelDTO{
   GameModelDTO.empty();
   GameModelDTO({Player ?player, required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.roundBonus, required this.levelTax, required this.limitPlayer, required this.players});
   GameModelDTO.initAllFields({required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.account, required this.balance, required this.players,
-    required this.hipotecas, required this.logs, required this.chances, required this.roundBonus, required this.youBankrupt, required this.auctions});
+    required this.mortgages, required this.logs, required this.chances, required this.roundBonus, required this.youBankrupt, required this.auctions});
  
   GameModelDTO toInitialTemplate(){
     return GameModelDTO(
@@ -423,7 +423,7 @@ class GameModelDTO{
       'balance': balance.toMap(),
       'player' : player.toMap(),
       'players': players.map((player) => player.toMap()).toList(),
-      'hipotecas': hipotecas.map((hipoteca) => hipoteca.toMap()).toList(),
+      'mortgages': mortgages.map((mortgage) => mortgage.toMap()).toList(),
       'logs': logs,
       'chances': chances.map((chance) => chance.toMap()).toList(),
       'initalGameBalance': initalGameBalance,
@@ -452,7 +452,7 @@ class GameModelDTO{
         account: Account.fromMap(map['account']),
         balance: Balance.fromMap(map['balance']),
         players: (map['players'] as List<dynamic>).map((p) => Player.fromMap(p as Map<String, dynamic>)).toList(),
-        hipotecas: (map['hipotecas'] as List<dynamic>).map((h) => Hipoteca.fromMap(h as Map<String, dynamic>)).toList(),
+        mortgages: (map['mortgages'] as List<dynamic>).map((h) => Mortgage.fromMap(h as Map<String, dynamic>)).toList(),
         logs: (map['logs'] as List<dynamic>).cast<String>(),
         chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
         auctions: (map['auctions'] as List<dynamic>).map((b) => Auction.fromMap(b as Map<String, dynamic>)).toList(),

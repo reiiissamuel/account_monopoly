@@ -8,7 +8,7 @@ class Balance{
 
   num getRoundIncomming(int i){
     return accounts[i].bonus + accounts[i].qtdEventGain + accounts[i].restituicao + accounts[i].transferIn +
-        accounts[i].hipotecasIn + accounts[i].otherReceives + accounts[i].loanIn + accounts[i].auctionIn;
+        accounts[i].mortgagesIn + accounts[i].otherReceives + accounts[i].loanIn + accounts[i].auctionIn;
   }
 
   num getRoundOutGoing(int i){
