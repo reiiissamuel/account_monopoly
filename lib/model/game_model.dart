@@ -15,13 +15,12 @@ import '../dto/balance.dart';
 import '../dto/chance.dart';
 import '../dto/event_dto.dart';
 import '../dto/hipoteca.dart';
-import '../enums/enums.dart';
+import '../enums/log_msg_type.dart';
 
 class GameModelController extends Model {
   UserModelController userModelController;
   late Player player;
   PeerConnectionController? peerConnectionController;
-  AuctionController auctionController = AuctionController();
   GameModelDTO? gameModelDTO;
   bool isLoading = false;
   bool isThereAuction = false;
@@ -72,20 +71,18 @@ class GameModelController extends Model {
         break;
       case LogMsgType.AUCTION_START:
         isThereAuction = true;
-        Auction? auction = event.auction;
-        if (auction != null) {
-          auctionController.setNewAuction(auction);
-        }
+        event.auction!.whichPlayersIdStillIn.add(Map.of({player.id : true}));
+        gameModelDTO!.auctions.add(event.auction!);
         break;
       case LogMsgType.AUCTION_END:
         isThereAuction = false;
-        auctionController.endAuction();
+        gameModelDTO!.auctions.last = event.auction!;
+        if(gameModelDTO!.auctions.last.auctionCaller == player.username){
+          _updateBalance(gameModelDTO!.auctions.last.endValue);
+        }
         break;
-      case LogMsgType.AUCTION_PAY:
-        auctionController.payMinimmun(sourceplayer.username);
-        break;
-      case LogMsgType.AUCTION_RAISE:
-        auctionController.raise(value!, sourceplayer.username);
+      case (LogMsgType.AUCTION_RAISE || LogMsgType.AUCTION_PAY):
+        gameModelDTO!.auctions.last = event.auction!;
         break;
       case LogMsgType.JOIN_TABLE:
         int i = gameModelDTO!.players.indexWhere((p) => p.id == sourceplayer.id);
@@ -110,7 +107,7 @@ class GameModelController extends Model {
     _logComposer(event);
   }
 
-  void eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value, Player ?sourcePlayer}) {
+  void eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value, Player ?sourcePlayer, Auction ?auction}) {
     isLoading = true;
     notifyListeners();
 
@@ -155,20 +152,29 @@ class GameModelController extends Model {
         break;
       case LogMsgType.AUCTION_START:
         isThereAuction = true;
-        Auction? auction = event.auction;
-        if (auction != null) {
-          auctionController.setNewAuction(auction);
-        }
+        event.auction = auction;
+        event.auction!.whichPlayersIdStillIn.add(Map.of({player.id : false}));
+        gameModelDTO!.auctions.add(auction!);
         break;
       case LogMsgType.AUCTION_END:
         isThereAuction = false;
-        auctionController.endAuction();
+        gameModelDTO!.auctions.last.setFinalValue();
+        _updateBalance(-gameModelDTO!.auctions.last.endValue);
+        break;
+      case LogMsgType.AUCTION_LEAVE:
+        isThereAuction = false;
+        gameModelDTO!.auctions.last!.whichPlayersIdStillIn.firstWhere((e) => e.containsKey([player.id]))[player.id] = false;
+        event.auction = gameModelDTO!.auctions.last;
         break;
       case LogMsgType.AUCTION_PAY:
-        auctionController.payMinimmun(event.sourcePlayer.username);
+        gameModelDTO!.auctions.last.buyer = player.username;
+        gameModelDTO!.auctions.last.currentValue = gameModelDTO!.auctions.last.startValue;
+        event.auction = gameModelDTO!.auctions.last;
         break;
-      case LogMsgType.AUCTION_RAISE:
-        auctionController.raise(value!, event.sourcePlayer.username);
+      case (LogMsgType.AUCTION_RAISE):
+        gameModelDTO!.auctions.last.buyer = player.username;
+        gameModelDTO!.auctions.last.currentValue += value!;
+        event.auction = gameModelDTO!.auctions.last;
         break;
       case LogMsgType.BANKRUPTCY:
         if (gameModelDTO!.players.isNotEmpty) {
@@ -211,9 +217,9 @@ class GameModelController extends Model {
     if (event.type.messageScope != null) {
       gameModelDTO!.logs.add(
           event.type.messageScope
-          !.replaceAll('{SOURCE}', event.sourcePlayer.username)
+          !.replaceAll('{SOURCE}', event.sourcePlayer.username == player.username ? 'Você' : event.sourcePlayer.username)
               .replaceAll('{VALUE}', event.value.toString())
-              .replaceAll('{DEST}', event.destinationPlayer!.username)
+              .replaceAll('{DEST}', event.destinationPlayer!.username == player.username ? 'Você' : event.sourcePlayer.username)
       );
     }
   }
@@ -385,15 +391,16 @@ class GameModelDTO{
   List<Hipoteca> hipotecas = [];
   List<String> logs = [];
   //List<Investment> investments= List<Investment>();
-  List<Event> benefits = [];
+  List<Chance> chances = [];
+  List<Auction> auctions = [];
 
   bool youWon = false;
   bool youBankrupt = false;
 
   GameModelDTO.empty();
-  GameModelDTO({Player ?player, required id, required int initalGameBalance, required int currentGameBalance, required this.roundBonus, required this.levelTax, required this.limitPlayer, required this.players});
-  GameModelDTO.initAllFields({required id, required int initalGameBalance, required int currentGameBalance, required Account account, required Balance balance, required List<Player> players,
-    required List<Hipoteca> hipotecas, required List<String> logs, required List<Event> benefits, required int roundBonus, required this.youBankrupt});
+  GameModelDTO({Player ?player, required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.roundBonus, required this.levelTax, required this.limitPlayer, required this.players});
+  GameModelDTO.initAllFields({required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.account, required this.balance, required this.players,
+    required this.hipotecas, required this.logs, required this.chances, required this.roundBonus, required this.youBankrupt, required this.auctions});
  
   GameModelDTO toInitialTemplate(){
     return GameModelDTO(
@@ -418,9 +425,10 @@ class GameModelDTO{
       'players': players.map((player) => player.toMap()).toList(),
       'hipotecas': hipotecas.map((hipoteca) => hipoteca.toMap()).toList(),
       'logs': logs,
-      'benefits': benefits.map((benefits) => benefits.toMap()).toList(),
+      'chances': chances.map((chance) => chance.toMap()).toList(),
       'initalGameBalance': initalGameBalance,
-      'youBankrupt': youBankrupt
+      'youBankrupt': youBankrupt,
+      'auctions': auctions
     };
   }
  
@@ -446,7 +454,8 @@ class GameModelDTO{
         players: (map['players'] as List<dynamic>).map((p) => Player.fromMap(p as Map<String, dynamic>)).toList(),
         hipotecas: (map['hipotecas'] as List<dynamic>).map((h) => Hipoteca.fromMap(h as Map<String, dynamic>)).toList(),
         logs: (map['logs'] as List<dynamic>).cast<String>(),
-        benefits: (map['benefits'] as List<dynamic>).map((b) => Event.fromMap(b as Map<String, dynamic>)).toList(),
+        chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
+        auctions: (map['auctions'] as List<dynamic>).map((b) => Auction.fromMap(b as Map<String, dynamic>)).toList(),
         roundBonus:  map['roundBonus'] as int,
         initalGameBalance: map['initalGameBalance'] as int,
         youBankrupt: map['youBankrupt'] as bool

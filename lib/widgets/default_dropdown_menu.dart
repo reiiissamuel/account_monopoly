@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../dialogs/tip_alert_dialog.dart';
-
 
 class DefaultDropdownMenu<T> extends StatelessWidget {
 
@@ -9,7 +7,6 @@ class DefaultDropdownMenu<T> extends StatelessWidget {
   final String hintText;
   List<T> items;
   Function(dynamic) onChange;
-
 
   DefaultDropdownMenu({super.key, required this.value, required this.hintText, required this.items, required this.onChange});
 

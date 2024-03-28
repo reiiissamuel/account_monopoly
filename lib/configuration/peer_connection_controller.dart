@@ -1,6 +1,6 @@
 import 'package:account_monopoly/dto/event_dto.dart';
 import 'package:account_monopoly/dto/player.dart';
-import 'package:account_monopoly/enums/enums.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
 import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
 import 'package:account_monopoly/model/game_model.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -51,6 +51,7 @@ class PeerConnectionController {
 
       event.on("data").listen((data) {
         gameModelController.processComingEvent(EventDTO.fromMap(data));
+        send(data);
       });
 
       event.on("close").listen((event) {
