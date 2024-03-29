@@ -11,7 +11,7 @@ class Account{
   int bonus = 0;
   int ir = 0; //imposto de renda
   int restituicao = 0;
-  bool isParcelada = false; //retorna true se a fatura foi parcelada
+  bool isInInstallment = false; //retorna true se a fatura foi parcelada
 
   //dados somente para armazenamento todo ver possibilidade de usar dto separado
   int transferIn = 0;
@@ -36,7 +36,7 @@ class Account{
         required this.bonus,
         required this.ir,
         required this.restituicao,
-        required this.isParcelada,
+        required this.isInInstallment,
         required this.transferIn,
         required this.transferOut,
         required this.mortgagesIn,
@@ -64,7 +64,7 @@ class Account{
       'bonus': bonus,
       'ir': ir,
       'restituicao': restituicao,
-      'isParcelada':  isParcelada,
+      'isInInstallment':  isInInstallment,
       'transferIn': transferIn,
       'transferOut': transferOut,
       'mortgagesIn': mortgagesIn,
@@ -88,7 +88,7 @@ class Account{
         bonus: map['bonus'] as int,
         ir: map['ir'] as int,
         restituicao: map['restituicao'] as int,
-        isParcelada: map['isParcelada'] as bool,
+        isInInstallment: map['isParcelada'] as bool,
         transferIn: map['transferIn']  as int,
         mortgagesIn: map['mortgagesIn']  as int,
         transferOut: map['transferOut'] as int,

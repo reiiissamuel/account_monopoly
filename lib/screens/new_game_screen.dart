@@ -28,7 +28,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
   List <int> spinnerItems = [2,3,4,5,6,7,8,9,10];
   bool isAuctionSwitchEnabled = false;
   bool isChanceSwitchEnabled = false;
-  bool isHipotecaEnabled = false;
+  bool isMortgageEnabled = false;
 
 
   bool _enableConfirmButton = true;
@@ -196,9 +196,9 @@ class _NewGameScreenState extends State<NewGameScreen> {
                           inactiveTrackColor: Colors.grey.shade400,
                           splashRadius: 35.0,
                           // boolean variable value
-                          value: isHipotecaEnabled,
+                          value: isMortgageEnabled,
                           // changes the state of the switch
-                          onChanged: (value) => setState(() => isHipotecaEnabled = value),
+                          onChanged: (value) => setState(() => isMortgageEnabled = value),
                         ),
                       )
                     ],
@@ -265,7 +265,11 @@ class _NewGameScreenState extends State<NewGameScreen> {
                     players: [],
                     initalGameBalance:  int.parse(_initialBalanceController.text),
                     roundBonus: int.parse(dropdownBonusValue),
-                    levelTax: int.parse(dropdownLoanTax)
+                    levelTax: StringUtils.setTax(dropdownLoanTax),
+                    auctionEnabled: isAuctionSwitchEnabled,
+                    mortgageEnabled: isMortgageEnabled,
+                    chancesEnabled: isChanceSwitchEnabled,
+
                 );
 
                 GameModelController.of(context).createNewGame(onFail: _onFail, onSuccess: _onSuccess, gameData: gameData);

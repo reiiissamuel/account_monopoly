@@ -107,7 +107,7 @@ class GameModelController extends Model {
     _logComposer(event);
   }
 
-  void eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value, Player ?sourcePlayer, Auction ?auction}) {
+  void eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value, Player ?sourcePlayer, Auction ?auction, int ?installments}) {
     isLoading = true;
     notifyListeners();
 
@@ -119,6 +119,11 @@ class GameModelController extends Model {
         value: value);
 
     switch (event.type) {
+      case LogMsgType.CLOSE_TURN:
+        _updateBalance(gameModelDTO!.roundBonus);
+        //todo checar se tem leilão para disparar
+        //todo atualizar contagem das hipotecas
+        return;
       case LogMsgType.TRANSFER:
         gameModelDTO!.account.transferOut += value!;
         _updateBalance(-value);
@@ -142,13 +147,14 @@ class GameModelController extends Model {
       case LogMsgType.BUILD_HOTEL:
         gameModelDTO!.account.qtdHotel += value!;
         break;
-      case LogMsgType.HIPOTECA:
+      case LogMsgType.MORTGAGE:
         gameModelDTO!.account.mortgagesIn += value!;
         _updateBalance(value);
         break;
       case LogMsgType.LOAN:
         gameModelDTO!.account.loanIn += value!;
         _updateBalance(value);
+        gameModelDTO!.balance.generateInstallments(installments: installments!, installment: (value / installments!).floor());
         break;
       case LogMsgType.AUCTION_START:
         isThereAuction = true;
@@ -338,31 +344,6 @@ class GameModelController extends Model {
   }
 
   //in game methods
-  bool hasRoundsAccount(int round) {
-    for (var account in gameModelDTO!.balance.accounts) {
-      if (account.round == round) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /* void exitGame() {
-    isLoading = true;
-    notifyListeners();
-
-    logs = [];
-    players = [];
-    gameData = Map();
-    gameCode = null;
-    currentGameBalance = null;
-    account = Account();
-    balance = Balance();
-    mortgages = [];
-
-    isLoading = false;
-    notifyListeners();
-  } */
 
   bool hasEnoughBalance(int value) {
     if (value <= gameModelDTO!.currentGameBalance) {
@@ -394,13 +375,18 @@ class GameModelDTO{
   List<Chance> chances = [];
   List<Auction> auctions = [];
 
+  bool auctionEnabled = false;
+  bool mortgageEnabled = false;
+  bool chancesEnabled = false;
   bool youWon = false;
   bool youBankrupt = false;
 
   GameModelDTO.empty();
-  GameModelDTO({Player ?player, required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.roundBonus, required this.levelTax, required this.limitPlayer, required this.players});
-  GameModelDTO.initAllFields({required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.account, required this.balance, required this.players,
-    required this.mortgages, required this.logs, required this.chances, required this.roundBonus, required this.youBankrupt, required this.auctions});
+  GameModelDTO({Player ?player, required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.roundBonus,
+    required this.levelTax, required this.limitPlayer, required this.players, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
+  GameModelDTO.initAllFields({required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.account,
+    required this.balance, required this.players, required this.mortgages, required this.logs, required this.chances, required this.roundBonus,
+    required this.youBankrupt, required this.auctions, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
  
   GameModelDTO toInitialTemplate(){
     return GameModelDTO(
@@ -411,7 +397,8 @@ class GameModelDTO{
       player: player,
       levelTax: levelTax,
       limitPlayer: limitPlayer, 
-      players: players);
+      players: players,
+    );
   }
 
 
@@ -428,22 +415,12 @@ class GameModelDTO{
       'chances': chances.map((chance) => chance.toMap()).toList(),
       'initalGameBalance': initalGameBalance,
       'youBankrupt': youBankrupt,
-      'auctions': auctions
+      'auctions': auctions,
+      'auctionEnabled': auctionEnabled,
+      'mortgageEnabled': mortgageEnabled,
+      'chancesEnabled': chancesEnabled
     };
   }
- 
-  /*factory GameModelDTO.fromGameModelDto(GameModelDTO template){
-    return GameModelDTO(
-      id: template.id,
-      initalGameBalance: template.initalGameBalance,
-      currentGameBalance: template.currentGameBalance,
-      roundBonus: template.roundBonus,
-      loanTax: template.loanTax,
-      faturaTax: template.faturaTax,
-      limitPlayer: template.limitPlayer, 
-      players: template.players);
-
-  }*/
 
   factory GameModelDTO.fromMap(Map<String, dynamic> map) {
     return GameModelDTO.initAllFields(
@@ -458,7 +435,10 @@ class GameModelDTO{
         auctions: (map['auctions'] as List<dynamic>).map((b) => Auction.fromMap(b as Map<String, dynamic>)).toList(),
         roundBonus:  map['roundBonus'] as int,
         initalGameBalance: map['initalGameBalance'] as int,
-        youBankrupt: map['youBankrupt'] as bool
+        youBankrupt: map['youBankrupt'] as bool,
+        auctionEnabled: map['auctionEnabled'] as bool,
+        mortgageEnabled: map['mortgageEnabled'] as bool,
+        chancesEnabled: map['chancesEnabled'] as bool;
     );
   }
 }

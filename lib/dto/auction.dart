@@ -1,7 +1,7 @@
 
 class Auction {
 
-  int id;
+  String id;
   String auctionCaller;
   String propertyName;
   int currentValue;
@@ -9,7 +9,6 @@ class Auction {
   int endValue = 0;
   late List<Map<String, bool>> whichPlayersIdStillIn;
   String buyer = "";
-
 
   Auction({required this.id, required this.auctionCaller, required this.propertyName, required this.startValue, required this.endValue, required this.currentValue});
 
@@ -34,7 +33,7 @@ class Auction {
 
   factory Auction.fromMap(Map<String, dynamic> map) {
     return Auction(
-      id: map['id'] as int,
+      id: map['id'] as String,
       auctionCaller: map['auctionCaller'] as String,
       propertyName: map['propertyName'] as String,
       startValue: map['startValue'] as int,

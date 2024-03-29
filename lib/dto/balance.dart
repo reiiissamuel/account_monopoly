@@ -16,6 +16,29 @@ class Balance{
         accounts[i].qtdEventPay + accounts[i].qtdHome + accounts[i].qtdHotel + accounts[i].ir + accounts[i].transferOut + accounts[i].otherPaymentsOut;
   }
 
+  generateInstallments({required int installments, required int installment}){
+
+    for(int i = 1; i <= installments; i++){
+      if(hasAccountInTheRound(round + i)) {
+        accounts[round + i].loanInstallment = installment;
+      } else{
+        Account newAccount = Account.empty();
+        newAccount.loanInstallment += installment;
+        newAccount.round = round + i;
+        accounts.add(newAccount);
+      }
+    }
+  }
+
+  bool hasAccountInTheRound(int round) {
+    for (var account in accounts) {
+      if (account.round == round) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   Balance({required this.round, required this.profit, required this.expanses, required this.accounts});
 

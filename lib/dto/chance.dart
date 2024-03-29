@@ -1,4 +1,24 @@
+import 'dart:convert';
 
+import 'package:flutter/services.dart';
+
+class ChanceController {
+  List<Chance> events = List.empty();
+
+  Future<String> _loadEventFromJson() async {
+    return await rootBundle.loadString('jsondata/events.json');
+  }
+
+  Future<List> getAllEvents() async {
+    String jsonString = await _loadEventFromJson();
+    var eventsObjJson = jsonDecode(jsonString)["events"] as List;
+    events = eventsObjJson
+        .map((eventsJson) => Chance.fromJson(eventsJson))
+        .toList();
+
+    return events;
+  }
+}
 class Chance {
   int? id;
   String? name;

@@ -25,4 +25,17 @@ class StringUtils {
 
     return result;
   }
+
+  static int setTax(String taxLevel){
+    switch(taxLevel){
+      case "Normal":
+        return 5;
+      case "Alto":
+        return 7;
+      case "Jogo-Rapido":
+        return 10;
+      default:
+        return 5;
+    }
+  }
 }

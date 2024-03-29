@@ -58,7 +58,7 @@ class ChartTwo extends StatelessWidget {
           sources[0].value += ac.transferIn;
           sources[1].value += ac.bonus;
           sources[2].value += ac.qtdEventGain;
-          sources[3].value += ac.hipotecasIn;
+          sources[3].value += ac.mortgagesIn;
           sources[4].value += ac.loanIn;
           sources[5].value += ac.restituicao;
           sources[6].value += ac.auctionIn;
@@ -69,7 +69,7 @@ class ChartTwo extends StatelessWidget {
         sources[0].value += model.gameModelDTO!.account.transferIn;
         sources[1].value += model.gameModelDTO!.account.bonus;
         sources[2].value += model.gameModelDTO!.account.qtdEventGain;
-        sources[3].value += model.gameModelDTO!.account.hipotecasIn;
+        sources[3].value += model.gameModelDTO!.account.mortgagesIn;
         sources[4].value += model.gameModelDTO!.account.loanIn;
         sources[5].value += model.gameModelDTO!.account.restituicao;
         sources[6].value += model.gameModelDTO!.account.auctionIn;
