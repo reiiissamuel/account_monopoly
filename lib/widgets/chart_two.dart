@@ -49,7 +49,7 @@ class ChartTwo extends StatelessWidget {
           sources[1].value += ac.qtdPurchases;
           sources[2].value += (ac.qtdHome + ac.qtdHotel);
           sources[3].value += ac.qtdEventPay;
-          sources[4].value += ac.previousAccoutInstallment;
+          sources[4].value += ac.previousAccountInstallment;
           sources[5].value += ac.ir;
           sources[6].value += ac.otherPaymentsOut;
         }
@@ -81,7 +81,7 @@ class ChartTwo extends StatelessWidget {
         sources[1].value += model.gameModelDTO!.account.qtdPurchases;
         sources[2].value += (model.gameModelDTO!.account.qtdHome + model.gameModelDTO!.account.qtdHotel);
         sources[3].value += model.gameModelDTO!.account.qtdEventPay;
-        sources[4].value += model.gameModelDTO!.account.previousAccoutInstallment;
+        sources[4].value += model.gameModelDTO!.account.previousAccountInstallment;
         sources[5].value += model.gameModelDTO!.account.ir;
         sources[6].value += model.gameModelDTO!.account.otherPaymentsOut;
         break;

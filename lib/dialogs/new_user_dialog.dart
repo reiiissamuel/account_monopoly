@@ -13,7 +13,7 @@ class NewUserDialog extends StatefulWidget {
 }
 
 class NewUserDialogState extends State<NewUserDialog> {
-  static const String NAME_HINT_TEXT = "Me diga quem é você.";
+  static const String NAME_HINT_TEXT = "Me diga seu nome.";
   static const String USERNAME_HINT_TEXT = "Defina um apelido.";
   static const String VALIDATION_NAME_ERROR_MSG = "Você precisa definir um nome com mais de 1 caractere.";
   static const String VALIDATION_USERNAME_ERROR_MSG = "Você precisa definir um nome de usuário sem espaço.";
@@ -46,7 +46,21 @@ class NewUserDialogState extends State<NewUserDialog> {
               children: <Widget>[
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(hintText: NAME_HINT_TEXT),
+                  decoration: const InputDecoration(
+                    hintText: NAME_HINT_TEXT,
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white10, width: 3.0),
+                        borderRadius: BorderRadius.all(Radius.circular(20))
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.white, width: 5.0
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(20))
+                    ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0))),
+                  ),
                   keyboardType: TextInputType.text,
                   validator: (text) {
                     if(text == null || text.isEmpty || text.length < 2) return VALIDATION_NAME_ERROR_MSG;
@@ -55,7 +69,21 @@ class NewUserDialogState extends State<NewUserDialog> {
                 const SizedBox(height: 16.0),
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(hintText: USERNAME_HINT_TEXT),
+                  decoration: const InputDecoration(
+                      hintText: USERNAME_HINT_TEXT,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white10, width: 3.0),
+                        borderRadius: BorderRadius.all(Radius.circular(20))
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.white, width: 5.0
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(20))
+                    ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0))),
+                  ),
                   validator: (text) {
                     if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return VALIDATION_USERNAME_ERROR_MSG;
                   },

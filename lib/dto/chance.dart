@@ -6,7 +6,7 @@ class ChanceController {
   List<Chance> events = List.empty();
 
   Future<String> _loadEventFromJson() async {
-    return await rootBundle.loadString('jsondata/events.json');
+    return await rootBundle.loadString('jsondata/chances.json');
   }
 
   Future<List> getAllEvents() async {

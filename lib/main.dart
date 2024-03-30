@@ -49,7 +49,8 @@ class _AccountmonopolyAppState extends State<AccountmonopolyApp> {
               model: UserModelController(),
               child: ScopedModelDescendant<UserModelController>(
                 builder: (context, child, model) {
-                  return ScopedModel(model: GameModelController(userModelController: model),
+                  return ScopedModel(
+                      model: GameModelController(userModelController: model),
                       child: MaterialApp(
                           title: 'Account Monopoly',
                           theme: ThemeData(

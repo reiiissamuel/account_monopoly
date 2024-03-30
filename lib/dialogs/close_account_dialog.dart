@@ -54,7 +54,7 @@ class CloseAccountDialog extends StatelessWidget {
                                 "Casas: ${StringUtils.currencyFormat(account.qtdHome.toString())}\n"
                                 "Hotéis: ${StringUtils.currencyFormat(account.qtdHotel.toString())}\n"
                                 "Empréstimo:${StringUtils.currencyFormat(account.loanInstallment.toString())}\n"
-                                "Fatura Parcelada: ${StringUtils.currencyFormat(account.previousAccoutInstallment.toString())}\n"
+                                "Fatura Parcelada: ${StringUtils.currencyFormat(account.previousAccountInstallment.toString())}\n"
                                 "Restituições: -${StringUtils.currencyFormat(account.restituicao.toString())}\n"
                                 "Imposto de renda: ${StringUtils.currencyFormat(account.ir.toString())}\n"
                                 "Bônus: -${StringUtils.currencyFormat(account.bonus.toString())}\n\n"
@@ -144,7 +144,7 @@ class CloseAccountDialog extends StatelessWidget {
                           ),
                           backgroundColor: Theme.of(context).primaryColor,
                         ),
-                        onPressed: (account.previousAccoutInstallment > 0 || account.getTotal() <= 0) ? null : () {
+                        onPressed: (account.previousAccountInstallment > 0 || account.getTotal() <= 0) ? null : () {
                           showDialog(context: context, builder: (BuildContext context){
                             return ConfirmActionDialog(title: "Alerta de Parcelamento!", textContent: "Confirma o parcelamento da fatura em 2x?"
                                 "\n\nJuros aplicado sobre do valor total: ${2*StringUtils.setTax("")}%",
@@ -165,7 +165,7 @@ class CloseAccountDialog extends StatelessWidget {
                           ),
                           backgroundColor: Theme.of(context).primaryColor,
                         ),
-                        onPressed: (account.previousAccoutInstallment > 0 || account.getTotal() <= 0) ? null : () {
+                        onPressed: (account.previousAccountInstallment > 0 || account.getTotal() <= 0) ? null : () {
                           showDialog(context: context, builder: (BuildContext context){
                             return ConfirmActionDialog(
                                 title: "Alerta de Parcelamento!",

@@ -6,15 +6,16 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../model/game_model.dart';
 import '../utils/tips_resourse.dart';
 import '../widgets/tip_icon_button.dart';
+import 'game_screen.dart';
 
 class NewGameScreen extends StatefulWidget {
   const NewGameScreen({super.key});
 
   @override
-  _NewGameScreenState createState() => _NewGameScreenState();
+  NewGameScreenState createState() => NewGameScreenState();
 }
 
-class _NewGameScreenState extends State<NewGameScreen> {
+class NewGameScreenState extends State<NewGameScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final _initialBalanceController = TextEditingController();
@@ -256,15 +257,14 @@ class _NewGameScreenState extends State<NewGameScreen> {
             ),
             TextButton(
               onPressed: !_enableConfirmButton ? null : () async {
-                _enableConfirmButton = false;
                 String generatedGameId = StringUtils.generateUUID(size: 8); 
                 GameModelDTO gameData = GameModelDTO(
                     id: generatedGameId,
-                    currentGameBalance: int.parse(_initialBalanceController.text),
+                    currentGameBalance: int.parse(_initialBalanceController.text.replaceAll(".", "")),
                     limitPlayer: dropdownValue,
                     players: [],
-                    initalGameBalance:  int.parse(_initialBalanceController.text),
-                    roundBonus: int.parse(dropdownBonusValue),
+                    initalGameBalance:  int.parse(_initialBalanceController.text.replaceAll(".", "")),
+                    roundBonus: int.parse(dropdownBonusValue.replaceAll(".", "")),
                     levelTax: StringUtils.setTax(dropdownLoanTax),
                     auctionEnabled: isAuctionSwitchEnabled,
                     mortgageEnabled: isMortgageEnabled,
@@ -272,7 +272,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
 
                 );
 
-                GameModelController.of(context).createNewGame(onFail: _onFail, onSuccess: _onSuccess, gameData: gameData);
+                GameModelController.of(context).createNewGame(onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: gameData);
               },
               child: const Text("Confirmar", style: TextStyle(fontSize: 17.0, color: Colors.white )),
             ),
@@ -297,6 +297,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
 
   Future<void> _onSuccess() async {
     Navigator.of(context).pop();
-    //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModelController.of(context).exitGame());
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
+        //.then((value) => GameModelController.of(context).exitGame());
   }
 }

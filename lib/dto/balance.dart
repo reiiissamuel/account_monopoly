@@ -14,7 +14,7 @@ class Balance{
   }
 
   num getRoundOutGoing(int i){
-    return  accounts[i].previousAccoutInstallment + accounts[i].loanInstallment + accounts[i].qtdPurchases +
+    return  accounts[i].previousAccountInstallment + accounts[i].loanInstallment + accounts[i].qtdPurchases +
         accounts[i].qtdEventPay + accounts[i].qtdHome + accounts[i].qtdHotel + accounts[i].ir + accounts[i].transferOut + accounts[i].otherPaymentsOut;
   }
 
@@ -26,12 +26,12 @@ class Balance{
       if(hasAccountInTheRound(round + i)) {
         type == InstallmentType.LOAN_INSTALLMENT
             ? accounts[round + i].loanInstallment += installment
-            : accounts[round + i].previousAccoutInstallment += installment;
+            : accounts[round + i].previousAccountInstallment += installment;
       } else{
         Account newAccount = Account.empty();
         type == InstallmentType.LOAN_INSTALLMENT
             ? newAccount.loanInstallment = installment
-            : newAccount.previousAccoutInstallment = installment;
+            : newAccount.previousAccountInstallment = installment;
         newAccount.round = round + i;
         accounts.add(newAccount);
       }

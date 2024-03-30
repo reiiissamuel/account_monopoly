@@ -57,7 +57,7 @@ class GameScreenState extends State<GameScreen> {
       child: ScopedModelDescendant<GameModelController>(
                 builder: (context, child, model){
                   if(model.isLoading || UserModelController.of(context).isLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor,));
                   }
                   if(model.youWon) {
                     return const WinnerDialog(); // return when context player is the winner
@@ -105,7 +105,7 @@ class GameScreenState extends State<GameScreen> {
                         ],
                       ),
 
-                      floatingActionButton: !model.gameModelDTO!.chancesEnabled ? null : Padding(
+                      floatingActionButton: model.gameModelDTO!.chancesEnabled ? Padding(
                         padding: const EdgeInsets.only(bottom: 195.0),
                         child: FloatingActionButton(
                           backgroundColor: Theme.of(context).primaryColor,
@@ -143,7 +143,7 @@ class GameScreenState extends State<GameScreen> {
                             ),
                           ),
                         ),
-                      ),
+                      ) : null,
 
                      backgroundColor: Colors.black,
                       body: Padding(

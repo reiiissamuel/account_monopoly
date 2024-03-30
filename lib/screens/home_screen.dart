@@ -25,10 +25,10 @@ class HomeScreenState extends State<HomeScreen> {
     return ScopedModelDescendant<UserModelController>(
       builder: (context, child, model) {
         if(model.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
         }
-        return WillPopScope(
-            onWillPop: () async => false,
+        return PopScope(
+            canPop: false,
             child: Scaffold(
               appBar: AppBar(
                   backgroundColor: Theme.of(context).primaryColor,

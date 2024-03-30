@@ -28,12 +28,13 @@ class GameModelController extends Model {
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
   bool youWon = false;
+  String ?any;
 
 
   GameModelController({required this.userModelController}) {
-    /*if(userModelController.isLoggedIn()){
+    if(userModelController.isLoggedIn()){
 
-    }*/
+    }
   }
 
   static GameModelController of(BuildContext context) =>
@@ -239,10 +240,9 @@ class GameModelController extends Model {
     }
   }
 
-  void createNewGame({required GameModelDTO gameData, required Function onFail, required Function onSuccess}) async {
+  void createNewGame({required GameModelDTO gameModelDTO, required Function onFail, required Function onSuccess}) async {
     isLoading = true;
     notifyListeners();
-
     String usermodelname = userModelController.user!.username;
     int usermodelId = userModelController.user!.id!;
     String generatedGameId = StringUtils.generateUUID(size: 8);
@@ -254,11 +254,11 @@ class GameModelController extends Model {
       isHost: true
     );
 
-    gameModelDTO = gameData;
+    this.gameModelDTO = gameModelDTO;
     try{
       _createPeerConnectionController(peerId: player.id);
       peerConnectionController!.openConnectionsAsHost();
-      userModelController.user!.games.add(gameData);
+      userModelController.user!.games.add(gameModelDTO);
       _updateUserModel();
     } catch (e) {
       onFail("Algo deu errado!");
@@ -471,7 +471,8 @@ class GameModelDTO{
       'auctions': auctions,
       'auctionEnabled': auctionEnabled,
       'mortgageEnabled': mortgageEnabled,
-      'chancesEnabled': chancesEnabled
+      'chancesEnabled': chancesEnabled,
+      'roundBonus': roundBonus
     };
   }
 

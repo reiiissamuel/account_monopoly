@@ -1,7 +1,7 @@
 class Account{
   //dados reeferentes a fatura e pagamento posterior
   int round = 0;
-  int previousAccoutInstallment = 0; //parcela de fatura anterior
+  int previousAccountInstallment = 0; //parcela de fatura anterior
   int loanInstallment = 0;
   int qtdPurchases = 0;
   int qtdEventPay = 0;
@@ -26,7 +26,7 @@ class Account{
   Account(
       {
         required this.round,
-        required this.previousAccoutInstallment,
+        required this.previousAccountInstallment,
         required this.loanInstallment,
         required this.qtdPurchases,
         required this.qtdEventPay,
@@ -49,13 +49,13 @@ class Account{
 
 
   int getTotal(){
-    return previousAccoutInstallment + loanInstallment + qtdPurchases + qtdEventPay + qtdHome + qtdHotel - qtdEventGain - bonus + ir - restituicao;
+    return previousAccountInstallment + loanInstallment + qtdPurchases + qtdEventPay + qtdHome + qtdHotel - qtdEventGain - bonus + ir - restituicao;
   }
 
   Map<String, dynamic> toMap() {
     return {
       'round':  round,
-      'previousAccout': previousAccoutInstallment,
+      'previousAccountInstallment': previousAccountInstallment,
       'loanInstallment': loanInstallment,
       'qtdEventPay': qtdEventPay,
       'qtdHome': qtdHome,
@@ -79,7 +79,7 @@ class Account{
   factory Account.fromMap(Map<String, dynamic> map) {
     return Account(
         round: map['round'] as int,
-        previousAccoutInstallment: map['previousAccoutInstallment'] as int,
+        previousAccountInstallment: map['previousAccountInstallment'] as int,
         loanInstallment: map['loanInstallment'] as int,
         qtdEventPay: map['qtdEventPay'] as int,
         qtdHome: map['qtdHome']  as int,
@@ -88,7 +88,7 @@ class Account{
         bonus: map['bonus'] as int,
         ir: map['ir'] as int,
         restituicao: map['restituicao'] as int,
-        isInInstallment: map['isParcelada'] as bool,
+        isInInstallment: map['isInInstallment'],
         transferIn: map['transferIn']  as int,
         mortgagesIn: map['mortgagesIn']  as int,
         transferOut: map['transferOut'] as int,
