@@ -1,27 +1,31 @@
-/*import 'dart:async';
+import 'dart:async';
+import 'package:account_monopoly/enums/log_msg_type.dart';
 import 'package:flutter/material.dart';
-import 'package:monopolycontamovel/datas/event.dart';
-import 'package:monopolycontamovel/datas/hipoteca.dart';
-import 'package:monopolycontamovel/dialogs/account_description.dart';
-import 'package:monopolycontamovel/dialogs/auction_alert_dialog.dart';
-import 'package:monopolycontamovel/dialogs/closeAccount_dialog.dart';
-import 'package:monopolycontamovel/dialogs/customKeyboard_dialog.dart';
-import 'package:monopolycontamovel/dialogs/event_dialog.dart';
-import 'package:account_monopoly/dialogs/moreOptions_dialog.dart';
-import 'package:monopolycontamovel/dialogs/table_info_dialog.dart';
-import 'package:monopolycontamovel/dialogs/winner_dialog.dart';
-import 'package:monopolycontamovel/models/game_model.dart';
-import 'package:monopolycontamovel/models/user_model.dart';
-import 'package:monopolycontamovel/screens/beneficiaries_screen.dart';
-import 'package:monopolycontamovel/screens/game_balance_screen.dart';
-import 'package:account_monopoly/screens/hipotecas_screen.dart';
+import 'package:account_monopoly/dialogs/auction_alert_dialog.dart';
+import 'package:account_monopoly/dialogs/winner_dialog.dart';
+import 'package:account_monopoly/screens/game_balance_screen.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
-import 'package:account_monopoly/widgets/game_iconButton_builder.dart';
 import 'package:scoped_model/scoped_model.dart';
 
+import '../dialogs/account_description.dart';
+import '../dialogs/chance_dialog.dart';
+import '../dialogs/close_account_dialog.dart';
+import '../dialogs/confirm_action_dialog.dart';
+import '../dialogs/custom_keyboard_dialog.dart';
+import '../dialogs/more_options_dialog.dart';
+import '../dialogs/table_info_dialog.dart';
+import '../dto/chance.dart';
+import '../enums/keyboard_operation.dart';
+import '../model/game_model.dart';
+import '../model/user_model.dart';
+import '../widgets/game_icon_button_builder.dart';
+import 'beneficiaries_screen.dart';
 import 'home_screen.dart';
+import 'mortgage_screen.dart';
 
 class GameScreen extends StatefulWidget {
+  const GameScreen({super.key});
+
 
   @override
   GameScreenState createState() => GameScreenState();
@@ -29,12 +33,9 @@ class GameScreen extends StatefulWidget {
 //todo resolver limite de jogadores
 //todo implementar dialog com dados da partida e menu
 class GameScreenState extends State<GameScreen> {
-  
-  StringFormatter _stringFormatter = StringFormatter();
+
   int eventDeckCount = 0;
-  List<Event> _events = List.empty();
-  EventController _eventController = EventController();
-  StringFormatter sf = StringFormatter();
+  List<Chance> _chances = [];
 
   bool _saldoVisibiliade = false;
 
@@ -48,79 +49,92 @@ class GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
 
-    if(UserModel.of(context).firebaseUser == null)
-      return Center(child: CircularProgressIndicator());
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: ScopedModelDescendant<GameModel>(
+    if(UserModelController.of(context).user == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return PopScope(
+      canPop: false,
+      child: ScopedModelDescendant<GameModelController>(
                 builder: (context, child, model){
-                  if(model.isLoading || UserModel.of(context).isLoading)
-                    return Center(child: CircularProgressIndicator());
-
-                  if(model.youWon==true)
-                    return WinnerDialog(); // retorna quando o jogadore vence
+                  if(model.isLoading || UserModelController.of(context).isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if(model.youWon) {
+                    return const WinnerDialog(); // return when context player is the winner
+                  }
+                  if(model.isThereAuction){
+                    _dialogCaller(context, const AuctionAlert());
+                  }
                   return Scaffold(
                       appBar: AppBar(
                         automaticallyImplyLeading: false,
-                        title: Text(
+                        title: const Text(
                           "My Mobile Bank", style: TextStyle(letterSpacing: 2),
                         ),
                         centerTitle: true,
                         leading: Center(
-                            child: !model.isThareAuction ? Icon(Icons.notifications_none, color: Colors.white)
-                                :
-                            IconButton(
-                              icon: Icon(Icons.notifications_active, color: Colors.yellowAccent),
-                              onPressed: ()  {
-                                _dialogCaller(context, AuctionAlert()).then((value){
-                                  //todo fazer essa consulta a partir da lista de objetos auction
-                                  String s = model.logs.last;
-                                  //so procurará por mais leilões das minhas hipotecas, caso a ultima propriedade leiloada no log tenha sido minha e leiloada pelo banco
-                                  if(s.startsWith("Banco") && s.contains("leilão") && s.contains("VOCÊ"))
-                                    _lookForNextAuction(context, model);
-                                  else
-                                    model.isThareAuction = false;
-                                  model.notify();
-                                });
-                              },
-                            )
+                            child: !model.isThereAuction
+                                ? const Icon(Icons.broadcast_on_personal_rounded, color: Colors.green)
+                                : const Icon(Icons.install_mobile, color: Colors.white),
                         ),
                         actions: <Widget>[
                           Center(
                             child: GestureDetector(
-                              child: Text("ID", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold, color: Colors.white),),
+                              child: const Text("ID", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold, color: Colors.white),),
                               onTap: (){
-                                _dialogCaller(context, TableInfoDialog());
+                                _dialogCaller(context, const TableInfoDialog());
                               },
                             ),
                           ),
-                          SizedBox(width: 8.0),
+                          const SizedBox(width: 8.0),
                           IconButton(
-                            icon: Icon(Icons.exit_to_app),
+                            icon: const Icon(Icons.exit_to_app),
                             onPressed: () {
                               showDialog(context: context, builder:(BuildContext context){
-                                return ConfirmActionDialog(title: "Quer mesmo sair deste jogo?", textContent: "Você poderá entrar nele novamete\n"
-                                    "indo até a sessão \'jogos ativos\'", onConfirm: (){
-                                  //todo salvar dados da partida ao sair
-
-                                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
-                                });
+                                return ConfirmActionDialog(
+                                    title: "Quer mesmo sair deste jogo?",
+                                    textContent: "Você poderá entrar nele novamete\n"
+                                    "indo até a sessão \'jogos ativos\'",
+                                    onConfirm: (){
+                                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
+                                    }
+                                );
                               });
                             },
                           )
                         ],
                       ),
 
-                      floatingActionButton:
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 195.0),
+                      floatingActionButton: !model.gameModelDTO!.chancesEnabled ? null : Padding(
+                        padding: const EdgeInsets.only(bottom: 195.0),
                         child: FloatingActionButton(
                           backgroundColor: Theme.of(context).primaryColor,
-                          shape:CircleBorder(
+                          shape:const CircleBorder(
                               side: BorderSide(color: Colors.black)
                           ),
+                          onPressed: model.isThereAuction ? null : (){
+                            _dialogCaller(context, ConfirmActionDialog(title: "???", textContent: "Deseja pegar uma carta evento?", onConfirm:(){
+                              Navigator.of(context).pop();
+                              showDialog(context: context, builder: (BuildContext context){
+                                if(_chances[eventDeckCount].isbenefit) {
+                                  model.gameModelDTO!.chances.add(_chances[eventDeckCount]);
+                                }
+
+                                if(_chances[eventDeckCount].effect! > 0) {
+                                  model.gameModelDTO!.account.qtdEventGain += _chances[eventDeckCount].effect!;
+                                } else if(_chances[eventDeckCount].effect! < 0){
+                                  model.gameModelDTO!.account.qtdEventPay += (-_chances[eventDeckCount].effect!)!;
+                                }
+                                return ChanceDialog(_chances[eventDeckCount++]);
+                              });
+                            }));
+
+                            if(eventDeckCount == _chances.length) {
+                              eventDeckCount -= eventDeckCount;
+                            }
+                          },
                           child: Padding(
-                            padding: EdgeInsets.all(5.0),
+                            padding: const EdgeInsets.all(5.0),
                             child: SizedBox(
                               height: 50.0,
                               width: 50.0,
@@ -128,31 +142,12 @@ class GameScreenState extends State<GameScreen> {
                                   fit: BoxFit.contain),
                             ),
                           ),
-                          onPressed: model.isThareAuction ? null : (){
-                            _dialogCaller(context, ConfirmActionDialog(title: "???", textContent: "Deseja pegar uma carta evento?", onConfirm:(){
-                              Navigator.of(context).pop();
-                              showDialog(context: context, builder: (BuildContext context){
-                                if(_events[eventDeckCount].isbenefit)
-                                  model.benefits.add(_events[eventDeckCount]);
-
-                                if(_events[eventDeckCount].effect > 0)
-                                  model.account.qtdEventGain += _events[eventDeckCount].effect;
-                                else if(_events[eventDeckCount].effect < 0)
-                                  model.account.qtdEventPay += -(_events[eventDeckCount].effect);
-                                return EventDialog(_events[eventDeckCount++]);
-                              });
-                            }));
-
-                            if(eventDeckCount == _events.length)
-                              eventDeckCount -= eventDeckCount;
-                          },
                         ),
                       ),
 
                      backgroundColor: Colors.black,
-
                       body: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
                         child: Column(
                           children: [
                             Row(
@@ -174,10 +169,10 @@ class GameScreenState extends State<GameScreen> {
                                       )
                                       :
                                       Text(
-                                        "${_stringFormatter.currencyFormat(model.currentGameBalance.toString())} R\$",
+                                        "${StringUtils.currencyFormat(model.gameModelDTO!.currentGameBalance.toString())} R\$",
                                         style: TextStyle(
                                             fontSize: 27.0,
-                                            color: _verifyCase(model.currentGameBalance),
+                                            color: _verifyCase(model.gameModelDTO!.currentGameBalance),
                                             fontWeight: FontWeight.w500),
                                       ),
                                       IconButton(
@@ -203,13 +198,13 @@ class GameScreenState extends State<GameScreen> {
                                             ),
                                             backgroundColor: Theme.of(context).primaryColor
                                           ),
-                                          child: Text(
+                                          onPressed: model.isThereAuction ? null : (){
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MortgageScreen()));
+                                          },
+                                          child: const Text(
                                             "Hipotécas",
                                             style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500),
                                           ),
-                                          onPressed: model.isThareAuction ? null : (){
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) => HipotecaScreen()));
-                                          },
                                         ),
                                         ElevatedButton(
                                           style: ElevatedButton.styleFrom(
@@ -218,13 +213,11 @@ class GameScreenState extends State<GameScreen> {
                                             ),
                                             backgroundColor: Theme.of(context).primaryColor
                                           ),
-                                          child: Text(
+                                          child: const Text(
                                               "Fechar Rodada", textAlign: TextAlign.center,
                                               style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500)
                                           ),
-                                          onPressed: model.isThareAuction ? null : () async {
-                                            model.account.bonus = model.gameData["bonus"];
-
+                                          onPressed: () async {
                                             await showGeneralDialog(
                                                 context: context,
                                                 barrierDismissible: false,
@@ -235,17 +228,7 @@ class GameScreenState extends State<GameScreen> {
                                                 pageBuilder: (BuildContext context, Animation animation,
                                                     Animation secondAnimation){
                                                   return CloseAccountDialog();
-                                                }).then((value) => model.notify());
-
-                                            if(model.hipotecas.isNotEmpty){
-                                              model.hipotecas.forEach((h){
-                                                (h.deadline > 0) ? h.deadline -= 1 : (h.valueToPay > h.auctionMinValue)
-                                                    ? h.valueToPay -= (h.valueToPay * 0.1).floor() : h.valueToPay = h.auctionMinValue;
-                                                if(h.deadline == 0)
-                                                  h.isSetToAuction = false;
-                                              });
-                                              _lookForNextAuction(context, model);
-                                            }
+                                                }).then((value) => model.eventComposer(type: LogMsgType.CLOSE_TURN));
                                           },
                                         )
                                       ],
@@ -261,8 +244,8 @@ class GameScreenState extends State<GameScreen> {
                                 GameIconButtonBuilder(
                                   imgPath: "icons/buy.png",
                                   title: "Comprar", 
-                                  onPressed: model.isThareAuction ? (){} : (){
-                                    _dialogCaller(context, CustomKeyboard(title: "Insira o valor da propriedade",
+                                  onPressed: (){
+                                    _dialogCaller(context, const CustomKeyboard(title: "Insira o valor da propriedade",
                                       keyO: KeyboardOparation.ACCOUT_UPDATE, logMsgType: LogMsgType.BUY, playerToPayId: ""));
                                   }
                                 ),
@@ -270,47 +253,54 @@ class GameScreenState extends State<GameScreen> {
                                 GameIconButtonBuilder(
                                   imgPath: "icons/bills.png",  
                                   title: "Ver Fatura", 
-                                  onPressed: model.isThareAuction ? (){} : (){
-                                    _dialogCaller(context, AccountDescription(model.account));
+                                  onPressed: (){
+                                    _dialogCaller(context, AccountDescription(model.gameModelDTO!.account));
                                   }
                                 ),
 
                                 GameIconButtonBuilder(
                                   imgPath: "icons/pay.png",  
                                   title: "Transferir", 
-                                  onPressed: model.isThareAuction ? (){} : (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>BeneficiariesScreen()));
+                                  onPressed: (){
+                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>const BeneficiariesScreen()));
                                   }
                                 ),
 
                                 GameIconButtonBuilder(
                                   imgPath: "icons/graph.png",  
                                   title: "Balanço",
-                                  onPressed: model.isThareAuction ? (){} : (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => GameBalanceScreen()));
+                                  onPressed: (){
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
                                   }
                                 ),
 
                                 GameIconButtonBuilder(
                                   imgPath: "icons/buildhotel.png",
                                   title: "+Hotel",
-                                  onPressed: model.isThareAuction ? (){} : (){
-                                  _dialogCaller(context, CustomKeyboard(title: "Insira o valor total dos hotéis", keyO: KeyboardOparation.ACCOUT_UPDATE, logMsgType: LogMsgType.BUILD_HOTEL, playerToPayId: ""));
+                                  onPressed: (){
+                                  _dialogCaller(
+                                      context, const CustomKeyboard(
+                                      title: "Insira o valor total dos hotéis",
+                                      keyO: KeyboardOparation.ACCOUT_UPDATE,
+                                      logMsgType: LogMsgType.BUILD_HOTEL,
+                                      playerToPayId: ""));
                                 }),
 
                                 GameIconButtonBuilder(
                                   imgPath: "icons/buildhome.png",  
                                   title: "+Casa",
-                                  onPressed: model.isThareAuction ? (){} : 
+                                  onPressed:
                                   (){
-                                    _dialogCaller(context, CustomKeyboard(title: "Insira o valor da casas", keyO: KeyboardOparation.ACCOUT_UPDATE, logMsgType: LogMsgType.BUILD_HOUSE, playerToPayId: ""));
+                                    _dialogCaller(
+                                    context, const CustomKeyboard(title: "Insira o valor da casas",
+                                    keyO: KeyboardOparation.ACCOUT_UPDATE, logMsgType: LogMsgType.BUILD_HOUSE, playerToPayId: ""));
                                   }
                                 ),
 
                                 GameIconButtonBuilder(
                                     imgPath: "icons/more.png",
                                     title: "Mais", 
-                                    onPressed: model.isThareAuction ? (){} : (){_dialogCaller(context, MoreOptionsDialog());
+                                    onPressed: (){_dialogCaller(context, const MoreOptionsDialog());
                                 }),
                               ],
                             ),
@@ -321,18 +311,18 @@ class GameScreenState extends State<GameScreen> {
                                   borderRadius: BorderRadius.circular(20.0),
                                   color: Theme.of(context).primaryColor,
                                 ),
-                                padding: EdgeInsets.all(8.0),
+                                padding: const EdgeInsets.all(8.0),
                                 child: /*_streamBuilder,*/ListView.builder(
                                     reverse: true,
-                                    itemCount: GameModel.of(context).logs.length,
+                                    itemCount: model.gameModelDTO!.logs.length,
                                     itemBuilder: (context, index) {
-                                      List r = GameModel.of(context).logs.reversed.toList();
+                                      List r = model.gameModelDTO!.logs.reversed.toList();
                                       return Container(
                                           decoration: BoxDecoration(
                                               borderRadius: BorderRadius.circular(20.0),
                                               color: r[index].contains("VOCÊ") ? Colors.green : Colors.white
                                           ),
-                                          padding: EdgeInsets.all(5.0),
+                                          padding: const EdgeInsets.all(5.0),
                                           margin: const EdgeInsets.only(top: 5.0),
                                           child:  Text(r[index],
                                             style: TextStyle(
@@ -368,35 +358,14 @@ class GameScreenState extends State<GameScreen> {
   }
 
   void _getAllEvents() {
-    _eventController.getAllEvents().then((list) {
+    ChanceController chanceController = ChanceController();
+    chanceController.getAllEvents().then((list) {
       setState(() {
-        (_events = list.cast()).shuffle();
+        (_chances = list.cast()).shuffle();
       });
     });
   }
 
-  void _lookForNextAuction(BuildContext context, GameModel model)  {
-
-    if(model.hipotecas.any((h) => (!h.isSetToAuction && h.deadline==0))){
-      //model.isThareAuction = true;
-      Hipoteca hipoteca = Hipoteca();
-      hipoteca = model.hipotecas.firstWhere((h) => (!h.isSetToAuction && h.deadline==0));
-      model.hipotecas.firstWhere((h) => h.id == hipoteca.id).isSetToAuction = true;
-      model.logComposer(type: LogMsgType.AUCTION, auctionName: hipoteca.name, value: hipoteca.value);
-     // model.sendLog("Banco pôs \'${hipoteca.name}\' de ${model.user.userData["nick"]} para leilão com lance inicial de " + sf.currencyFormat(hipoteca.valueToPay.toString()));//todo substituir isso pela chamada do metodo logcomposer
-    }else{
-      model.isThareAuction = false;
-    }
-
-  }
-
 }
 
 
-enum KeyboardOparation{
-  ACCOUT_UPDATE,
-  LOAN,
-  TRANSFER_IN,
-  TRANSFER_OUT
-}
-*/
