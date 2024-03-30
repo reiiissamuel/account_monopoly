@@ -6,12 +6,13 @@ class StringUtils {
     String s = ns.replaceAll(".", "");
 
     //[1.000 10.000 100.000] [1.000.000 10.000.000 100.000.000]
-    if(s.length == 4 || s.length == 5 || s.length == 6)
+    if(s.length == 4 || s.length == 5 || s.length == 6) {
       return s.substring(0, s.length - 3) + "." + s.substring(s.length - 3 , s.length);
-    else if(s.length == 7 || s.length == 8 || s.length == 9)
-      return s.substring(0, s.length - 6) + "." + s.substring(s.length - 6, s.length - 3) + "." + s.substring(s.length - 3 , s.length);
-    else
-      return s;
+    } else if(s.length == 7 || s.length == 8 || s.length == 9){
+      return "${s.substring(0, s.length - 6)}.${s.substring(s.length - 6, s.length - 3)}.${s.substring(s.length - 3 , s.length)}";
+    }
+    else {
+      return s;}
   }
 
   static String generateUUID({required int size}) {
@@ -31,9 +32,9 @@ class StringUtils {
       case "Normal":
         return 5;
       case "Alto":
-        return 7;
-      case "Jogo-Rapido":
         return 10;
+      case "Jogo-Rapido":
+        return 15;
       default:
         return 5;
     }

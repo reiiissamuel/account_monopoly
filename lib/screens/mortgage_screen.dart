@@ -88,7 +88,7 @@ class MortgageScreen extends StatelessWidget {
                 "Valor Recebido: ${StringUtils.currencyFormat(mortgage.value.toString())} R\$\n"
                     " Total a Pagar: ${StringUtils.currencyFormat(mortgage.valueToPay.toString())} R\$\n"
                     "Prazo(Rodadas): ${mortgage.deadline.toString()}",
-                style: TextStyle(color: Colors.white, fontSize: 20.0),
+                style: const TextStyle(color: Colors.white, fontSize: 20.0),
               ),
             ),
             Align(

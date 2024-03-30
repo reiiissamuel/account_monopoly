@@ -131,12 +131,13 @@ class SetAuctionScreenState extends State<SetAuctionScreen> {
                                           onPressed: () {
                                                   if (_formKey.currentState!.validate()) {
                                                     Auction auction = Auction(
-                                                        id: StringUtils.generateUUID(size: 4),
+                                                        id: StringUtils.generateUUID(size: 7),
                                                         auctionCaller: model.player.username,
                                                         propertyName: _priceController.text.replaceAll(".", ""),
                                                         startValue: int.parse(_priceController.text.replaceAll(".", "")),
                                                         endValue: 0,
-                                                        currentValue: 0
+                                                        currentValue: 0,
+                                                        mortgageId: ''
                                                     );
                                                     model.eventComposer(type: LogMsgType.AUCTION_START, auction: auction);
                                                     Navigator.of(context).pop();

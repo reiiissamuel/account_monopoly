@@ -17,8 +17,9 @@ enum LogMsgType{
   LOST_CONNECTION(messageScope: '{SOURCE} está desconectado.'),
   JOIN_TABLE(messageScope: '{SOURCE} juntou-se ao jogo.'),
   SERVER_HAND_SHAKE(messageScope: null),
-  CLOSE_TURN(messageScope: null),
-  CHANCE_USED(messageScope: "{SOURCE}  usou um benefício.");
+  CLOSE_TURN(messageScope: "{SOURCE} fechou o faturamento da rodada em {VALUE}."),
+  CHANCE_USED(messageScope: "{SOURCE}  usou um benefício."),
+  ROUND_BONUS(messageScope: "{SOURCE} recebeu um bonus de {VALUE}.");
 
   final String? messageScope;
 

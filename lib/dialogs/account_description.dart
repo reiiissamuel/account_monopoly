@@ -24,7 +24,7 @@ class AccountDescription extends StatelessWidget {
               "Casas: ${StringUtils.currencyFormat(_account.qtdHome.toString())}\n"
               "Hoteis: ${StringUtils.currencyFormat(_account.qtdHotel.toString())}\n"
               "Empréstimo: ${StringUtils.currencyFormat(_account.loanInstallment.toString())}\n"
-              "Fatura Parcelada: ${StringUtils.currencyFormat(_account.previousAccout.toString())}\n"
+              "Fatura Parcelada: ${StringUtils.currencyFormat(_account.previousAccoutInstallment.toString())}\n"
               "Restituições: ${StringUtils.currencyFormat(_account.restituicao.toString())}\n"
               "Imposto de renda: ${StringUtils.currencyFormat(_account.ir.toString())}\n"
               "Bônus: ${StringUtils.currencyFormat(_account.bonus.toString())}\n\n"

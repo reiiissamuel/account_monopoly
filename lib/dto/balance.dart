@@ -1,3 +1,5 @@
+import 'package:account_monopoly/enums/installment_type.dart';
+
 import 'account.dart';
 
 class Balance{
@@ -12,18 +14,24 @@ class Balance{
   }
 
   num getRoundOutGoing(int i){
-    return  accounts[i].previousAccout + accounts[i].loanInstallment + accounts[i].qtdPurchases +
+    return  accounts[i].previousAccoutInstallment + accounts[i].loanInstallment + accounts[i].qtdPurchases +
         accounts[i].qtdEventPay + accounts[i].qtdHome + accounts[i].qtdHotel + accounts[i].ir + accounts[i].transferOut + accounts[i].otherPaymentsOut;
   }
 
-  generateInstallments({required int installments, required int installment}){
+  generateInstallments({required int installments, required int total, required InstallmentType type, required int tax}){
+    int totalPlusTax = total + ((total * tax) / 100).floor();
+    int installment = (totalPlusTax / installments).floor();
 
     for(int i = 1; i <= installments; i++){
       if(hasAccountInTheRound(round + i)) {
-        accounts[round + i].loanInstallment = installment;
+        type == InstallmentType.LOAN_INSTALLMENT
+            ? accounts[round + i].loanInstallment += installment
+            : accounts[round + i].previousAccoutInstallment += installment;
       } else{
         Account newAccount = Account.empty();
-        newAccount.loanInstallment += installment;
+        type == InstallmentType.LOAN_INSTALLMENT
+            ? newAccount.loanInstallment = installment
+            : newAccount.previousAccoutInstallment = installment;
         newAccount.round = round + i;
         accounts.add(newAccount);
       }
@@ -37,6 +45,24 @@ class Balance{
       }
     }
     return false;
+  }
+
+  void closeRoundAccount({required Account account}){
+    if(hasAccountInTheRound(round)) {
+      accounts[round] = account;
+    } else {
+      accounts.add(account);
+    }
+  }
+
+  Account openRoundAccount(){
+    Account account = Account.empty();
+    if(hasAccountInTheRound(round + 1)) {
+      account = accounts[round + 1];
+    } else{
+      account.round = round + 1;
+    }
+    return account;
   }
 
 

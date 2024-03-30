@@ -1,4 +1,5 @@
 import 'package:account_monopoly/configuration/peer_connection_controller.dart';
+import 'package:account_monopoly/enums/installment_type.dart';
 import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/dto/player.dart';
@@ -80,6 +81,7 @@ class GameModelController extends Model {
         if(gameModelDTO!.auctions.last.auctionCaller == player.username){
           _updateBalance(gameModelDTO!.auctions.last.endValue);
         }
+        gameModelDTO!.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
         break;
       case (LogMsgType.AUCTION_RAISE || LogMsgType.AUCTION_PAY):
         gameModelDTO!.auctions.last = event.auction!;
@@ -120,10 +122,12 @@ class GameModelController extends Model {
 
     switch (event.type) {
       case LogMsgType.CLOSE_TURN:
-        _updateBalance(gameModelDTO!.roundBonus);
-        //todo checar se tem leilão para disparar
-        //todo atualizar contagem das hipotecas
-        return;
+        _proccessCloseTurn(installments!);
+        _updateMortgageCountdown();
+        break;
+      case LogMsgType.ROUND_BONUS:
+        gameModelDTO!.account.bonus += gameModelDTO!.roundBonus;
+        break;
       case LogMsgType.TRANSFER:
         gameModelDTO!.account.transferOut += value!;
         _updateBalance(-value);
@@ -154,7 +158,11 @@ class GameModelController extends Model {
       case LogMsgType.LOAN:
         gameModelDTO!.account.loanIn += value!;
         _updateBalance(value);
-        gameModelDTO!.balance.generateInstallments(installments: installments!, installment: (value / installments!).floor());
+        gameModelDTO!.balance.generateInstallments(
+            tax: gameModelDTO!.levelTax,
+            type: InstallmentType.LOAN_INSTALLMENT,
+            installments: installments!,
+            total: value);
         break;
       case LogMsgType.AUCTION_START:
         isThereAuction = true;
@@ -166,6 +174,7 @@ class GameModelController extends Model {
         isThereAuction = false;
         gameModelDTO!.auctions.last.setFinalValue();
         _updateBalance(-gameModelDTO!.auctions.last.endValue);
+        gameModelDTO!.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
         break;
       case LogMsgType.AUCTION_LEAVE:
         isThereAuction = false;
@@ -345,6 +354,40 @@ class GameModelController extends Model {
 
   //in game methods
 
+  _updateMortgageCountdown(){
+    for(var mortgage in gameModelDTO!.mortgages){
+      mortgage.deadline -= 1;
+      if(mortgage.deadline <= 0){
+        Auction auction = Auction(
+            id: StringUtils.generateUUID(size: 7),
+            auctionCaller: "BANK",
+            propertyName: mortgage.name,
+            startValue: mortgage.value + ((mortgage.deadline * 10) * mortgage.value / 100).floor(),
+            endValue: 0,
+            currentValue: 0,
+            mortgageId: mortgage.id);
+        eventComposer(type: LogMsgType.AUCTION_START, auction: auction);
+        return;
+      }
+    }
+  }
+
+  _proccessCloseTurn(int installments){
+    if(installments != null){
+      gameModelDTO!.balance.generateInstallments(
+          tax: gameModelDTO!.levelTax,
+          type: InstallmentType.ACCOUNT_INSTALLMENT,
+          installments: installments,
+          total: gameModelDTO!.account.getTotal());
+      gameModelDTO!.account.isInInstallment = true;
+    } else {
+      _updateBalance(-(gameModelDTO!.account.getTotal()));
+    }
+    gameModelDTO!.balance.closeRoundAccount(account: gameModelDTO!.account);
+    gameModelDTO!.account = gameModelDTO!.balance.openRoundAccount();
+    gameModelDTO!.balance.round += 1;
+  }
+
   bool hasEnoughBalance(int value) {
     if (value <= gameModelDTO!.currentGameBalance) {
       return true;
@@ -355,6 +398,13 @@ class GameModelController extends Model {
   _updateBalance(int value) {
     gameModelDTO!.currentGameBalance += value;
     notifyListeners();
+  }
+
+  bool hasAnyLoanRunning() {
+    return gameModelDTO!.balance.accounts
+        .getRange(
+            gameModelDTO!.balance.round, gameModelDTO!.balance.accounts.length - 1)
+        .any((a) => a.loanInstallment > 0);
   }
 }
 
@@ -398,6 +448,9 @@ class GameModelDTO{
       levelTax: levelTax,
       limitPlayer: limitPlayer, 
       players: players,
+      auctionEnabled: auctionEnabled,
+      mortgageEnabled: mortgageEnabled,
+      chancesEnabled: chancesEnabled
     );
   }
 
@@ -438,7 +491,7 @@ class GameModelDTO{
         youBankrupt: map['youBankrupt'] as bool,
         auctionEnabled: map['auctionEnabled'] as bool,
         mortgageEnabled: map['mortgageEnabled'] as bool,
-        chancesEnabled: map['chancesEnabled'] as bool;
+        chancesEnabled: map['chancesEnabled'] as bool
     );
   }
 }

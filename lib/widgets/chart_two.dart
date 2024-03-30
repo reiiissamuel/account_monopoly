@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 
 import '../dto/account.dart';
+import '../enums/pie_chart_type.dart';
 import '../model/game_model.dart';
 
 /*
@@ -48,7 +49,7 @@ class ChartTwo extends StatelessWidget {
           sources[1].value += ac.qtdPurchases;
           sources[2].value += (ac.qtdHome + ac.qtdHotel);
           sources[3].value += ac.qtdEventPay;
-          sources[4].value += ac.previousAccout;
+          sources[4].value += ac.previousAccoutInstallment;
           sources[5].value += ac.ir;
           sources[6].value += ac.otherPaymentsOut;
         }
@@ -80,7 +81,7 @@ class ChartTwo extends StatelessWidget {
         sources[1].value += model.gameModelDTO!.account.qtdPurchases;
         sources[2].value += (model.gameModelDTO!.account.qtdHome + model.gameModelDTO!.account.qtdHotel);
         sources[3].value += model.gameModelDTO!.account.qtdEventPay;
-        sources[4].value += model.gameModelDTO!.account.previousAccout;
+        sources[4].value += model.gameModelDTO!.account.previousAccoutInstallment;
         sources[5].value += model.gameModelDTO!.account.ir;
         sources[6].value += model.gameModelDTO!.account.otherPaymentsOut;
         break;
@@ -159,11 +160,4 @@ class ChartSource {
         required this.value,
         required this.color,
       });
-}
-
-enum PieChartType{
-  ROUND_EXPANSES,
-  ROUND_PROFIT,
-  GENERAL_EXPANSES,
-  GENERAL_PROFIT
 }

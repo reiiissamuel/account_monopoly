@@ -1,7 +1,7 @@
 class Account{
   //dados reeferentes a fatura e pagamento posterior
   int round = 0;
-  int previousAccout = 0; //parcela de fatura anterior
+  int previousAccoutInstallment = 0; //parcela de fatura anterior
   int loanInstallment = 0;
   int qtdPurchases = 0;
   int qtdEventPay = 0;
@@ -26,7 +26,7 @@ class Account{
   Account(
       {
         required this.round,
-        required this.previousAccout,
+        required this.previousAccoutInstallment,
         required this.loanInstallment,
         required this.qtdPurchases,
         required this.qtdEventPay,
@@ -49,13 +49,13 @@ class Account{
 
 
   int getTotal(){
-    return previousAccout + loanInstallment + qtdPurchases + qtdEventPay + qtdHome + qtdHotel - qtdEventGain - bonus + ir - restituicao;
+    return previousAccoutInstallment + loanInstallment + qtdPurchases + qtdEventPay + qtdHome + qtdHotel - qtdEventGain - bonus + ir - restituicao;
   }
 
   Map<String, dynamic> toMap() {
     return {
       'round':  round,
-      'previousAccout': previousAccout,
+      'previousAccout': previousAccoutInstallment,
       'loanInstallment': loanInstallment,
       'qtdEventPay': qtdEventPay,
       'qtdHome': qtdHome,
@@ -79,7 +79,7 @@ class Account{
   factory Account.fromMap(Map<String, dynamic> map) {
     return Account(
         round: map['round'] as int,
-        previousAccout: map['previousAccout'] as int,
+        previousAccoutInstallment: map['previousAccoutInstallment'] as int,
         loanInstallment: map['loanInstallment'] as int,
         qtdEventPay: map['qtdEventPay'] as int,
         qtdHome: map['qtdHome']  as int,

@@ -9,8 +9,9 @@ class Auction {
   int endValue = 0;
   late List<Map<String, bool>> whichPlayersIdStillIn;
   String buyer = "";
+  String mortgageId = "";
 
-  Auction({required this.id, required this.auctionCaller, required this.propertyName, required this.startValue, required this.endValue, required this.currentValue});
+  Auction({required this.id, required this.auctionCaller, required this.propertyName, required this.startValue, required this.endValue, required this.currentValue, required this.mortgageId});
 
   void setFinalValue() {
     endValue = currentValue;
@@ -27,7 +28,8 @@ class Auction {
     "currentValue": currentValue,
     "propertyName": propertyName,
     "startValue": startValue,
-    "endValue": endValue
+    "endValue": endValue,
+    "mortgageId": mortgageId
   };
   }
 
@@ -38,7 +40,8 @@ class Auction {
       propertyName: map['propertyName'] as String,
       startValue: map['startValue'] as int,
       endValue: map['endValue'] as int,
-      currentValue: map['currentValue'] as int
+      currentValue: map['currentValue'] as int,
+      mortgageId: map['mortgageId'] as String
     );}
 
 }

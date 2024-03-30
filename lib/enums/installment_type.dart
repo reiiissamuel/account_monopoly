@@ -1,0 +1,4 @@
+enum InstallmentType{
+  LOAN_INSTALLMENT,
+  ACCOUNT_INSTALLMENT;
+}
