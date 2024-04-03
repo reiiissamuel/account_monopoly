@@ -1,9 +1,10 @@
+import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/service/google_login.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:provider/provider.dart';
 
-import '../model/user_model.dart';
 
 class NewUserDialog extends StatefulWidget {
   const NewUserDialog({super.key});
@@ -13,6 +14,9 @@ class NewUserDialog extends StatefulWidget {
 }
 
 class NewUserDialogState extends State<NewUserDialog> {
+
+  late UserProvider userProvider;
+
   static const String NAME_HINT_TEXT = "Me diga seu nome.";
   static const String USERNAME_HINT_TEXT = "Defina um apelido.";
   static const String VALIDATION_NAME_ERROR_MSG = "Você precisa definir um nome com mais de 1 caractere.";
@@ -24,11 +28,12 @@ class NewUserDialogState extends State<NewUserDialog> {
 
   @override
   Widget build(BuildContext context) {
+    userProvider = Provider.of<UserProvider>(context, listen: false);
     return Dialog(
       backgroundColor: Colors.black,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0)),
-      child: UserModelController.of(context).isLoading ?
+      child: userProvider.isLoading ?
      const Center(child: CircularProgressIndicator()) :
       Container(
           decoration: BoxDecoration(
@@ -100,7 +105,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                       onPressed:  () {
                         if (_formKey.currentState!.validate()) {
                           setState(() {
-                          UserModelController.of(context).signUp(
+                          userProvider.signUp(
                             name: _nameController.text,
                             username: _usernameController.text,
                             context: context,

@@ -1,11 +1,10 @@
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:scoped_model/scoped_model.dart';
+import 'package:provider/provider.dart';
 
 import '../dialogs/custom_keyboard_dialog.dart';
 import '../dto/player.dart';
-import '../enums/keyboard_operation.dart';
 import '../enums/log_msg_type.dart';
-import '../model/game_model.dart';
 import '../utils/string_utils.dart';
 
 
@@ -14,27 +13,28 @@ class BeneficiariesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScopedModelDescendant<GameModelController>(
-      builder: (context, child, model) {
-        if (model.isLoading) {
+    return Consumer<GameProvider>(
+      builder: (context, gameProvider, child) {
+        if (gameProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text("Beneficiários", style: TextStyle(letterSpacing: 2)),
+            backgroundColor: Theme.of(context).primaryColor,
+            title: const Text("Beneficiários", style: TextStyle(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.bold)),
             centerTitle: true,
           ),
           backgroundColor: Colors.black,
-          body: model.gameModelDTO!.players.isEmpty ?
+          body: gameProvider.gameModelDTO!.players.isEmpty ?
           Center(
             child: Icon(Icons.person, size: 60.0, color: Theme.of(context).primaryColor)
           )
           : ListView.builder(
               padding: const EdgeInsets.all(10.0),
-              itemCount: model.gameModelDTO!.players.length,
+              itemCount: gameProvider.gameModelDTO!.players.length,
               itemBuilder: (context, index) {
-                return _beneficiaryTile(context, model.gameModelDTO!.players[index]);
+                return _beneficiaryTile(context, gameProvider.gameModelDTO!.players[index]);
               }),
         );
       },
@@ -98,7 +98,7 @@ class BeneficiariesScreen extends StatelessWidget {
       ),
       onTap: (){
         showDialog(context: context, builder: (BuildContext context){
-          return CustomKeyboard(title: "Valor a tranferir", keyO: KeyboardOparation.TRANSFER_OUT, logMsgType: LogMsgType.TRANSFER, playerToPayId: player.id);
+          return CustomKeyboard(title: "Valor a tranferir", eventType: LogMsgType.TRANSFER, playerToPayId: player.id);
         });
       },
     );

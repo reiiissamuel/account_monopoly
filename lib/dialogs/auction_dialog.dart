@@ -1,10 +1,9 @@
 import 'package:account_monopoly/enums/log_msg_type.dart';
-import 'package:account_monopoly/model/game_model.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:scoped_model/scoped_model.dart';
-
+import 'package:provider/provider.dart';
 import '../dto/auction.dart';
+import '../provider/game_provider.dart';
 
 class AuctionDialog extends StatefulWidget {
   const AuctionDialog({super.key});
@@ -21,13 +20,13 @@ class AuctionDialogState extends State<AuctionDialog> {
   Widget build(BuildContext context) {
     return PopScope(
         canPop: false,
-            child: ScopedModelDescendant<GameModelController>(
-              builder: (context, child, model){
-                if(model.isLoading) {
+            child: Consumer<GameProvider>(
+              builder: (context, gameProvider, child){
+                if(gameProvider.isLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                Auction currentAuction = model.gameModelDTO!.auctions.last;
+                Auction currentAuction = gameProvider.gameModelDTO!.auctions.last;
 
                 return Card(
                   color: Colors.black.withOpacity(0.8),
@@ -66,9 +65,9 @@ class AuctionDialogState extends State<AuctionDialog> {
                               padding: const EdgeInsets.all(16.0),
                               child:ListView.builder(
                                   reverse: true,
-                                  itemCount: model.gameModelDTO!.logs.length,
+                                  itemCount: gameProvider.gameModelDTO!.logs.length,
                                   itemBuilder: (context, index) {
-                                    List r =  model.gameModelDTO!.logs.reversed.toList();
+                                    List r =  gameProvider.gameModelDTO!.logs.reversed.toList();
                                     return Container(
                                         decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(20.0),
@@ -86,7 +85,7 @@ class AuctionDialogState extends State<AuctionDialog> {
                               ),),
                             const SizedBox(height: 16.0),
 
-                            (currentAuction.areTherePlayersIn() && currentAuction.buyer == model.player.username)
+                            (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.player.username)
                                 ?
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -95,14 +94,14 @@ class AuctionDialogState extends State<AuctionDialog> {
                                     borderRadius: BorderRadius.circular(20.0)
                                 ),
                               ),
-                              onPressed: (currentAuction.areTherePlayersIn() && currentAuction.buyer == model.player.username) ?  () {
-                                model.eventComposer(type: LogMsgType.AUCTION_END);
+                              onPressed: (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.player.username) ?  () {
+                                gameProvider.eventComposer(type: LogMsgType.AUCTION_END);
                                 Navigator.of(context).pop();
                                 Navigator.of(context).pop();
                               } : null,
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: (currentAuction.areTherePlayersIn() && currentAuction.buyer == model.player.username)
+                                child: (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.player.username)
                                     ? const Text("Concluir Compra", style: TextStyle(color: Colors.white))
                                     : const Text("Sair", style: TextStyle(color: Colors.white)),
                               ),
@@ -119,12 +118,12 @@ class AuctionDialogState extends State<AuctionDialog> {
                                     ),
                                   ),
                                   onPressed: (
-                                      model.hasEnoughBalance(currentAuction.currentValue)
-                                          && currentAuction.buyer!=model.player.username) ? (){
+                                      gameProvider.hasEnoughBalance(currentAuction.currentValue)
+                                          && currentAuction.buyer!=gameProvider.player.username) ? (){
                                     if(currentAuction.buyer.isEmpty){
-                                      model.eventComposer(type: LogMsgType.AUCTION_PAY);
+                                      gameProvider.eventComposer(type: LogMsgType.AUCTION_PAY);
                                     } else {
-                                      model.eventComposer(type: LogMsgType.AUCTION_RAISE, value: 50000);
+                                      gameProvider.eventComposer(type: LogMsgType.AUCTION_RAISE, value: 50000);
                                     }
                                   } : null,
                                   child: Padding(
@@ -141,33 +140,55 @@ class AuctionDialogState extends State<AuctionDialog> {
                                         borderRadius: BorderRadius.circular(20.0)
                                     ),
                                   ),
-                                  onPressed:  _bidAction(context, currentAuction, 100000),
+                                  onPressed: (gameProvider.hasEnoughBalance(currentAuction.currentValue)
+                                          && currentAuction.buyer!=gameProvider.player.username) ? () {
+                                    if(currentAuction.buyer.isEmpty){
+                                      gameProvider.eventComposer(type: LogMsgType.AUCTION_PAY);
+                                    } else {
+                                      gameProvider.eventComposer(type: LogMsgType.AUCTION_RAISE, value: 50000);
+                                    }
+                                  } : null,
                                   child: const Padding(
                                     padding: EdgeInsets.all(8.0),
                                     child: Text("Cobrir (+100K)", style: TextStyle(fontSize: 17.0, letterSpacing: 2, color: Colors.white)),
                                   )
                                 ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).primaryColor,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20.0)
-                                    ),
-                                  ),
-                                  onPressed: _bidAction(context, currentAuction, 250000),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text("Cobrir (+250K)", style: TextStyle(fontSize: 17.0, letterSpacing: 2, color: Colors.white)),
-                                  ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(20.0)),
                                 ),
-                                ElevatedButton(
+                                onPressed: (gameProvider.hasEnoughBalance(
+                                            currentAuction.currentValue) &&
+                                        currentAuction.buyer !=
+                                            gameProvider.player.username)
+                                    ? () => gameProvider.eventComposer(
+                                        type: LogMsgType.AUCTION_RAISE,
+                                        value: 250000)
+                                    : null,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text("Cobrir (+250K)",
+                                      style: TextStyle(
+                                          fontSize: 17.0,
+                                          letterSpacing: 2,
+                                          color: Colors.white)),
+                                ),
+                              ),
+                              ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Theme.of(context).primaryColor,
                                     shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20.0)
                                     ),
                                   ),
-                                  onPressed:  _bidAction(context, currentAuction, 500000),
+                                  onPressed:  (gameProvider.hasEnoughBalance(currentAuction.currentValue)
+                                          && currentAuction.buyer!=gameProvider.player.username)
+                                      ? () => gameProvider.eventComposer(type: LogMsgType.AUCTION_RAISE, value: 500000)
+                                      : null,
                                   child: const Padding(
                                     padding: EdgeInsets.all(8.0),
                                     child: Text("Cobrir (+500K)", style: TextStyle(fontSize: 17.0, letterSpacing: 2, color: Colors.white)),
@@ -180,12 +201,11 @@ class AuctionDialogState extends State<AuctionDialog> {
                                         borderRadius: BorderRadius.circular(20.0)
                                     ),
                                   ),
-                                  onPressed: currentAuction.buyer!=model.player.username ? ()  {
-                                      model.eventComposer(type: LogMsgType.LOST_CONNECTION);
+                                  onPressed: currentAuction.buyer!=gameProvider.player.username ? ()  {
+                                      gameProvider.eventComposer(type: LogMsgType.AUCTION_LEAVE);
                                       Navigator.of(context).pop();
                                       Navigator.of(context).pop();
-                                    }
-                                   : null,
+                                    } : null,
                                   child: const Padding(
                                     padding: EdgeInsets.all(8.0),
                                     child: Text("Abandonar Leilão", style: TextStyle(fontSize: 17.0, letterSpacing: 2, color: Colors.white)),
@@ -199,14 +219,5 @@ class AuctionDialogState extends State<AuctionDialog> {
       },
     ) );
 
-  }
-
-  _bidAction(BuildContext context, Auction currentAuction, value){
-    return (currentAuction.buyer.isNotEmpty
-        && GameModelController.of(context).hasEnoughBalance(currentAuction.currentValue)
-        && currentAuction.buyer!=GameModelController.of(context).player.username
-    ) ? (){
-      GameModelController.of(context).eventComposer(type: LogMsgType.AUCTION_RAISE, value: value);
-    } : null;
   }
 }

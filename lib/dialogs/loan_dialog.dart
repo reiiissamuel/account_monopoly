@@ -1,7 +1,8 @@
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../enums/log_msg_type.dart';
-import '../model/game_model.dart';
 import '../utils/string_utils.dart';
 import 'confirm_action_dialog.dart';
 
@@ -21,14 +22,20 @@ class LoanDialogState extends State<LoanDialog> {
   final List <int> _turnValueList = [2,3,4,5];
   final TextEditingController _editingController = TextEditingController();
 
+  late GameProvider gameProvider;
+
 
   @override
   void initState() {
-    _updateValue(GameModelController.of(context));
+    super.initState();
+    Future.delayed(Duration.zero, (){
+      _updateValue(Provider.of<GameProvider>(context, listen: false));
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    gameProvider = Provider.of<GameProvider>(context);
     return Dialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0)), //this right here
@@ -45,23 +52,25 @@ class LoanDialogState extends State<LoanDialog> {
             const Text("Empréstimo", style: TextStyle(fontSize: 23.0, fontWeight: FontWeight.w500, color: Colors.white, letterSpacing: 2)),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 const Text("Valor:", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w500, color: Colors.white)),
+                const Spacer(flex: 1),
                 DropdownButton<String>(
+                  dropdownColor: Theme.of(context).primaryColor,
                   value: _loanValueSelected,
                   icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
                   iconSize: 24,
                   elevation: 16,
-                  style: const TextStyle(color: Colors.black, fontSize: 18),
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
                   underline: Container(
                     height: 1,
                     color: Colors.white,
                   ),
                   onChanged: (String ?data) {
                     setState(() {
-                      _loanValueSelected = data != null ? data : _loanValueSelected;
-                      _updateValue(GameModelController.of(context));
+                      _loanValueSelected = data ?? _loanValueSelected;
+                      _updateValue(gameProvider);
                     });
                   },
                   items: _loanValueList.map<DropdownMenuItem<String>>((String value) {
@@ -75,15 +84,17 @@ class LoanDialogState extends State<LoanDialog> {
             ),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 const Text("Parcelas:", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w500, color: Colors.white)),
+                const Spacer(flex: 1),
                 DropdownButton<int>(
+                  dropdownColor: Theme.of(context).primaryColor,
                   value: _turnValueSelected,
                   icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
                   iconSize: 24,
                   elevation: 16,
-                  style: const TextStyle(color: Colors.black, fontSize: 18),
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
                   underline: Container(
                     height: 1,
                     color: Colors.white,
@@ -91,7 +102,7 @@ class LoanDialogState extends State<LoanDialog> {
                   onChanged: (int ?data) {
                     setState(() {
                       _turnValueSelected = data ?? _turnValueSelected ;
-                      _updateValue(GameModelController.of(context));
+                      _updateValue(gameProvider);
                     });
                   },
                   items: _turnValueList.map<DropdownMenuItem<int>>((int value) {
@@ -137,27 +148,29 @@ class LoanDialogState extends State<LoanDialog> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    elevation: 4,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    backgroundColor: Colors.white,
+                    backgroundColor: Colors.black38,
                   ),
-                  child: const Text("Cancelar", style: TextStyle(fontSize: 17.0, letterSpacing: 2)),
+                  child: Text("Cancelar", style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 17.0, letterSpacing: 2)),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    elevation: 4,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    backgroundColor: Colors.white,
+                    backgroundColor: Colors.black38,
                   ),
-                  child: const Text("Concluir", style: TextStyle(fontSize: 17.0, letterSpacing: 2)),
+                  child: Text("Concluir", style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 17.0, letterSpacing: 2)),
                   onPressed: () {
                     showDialog(context: context, builder: (BuildContext context){
                       return ConfirmActionDialog(
                           title: "Alerta de Empréstimo",
                           textContent: "Você confirma o empréstimo?" ,
                           onConfirm: (){
-                            GameModelController.of(context).eventComposer(
+                            gameProvider.eventComposer(
                               type: LogMsgType.LOAN,
                               value: int.parse(_loanValueSelected.replaceAll(".", "")),
                               installments: _turnValueSelected
@@ -177,8 +190,8 @@ class LoanDialogState extends State<LoanDialog> {
     );
   }
 
-  void _updateValue(GameModelController model){
-    int tax = _turnValueSelected * model.gameModelDTO!.levelTax;
+  void _updateValue(GameProvider model){
+    int tax = (_turnValueSelected * model.gameModelDTO!.levelTax).floor();
     int valueToPay = int.parse(_loanValueSelected.replaceAll(".", "")) + ((tax * int.parse(_loanValueSelected.replaceAll(".", ""))) / 100).floor();
     setState(() {
       _editingController.text = StringUtils.currencyFormat(valueToPay.toString());

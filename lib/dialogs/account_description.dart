@@ -1,44 +1,48 @@
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../dto/account.dart';
 import '../utils/string_utils.dart';
 
 class AccountDescription extends StatelessWidget {
 
-  final Account _account;
-  const AccountDescription( this._account, {super.key});
+
+  const AccountDescription({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var account = Provider.of<GameProvider>(context, listen: false).gameModelDTO!.account;
     return AlertDialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0)
       ),
       backgroundColor: Theme.of(context).primaryColor,
-      title: const Text("Fatura Atual",
-          style: TextStyle(color: Colors.white)),
+      title: Text("Fatura Atual Rodada ${account.round}",
+          style: const TextStyle(color: Colors.white)),
       content: Text(
-          "Compras: ${StringUtils.currencyFormat(_account.qtdPurchases.toString())}\n"
-              "Pagamentos: ${StringUtils.currencyFormat(_account.qtdEventPay.toString())}\n"
-              "Recebimentos: ${StringUtils.currencyFormat(_account.qtdEventGain.toString().replaceAll("-", ""))}\n"
-              "Casas: ${StringUtils.currencyFormat(_account.qtdHome.toString())}\n"
-              "Hoteis: ${StringUtils.currencyFormat(_account.qtdHotel.toString())}\n"
-              "Empréstimo: ${StringUtils.currencyFormat(_account.loanInstallment.toString())}\n"
-              "Fatura Parcelada: ${StringUtils.currencyFormat(_account.previousAccountInstallment.toString())}\n"
-              "Restituições: ${StringUtils.currencyFormat(_account.restituicao.toString())}\n"
-              "Imposto de renda: ${StringUtils.currencyFormat(_account.ir.toString())}\n"
-              "Bônus: ${StringUtils.currencyFormat(_account.bonus.toString())}\n\n"
-              "Total: \$ ${StringUtils.currencyFormat(_account.getTotal().toString())}",
+          "Compras: ${StringUtils.currencyFormat(account.qtdPurchases.toString())}\n"
+              "Pagamentos: ${StringUtils.currencyFormat(account.qtdEventPay.toString())}\n"
+              "Recebimentos: ${StringUtils.currencyFormat(account.qtdEventGain.toString().replaceAll("-", ""))}\n"
+              "Casas: ${StringUtils.currencyFormat(account.qtdHome.toString())}\n"
+              "Hoteis: ${StringUtils.currencyFormat(account.qtdHotel.toString())}\n"
+              "Empréstimo: ${StringUtils.currencyFormat(account.loanInstallment.toString())}\n"
+              "Fatura Parcelada: ${StringUtils.currencyFormat(account.previousAccountInstallment.toString())}\n"
+              "Restituições: ${StringUtils.currencyFormat(account.restituicao.toString())}\n"
+              "Imposto de renda: ${StringUtils.currencyFormat(account.ir.toString())}\n"
+              "Bônus: ${StringUtils.currencyFormat(account.bonus.toString())}\n\n"
+              "Total: \$ ${StringUtils.currencyFormat(account.getTotal().toString())}",
           style: const TextStyle(color: Colors.white)),
       actions: <Widget>[
 
         TextButton(
           style: TextButton.styleFrom(
+            elevation: 6,
             //minimumSize: Size(_width, _height),
-            backgroundColor: Colors.black,
+            backgroundColor: Colors.black38,
             padding: const EdgeInsets.all(0),
           ),
-          child: const Text("Voltar", style: TextStyle(fontSize: 17.0)),
+          child: const Text("Voltar", style: TextStyle(fontSize: 17.0, color: Colors.white)),
           onPressed: () {
             Navigator.of(context).pop();
           },

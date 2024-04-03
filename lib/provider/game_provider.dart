@@ -1,14 +1,13 @@
 import 'package:account_monopoly/configuration/peer_connection_controller.dart';
 import 'package:account_monopoly/enums/installment_type.dart';
 import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
+import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/dto/player.dart';
-import 'package:account_monopoly/model/user_model.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:peerdart/peerdart.dart';
-import 'package:scoped_model/scoped_model.dart';
 
 import '../dto/account.dart';
 import '../dto/auction.dart';
@@ -18,8 +17,8 @@ import '../dto/event_dto.dart';
 import '../dto/mortgage.dart';
 import '../enums/log_msg_type.dart';
 
-class GameModelController extends Model {
-  UserModelController userModelController;
+class GameProvider extends ChangeNotifier {
+  late UserProvider userModelController;
   late Player player;
   PeerConnectionController? peerConnectionController;
   GameModelDTO? gameModelDTO;
@@ -31,23 +30,19 @@ class GameModelController extends Model {
   String ?any;
 
 
-  GameModelController({required this.userModelController}) {
-    if(userModelController.isLoggedIn()){
+  GameProvider();
 
-    }
-  }
+  //static GameModelController of(BuildContext context) =>
+  //    ScopedModel.of<GameModelController>(context);
 
-  static GameModelController of(BuildContext context) =>
-      ScopedModel.of<GameModelController>(context);
-
-  void notify() {
+  void notifyChanges(isLoading) {
+    this.isLoading = isLoading;
     notifyListeners();
   }
 
   processComingEvent(EventDTO event) {
     isLoading = true;
     notifyListeners();
-
     if(events.isEmpty || event.eventId != lastEventReceived?.eventId){
       lastEventReceived = event;
       events.add(event);
@@ -110,9 +105,9 @@ class GameModelController extends Model {
     _logComposer(event);
   }
 
-  void eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value, Player ?sourcePlayer, Auction ?auction, int ?installments}) {
-    isLoading = true;
-    notifyListeners();
+  eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value,
+    Player ?sourcePlayer, Auction ?auction, int ?installments}) async {
+    notifyChanges(true);
 
     EventDTO event =
     EventDTO(
@@ -123,8 +118,17 @@ class GameModelController extends Model {
 
     switch (event.type) {
       case LogMsgType.CLOSE_TURN:
-        _proccessCloseTurn(installments!);
+        event.value = -(gameModelDTO!.account.getTotal());
+        _proccessCloseTurn(installments);
         _updateMortgageCountdown();
+        break;
+      case LogMsgType.CURRENT_ACCOUNT_UPDATE_UP:
+        event.value = 200000;
+        gameModelDTO!.account.restituicao = 200000;
+        break;
+      case LogMsgType.CURRENT_ACCOUNT_UPDATE_DOWN:
+        event.value = 200000;
+        gameModelDTO!.account.ir = 200000;
         break;
       case LogMsgType.ROUND_BONUS:
         gameModelDTO!.account.bonus += gameModelDTO!.roundBonus;
@@ -160,7 +164,7 @@ class GameModelController extends Model {
         gameModelDTO!.account.loanIn += value!;
         _updateBalance(value);
         gameModelDTO!.balance.generateInstallments(
-            tax: gameModelDTO!.levelTax,
+            tax: (installments! * gameModelDTO!.levelTax).floor(),
             type: InstallmentType.LOAN_INSTALLMENT,
             installments: installments!,
             total: value);
@@ -168,6 +172,7 @@ class GameModelController extends Model {
       case LogMsgType.AUCTION_START:
         isThereAuction = true;
         event.auction = auction;
+        event.value = auction!.startValue;
         event.auction!.whichPlayersIdStillIn.add(Map.of({player.id : false}));
         gameModelDTO!.auctions.add(auction!);
         break;
@@ -186,6 +191,7 @@ class GameModelController extends Model {
         gameModelDTO!.auctions.last.buyer = player.username;
         gameModelDTO!.auctions.last.currentValue = gameModelDTO!.auctions.last.startValue;
         event.auction = gameModelDTO!.auctions.last;
+        event.value = gameModelDTO!.auctions.last.startValue;
         break;
       case (LogMsgType.AUCTION_RAISE):
         gameModelDTO!.auctions.last.buyer = player.username;
@@ -214,19 +220,12 @@ class GameModelController extends Model {
     }
     _sendEvent(event);
     _logComposer(event);
-    isLoading = false;
-    notifyListeners();
+    notifyChanges(false);
   }
 
   _sendEvent(EventDTO event) {
-    isLoading = true;
-    notifyListeners();
-
     peerConnectionController!.send(event);
-    processComingEvent(event);
-
-    isLoading = false;
-    notifyListeners();
+    //processComingEvent(event);
   }
 
   _logComposer(EventDTO event) {
@@ -234,8 +233,8 @@ class GameModelController extends Model {
       gameModelDTO!.logs.add(
           event.type.messageScope
           !.replaceAll('{SOURCE}', event.sourcePlayer.username == player.username ? 'Você' : event.sourcePlayer.username)
-              .replaceAll('{VALUE}', event.value.toString())
-              .replaceAll('{DEST}', event.destinationPlayer!.username == player.username ? 'Você' : event.sourcePlayer.username)
+              .replaceAll('{VALUE}', StringUtils.currencyFormat(event.value.toString()))
+              .replaceAll('{DEST}', event.destinationPlayer != null && event.destinationPlayer!.username == player.username ? 'Você' : event.sourcePlayer.username)
       );
     }
   }
@@ -257,6 +256,7 @@ class GameModelController extends Model {
     this.gameModelDTO = gameModelDTO;
     try{
       _createPeerConnectionController(peerId: player.id);
+      this.gameModelDTO!.players.add(player);
       peerConnectionController!.openConnectionsAsHost();
       userModelController.user!.games.add(gameModelDTO);
       _updateUserModel();
@@ -298,7 +298,7 @@ class GameModelController extends Model {
       }
       
       _createPeerConnectionController(
-          peerId: GameModelController._generatePlayerId(
+          peerId: GameProvider._generatePlayerId(
               usermodelname: userModelController.user!.username,
               usermodelId: userModelController.user!.id!,
               gameId: gameId)
@@ -372,10 +372,10 @@ class GameModelController extends Model {
     }
   }
 
-  _proccessCloseTurn(int installments){
+  _proccessCloseTurn(int ?installments){
     if(installments != null){
       gameModelDTO!.balance.generateInstallments(
-          tax: gameModelDTO!.levelTax,
+          tax: (installments! * gameModelDTO!.levelTax).floor(),
           type: InstallmentType.ACCOUNT_INSTALLMENT,
           installments: installments,
           total: gameModelDTO!.account.getTotal());
@@ -383,9 +383,10 @@ class GameModelController extends Model {
     } else {
       _updateBalance(-(gameModelDTO!.account.getTotal()));
     }
-    gameModelDTO!.balance.closeRoundAccount(account: gameModelDTO!.account);
-    gameModelDTO!.account = gameModelDTO!.balance.openRoundAccount();
+    //gameModelDTO!.balance.closeRoundAccount(account: gameModelDTO!.account);
+    gameModelDTO!.balance.setNextRoundAccount();
     gameModelDTO!.balance.round += 1;
+    gameModelDTO!.account = gameModelDTO!.balance.accounts[gameModelDTO!.balance.round];
   }
 
   bool hasEnoughBalance(int value) {
@@ -403,7 +404,7 @@ class GameModelController extends Model {
   bool hasAnyLoanRunning() {
     return gameModelDTO!.balance.accounts
         .getRange(
-            gameModelDTO!.balance.round, gameModelDTO!.balance.accounts.length - 1)
+        gameModelDTO!.balance.round, (gameModelDTO!.balance.accounts.isNotEmpty ? gameModelDTO!.balance.accounts.length : 0))
         .any((a) => a.loanInstallment > 0);
   }
 }

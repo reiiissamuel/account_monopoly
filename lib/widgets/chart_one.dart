@@ -1,6 +1,7 @@
-import 'package:account_monopoly/model/game_model.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:provider/provider.dart';
 
 import '../dto/player.dart';
 
@@ -13,7 +14,7 @@ class ChartOne extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    List<Player> players = GameModelController.of(context).gameModelDTO!.players;
+    List<Player> players = Provider.of<GameProvider>(context).gameModelDTO!.players;
 
     List<charts.Series<Player, String>> series = [
       charts.Series(

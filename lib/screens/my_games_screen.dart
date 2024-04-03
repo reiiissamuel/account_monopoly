@@ -1,11 +1,11 @@
 
+import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:scoped_model/scoped_model.dart';
+import 'package:provider/provider.dart';
 
 import '../dialogs/confirm_action_dialog.dart';
-import '../model/game_model.dart';
-import '../model/user_model.dart';
+import '../provider/game_provider.dart';
 import '../utils/string_utils.dart';
 
 
@@ -13,47 +13,51 @@ class MyGamesScreen extends StatelessWidget {
 
 
   final _scafoldKey = GlobalKey<ScaffoldState>();
-
   MyGamesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ScopedModelDescendant<UserModelController>(
-      builder: (context, child, model) {
-        if (model.isLoading && GameModelController.of(context).isLoading) return const Center(child: CircularProgressIndicator());
-        return Scaffold(
-            key: _scafoldKey,
-            appBar: AppBar(
-              title: const Text("Jogos Ativo", style: TextStyle(letterSpacing: 2)),
-              centerTitle: true,
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-                  child: GestureDetector(
-                      child: const Icon(Icons.question_mark_rounded, color: Colors.white),
-                      onTap: () => {}))
-              ],
-            ),
-            backgroundColor: Colors.black,
-            body: model.user?.games != null || model.user!.games.isNotEmpty
-                ?
-            ListView.builder(
-                padding: const EdgeInsets.all(10.0),
-                itemCount: model.user!.games.length,
-                itemBuilder: (context, index) {
-                  return _gameTile(context, model.user!.games[index]);
-                })
-                :
-            Center(
-              child: Icon(Icons.save, color: Theme.of(context).primaryColor, size: 100.0),
-            )
-        );
-      },
+
+    return Scaffold(
+        key: _scafoldKey,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).primaryColor,
+          title: const Text("Jogos Ativo", style: TextStyle(
+            color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2)),
+          centerTitle: true,
+          actions: [
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                child: GestureDetector(
+                    child: const Icon(Icons.question_mark_rounded, color: Colors.white),
+                    onTap: () => {}))
+          ],
+        ),
+        backgroundColor: Colors.black,
+        body: Consumer<UserProvider>(
+          builder: (context, userProvider, Widget? child) {
+            if(userProvider.isLoading){
+              return const Center(child: CircularProgressIndicator());
+            } else if (userProvider.user!.games != null || userProvider.user!.games.isNotEmpty){
+              return ListView.builder(
+                  padding: const EdgeInsets.all(10.0),
+                  itemCount: userProvider.user!.games.length,
+                  itemBuilder: (context, index) {
+                    return _gameTile(context, userProvider.user!.games[index]);
+                  });
+            } else{
+              return Center(
+                child: Icon(Icons.save, color: Theme.of(context).primaryColor, size: 100.0),
+              );
+            }
+          })
     );
   }
 
   Widget _gameTile(BuildContext context, GameModelDTO game){
-
+    UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
     return Container(
       margin: const EdgeInsets.only(bottom: 8.0),
       height: 210.0,
@@ -80,7 +84,7 @@ class MyGamesScreen extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                "Saldo Inicial: ${StringUtils.currencyFormat(game.initalGameBalance.toString())} R\$",
+                "Saldo atual: ${StringUtils.currencyFormat(game.currentGameBalance.toString())} R\$",
                 style: const TextStyle(color: Colors.white, fontSize: 20.0),
               ),
             ),
@@ -95,7 +99,7 @@ class MyGamesScreen extends StatelessWidget {
                         backgroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        GameModelController.of(context).getGameById( onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: game);
+                        Provider.of<GameProvider>(context, listen: false).getGameById( onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: game);
                       },
                       child: const Icon(
                         Icons.arrow_forward,
@@ -108,11 +112,11 @@ class MyGamesScreen extends StatelessWidget {
                         shape: const CircleBorder(),
                         backgroundColor: Colors.white,
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         showDialog(context: context, builder: (BuildContext context){
                           return ConfirmActionDialog(title: "Alerta de Exclusão!", textContent: "As informações referentes a essa partida "
                               "serão excluídas permanentemente", onConfirm: () async {
-                            UserModelController.of(context).deleteGame(game.id);
+                            userProvider.deleteGame(game.id);
                             Navigator.pop(context);
                           });
                         });

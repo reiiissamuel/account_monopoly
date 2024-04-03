@@ -2,10 +2,11 @@ import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:provider/provider.dart';
 
 import '../dto/account.dart';
 import '../enums/pie_chart_type.dart';
-import '../model/game_model.dart';
+import '../provider/game_provider.dart';
 
 /*
 * esse grafico da uma descrição dos gastos, ou lucros, podendo ser por rodada ou geral
@@ -15,12 +16,13 @@ class ChartTwo extends StatelessWidget {
 
   String chartTitle = "";
   PieChartType chartType;
-
+  late GameProvider gameProvider;
   List<ChartSource> sources = [];
 
   ChartTwo({super.key, required this.chartTitle, required this.chartType});
 
-   void _buildChartSources(PieChartType type, GameModelController model){
+   void _buildChartSources(PieChartType type, GameProvider gameProvider){
+
      (type == PieChartType.GENERAL_EXPANSES ||  type == PieChartType.ROUND_EXPANSES) ?
      sources = [
        ChartSource(indice: "Transferencia", value: 0, color: MaterialPalette.purple.shadeDefault),
@@ -44,7 +46,7 @@ class ChartTwo extends StatelessWidget {
      ];
     switch(type){
       case PieChartType.GENERAL_EXPANSES:
-        for (Account ac in model.gameModelDTO!.balance.accounts) {
+        for (Account ac in gameProvider.gameModelDTO!.balance.accounts) {
           sources[0].value += ac.transferOut;
           sources[1].value += ac.qtdPurchases;
           sources[2].value += (ac.qtdHome + ac.qtdHotel);
@@ -55,7 +57,7 @@ class ChartTwo extends StatelessWidget {
         }
         break;
       case PieChartType.GENERAL_PROFIT:
-        for (Account ac in model.gameModelDTO!.balance.accounts) {
+        for (Account ac in gameProvider.gameModelDTO!.balance.accounts) {
           sources[0].value += ac.transferIn;
           sources[1].value += ac.bonus;
           sources[2].value += ac.qtdEventGain;
@@ -67,23 +69,23 @@ class ChartTwo extends StatelessWidget {
         }
         break;
       case PieChartType.ROUND_PROFIT:
-        sources[0].value += model.gameModelDTO!.account.transferIn;
-        sources[1].value += model.gameModelDTO!.account.bonus;
-        sources[2].value += model.gameModelDTO!.account.qtdEventGain;
-        sources[3].value += model.gameModelDTO!.account.mortgagesIn;
-        sources[4].value += model.gameModelDTO!.account.loanIn;
-        sources[5].value += model.gameModelDTO!.account.restituicao;
-        sources[6].value += model.gameModelDTO!.account.auctionIn;
-        sources[7].value += model.gameModelDTO!.account.otherReceives;
+        sources[0].value += gameProvider.gameModelDTO!.account.transferIn;
+        sources[1].value += gameProvider.gameModelDTO!.account.bonus;
+        sources[2].value += gameProvider.gameModelDTO!.account.qtdEventGain;
+        sources[3].value += gameProvider.gameModelDTO!.account.mortgagesIn;
+        sources[4].value += gameProvider.gameModelDTO!.account.loanIn;
+        sources[5].value += gameProvider.gameModelDTO!.account.restituicao;
+        sources[6].value += gameProvider.gameModelDTO!.account.auctionIn;
+        sources[7].value += gameProvider.gameModelDTO!.account.otherReceives;
         break;
       case PieChartType.ROUND_EXPANSES:
-        sources[0].value += model.gameModelDTO!.account.transferOut;
-        sources[1].value += model.gameModelDTO!.account.qtdPurchases;
-        sources[2].value += (model.gameModelDTO!.account.qtdHome + model.gameModelDTO!.account.qtdHotel);
-        sources[3].value += model.gameModelDTO!.account.qtdEventPay;
-        sources[4].value += model.gameModelDTO!.account.previousAccountInstallment;
-        sources[5].value += model.gameModelDTO!.account.ir;
-        sources[6].value += model.gameModelDTO!.account.otherPaymentsOut;
+        sources[0].value += gameProvider.gameModelDTO!.account.transferOut;
+        sources[1].value += gameProvider.gameModelDTO!.account.qtdPurchases;
+        sources[2].value += (gameProvider.gameModelDTO!.account.qtdHome + gameProvider.gameModelDTO!.account.qtdHotel);
+        sources[3].value += gameProvider.gameModelDTO!.account.qtdEventPay;
+        sources[4].value += gameProvider.gameModelDTO!.account.previousAccountInstallment;
+        sources[5].value += gameProvider.gameModelDTO!.account.ir;
+        sources[6].value += gameProvider.gameModelDTO!.account.otherPaymentsOut;
         break;
     }
   }
@@ -91,7 +93,7 @@ class ChartTwo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    _buildChartSources(chartType, GameModelController.of(context));
+    _buildChartSources(chartType, Provider.of<GameProvider>(context));
 
     List<charts.Series<ChartSource, String> > series =[
       charts.Series<ChartSource, String>(
@@ -116,7 +118,7 @@ class ChartTwo extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               Expanded(
-              child: charts.PieChart(series, animate: true,defaultRenderer:  charts.ArcRendererConfig(arcRatio: 1,
+              child: charts.PieChart<String>(series, animate: true,defaultRenderer:  charts.ArcRendererConfig(arcRatio: 1,
                   arcWidth: 50), behaviors: [
                 charts.DatumLegend(
                   // Positions for "start" and "end" will be left and right respectively

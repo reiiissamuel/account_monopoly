@@ -1,6 +1,6 @@
-import 'package:account_monopoly/model/game_model.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:scoped_model/scoped_model.dart';
+import 'package:provider/provider.dart';
 
 import '../dialogs/confirm_action_dialog.dart';
 import '../dialogs/new_mortgage_dialog.dart';
@@ -8,22 +8,30 @@ import '../dto/mortgage.dart';
 import '../enums/log_msg_type.dart';
 import '../utils/string_utils.dart';
 
-
-class MortgageScreen extends StatelessWidget {
+class MortgageScreen extends StatefulWidget{
   const MortgageScreen({super.key});
+
+
+  @override
+  MortgageScreenState createState() => MortgageScreenState();
+}
+
+class MortgageScreenState extends State<MortgageScreen> {
+  late GameProvider gameProvider;
 
   @override
   Widget build(BuildContext context) {
-    return ScopedModelDescendant<GameModelController>(
-      builder: (context, child, model) {
-        if (model.isLoading) return const Center(child: CircularProgressIndicator());
+    return Consumer<GameProvider>(
+      builder: (context, gameProvider, child) {
+        if (gameProvider.isLoading) return const Center(child: CircularProgressIndicator());
         return Scaffold(
             appBar: AppBar(
-              title: const Text("Hipotécas", style: TextStyle(letterSpacing: 2)),
+              backgroundColor: Theme.of(context).primaryColor,
+              title: const Text("Hipotécas", style: TextStyle(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.bold)),
               centerTitle: true,
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, color: Colors.white,),
                   onPressed: (){
                     showDialog(
                         context: context,
@@ -35,7 +43,7 @@ class MortgageScreen extends StatelessWidget {
               ],
             ),
             backgroundColor: Colors.black,
-            body: model.gameModelDTO!.mortgages.isEmpty ?
+            body: gameProvider.gameModelDTO!.mortgages.isEmpty ?
                 Center(
                   child: IconButton(icon: const Icon(Icons.add, size: 60.0), color: Theme.of(context).primaryColor, onPressed: (){
                     showDialog(
@@ -48,10 +56,10 @@ class MortgageScreen extends StatelessWidget {
 
           : ListView.builder(
                 padding: const EdgeInsets.all(10.0),
-                itemCount: model.gameModelDTO!.mortgages.length,
+                itemCount: gameProvider.gameModelDTO!.mortgages.length,
                 itemBuilder: (context, index) {
                   //if(model.mortgages[index].deadline > 0)
-                    return _mortgageTile(context, model.gameModelDTO!.mortgages[index]);
+                    return _mortgageTile(context, gameProvider.gameModelDTO!.mortgages[index]);
                 }),
         );
       },
@@ -59,6 +67,7 @@ class MortgageScreen extends StatelessWidget {
   }
 
   Widget _mortgageTile(BuildContext context, Mortgage mortgage){
+    gameProvider = Provider.of<GameProvider>(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8.0),
       height: 210.0,
@@ -100,15 +109,15 @@ class MortgageScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20.0), side: const BorderSide(color: Colors.black)),
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
-                  onPressed: GameModelController.of(context).hasEnoughBalance(mortgage.valueToPay) ? () {
+                  onPressed: gameProvider.hasEnoughBalance(mortgage.valueToPay) ? () {
                     showDialog(context: context, builder: (BuildContext context){
                       return ConfirmActionDialog(
                           title: "Resgate de propriedade",
                           textContent: "Confirma o pagamento de  ${StringUtils.currencyFormat(mortgage.valueToPay.toString())} R\$ ?" ,
                           onConfirm: (){
 
-                            GameModelController.of(context).eventComposer(type: LogMsgType.PAY_BANK, value: mortgage.valueToPay);
-                            GameModelController.of(context).gameModelDTO!.mortgages.removeWhere((h) => h.id == mortgage.id);
+                            gameProvider.eventComposer(type: LogMsgType.PAY_BANK, value: mortgage.valueToPay);
+                            gameProvider.gameModelDTO!.mortgages.removeWhere((h) => h.id == mortgage.id);
                             Navigator.of(context).pop();
                           });
                     });

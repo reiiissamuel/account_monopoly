@@ -7,7 +7,7 @@ class Auction {
   int currentValue;
   int startValue = 0;
   int endValue = 0;
-  late List<Map<String, bool>> whichPlayersIdStillIn;
+  List<Map<String, bool>> whichPlayersIdStillIn = [];
   String buyer = "";
   String mortgageId = "";
 

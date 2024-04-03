@@ -19,7 +19,9 @@ enum LogMsgType{
   SERVER_HAND_SHAKE(messageScope: null),
   CLOSE_TURN(messageScope: "{SOURCE} fechou o faturamento da rodada em {VALUE}."),
   CHANCE_USED(messageScope: "{SOURCE}  usou um benefício."),
-  ROUND_BONUS(messageScope: "{SOURCE} recebeu um bonus de {VALUE}.");
+  ROUND_BONUS(messageScope: "{SOURCE} recebeu um bonus de {VALUE}."),
+  CURRENT_ACCOUNT_UPDATE_UP(messageScope: '{SOURCE} recebeu {VALUE} em crédito.'),
+  CURRENT_ACCOUNT_UPDATE_DOWN(messageScope: '{SOURCE} pagou {VALUE} para o banco.');
 
   final String? messageScope;
 

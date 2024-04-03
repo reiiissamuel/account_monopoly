@@ -1,6 +1,7 @@
-import 'package:account_monopoly/model/game_model.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:provider/provider.dart';
 
 /*
 *
@@ -13,13 +14,13 @@ class ChartThree extends StatelessWidget {
   List<ChartSource> sources = [];
 
 
-  _buildChartSource(GameModelController model){
-    for (var ac in model.gameModelDTO!.balance.accounts) {
+  _buildChartSource(GameProvider gameProvider){
+    for (var ac in gameProvider.gameModelDTO!.balance.accounts) {
       sources.add(
           ChartSource(
               round: ac.round,
-              inComming: model.gameModelDTO!.balance.getRoundIncomming(ac.round).toInt(),
-              outGoing: model.gameModelDTO!.balance.getRoundOutGoing(ac.round).toInt())
+              inComming: gameProvider.gameModelDTO!.balance.getRoundIncomming(ac.round).toInt(),
+              outGoing: gameProvider.gameModelDTO!.balance.getRoundOutGoing(ac.round).toInt())
       );
     }
   }
@@ -28,7 +29,7 @@ class ChartThree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-   _buildChartSource(GameModelController.of(context));
+   _buildChartSource(Provider.of<GameProvider>(context));
 
     List<charts.Series<ChartSource, int>> series = [
       charts.Series(

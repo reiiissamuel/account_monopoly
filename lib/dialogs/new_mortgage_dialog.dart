@@ -1,9 +1,10 @@
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../dto/mortgage.dart';
 import '../enums/log_msg_type.dart';
-import '../model/game_model.dart';
 import 'confirm_action_dialog.dart';
 
 class NewMortgageDialog extends StatefulWidget {
@@ -20,8 +21,11 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
   final _formKey = GlobalKey<FormState>();
   static const int DEADLINE = 3;
 
+  late GameProvider gameProvider;
+
   @override
   Widget build(BuildContext context) {
+    gameProvider = Provider.of<GameProvider>(context);
     return Dialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0)), //this right here
@@ -42,7 +46,7 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                 decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     border: Border.all(
-                      color: Colors.white,
+                      color: Colors.black12,
                     ),
                     borderRadius: const BorderRadius.all(Radius.circular(20))
                 ),
@@ -55,9 +59,18 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                          enabledBorder:OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                          errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                          fillColor: Colors.black12,
+                          filled: true,
+                          enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black12, width: 3.0),
+                              borderRadius: BorderRadius.all(Radius.circular(20))
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Colors.white, width: 5.0
+                              ),
+                              borderRadius: BorderRadius.all(Radius.circular(20))
+                          ),
                           hintText: "Digite o nome da propriedade"
                       ),
                       keyboardType: TextInputType.text,
@@ -71,9 +84,18 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                     TextFormField(
                       controller: _valueController,
                       decoration: const InputDecoration(
-                        enabledBorder:OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                          errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                        fillColor: Colors.black12,
+                          filled: true,
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black12, width: 3.0),
+                              borderRadius: BorderRadius.all(Radius.circular(20))
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Colors.white, width: 5.0
+                              ),
+                              borderRadius: BorderRadius.all(Radius.circular(20))
+                          ),
                           hintText: "Digite o valor da Propriedade"
                       ),
                       keyboardType: TextInputType.number,
@@ -107,10 +129,10 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20.0)
                             ),
-                            backgroundColor: Colors.white,
+                            backgroundColor: Colors.green,
                             splashFactory: InkRipple.splashFactory,
                           ),
-                          child: const Text("Concluir", style: TextStyle(fontSize: 17.0, letterSpacing: 2)),
+                          child: const Text("Concluir", style: TextStyle(fontSize: 17.0, letterSpacing: 2, color: Colors.white)),
                           onPressed: () {
                             if(_formKey.currentState!.validate()){
                               int toReceive = (int.parse(_valueController.text.replaceAll(".", "")) /2).floor();
@@ -131,9 +153,9 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                                       mortgage.valueToPay = toPay;
                                       mortgage.deadline = DEADLINE;
                                       mortgage.auctionMinValue = (toPay /2).floor();
-                                      GameModelController.of(context).gameModelDTO!.mortgages.add(mortgage);
+                                      gameProvider.gameModelDTO!.mortgages.add(mortgage);
 
-                                      GameModelController.of(context).eventComposer(type: LogMsgType.MORTGAGE, value: toReceive);
+                                      gameProvider.eventComposer(type: LogMsgType.MORTGAGE, value: toReceive);
                                       Navigator.pop(context);
                                       Navigator.pop(context);
                                     });

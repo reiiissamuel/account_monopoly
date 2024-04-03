@@ -1,11 +1,11 @@
 import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:scoped_model/scoped_model.dart';
+import 'package:provider/provider.dart';
 
 import '../dialogs/confirm_action_dialog.dart';
 import '../dialogs/tip_alert_dialog.dart';
 import '../dto/chance.dart';
-import '../model/game_model.dart';
 import '../utils/tips_resourse.dart';
 
 class ChancesScreen extends StatelessWidget {
@@ -13,47 +13,47 @@ class ChancesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScopedModelDescendant<GameModelController>(
-      builder: (context, child, model) {
-        if (model.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text("Benefícios", style: TextStyle(letterSpacing: 2)),
-            centerTitle: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.help),
-                color: Colors.white,
-                onPressed: () {
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return TipDialog(
-                            title: "Tela de Benefícios",
-                            tip: TipsResourse.BENEFITS_SCREEN);
-                      });
-                },
-              )
-            ],
-          ),
-          backgroundColor: Colors.black,
-          body: model.gameModelDTO!.chances.isEmpty
-              ? const Center(
-                  child: Icon(Icons.hourglass_empty,
-                      color: Colors.white, size: 25))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(10.0),
-                  itemCount: model.gameModelDTO!.chances.length,
-                  itemBuilder: (context, index) {
-                    //if(model.hipotecas[index].deadline > 0)
-                    return _benefitsTile(
-                        context, model.gameModelDTO!.chances[index]);
-                  }),
-        );
-      },
-    );
+    if (Provider.of<GameProvider>(context).isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text("Benefícios", style: TextStyle(letterSpacing: 2)),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.help),
+              color: Colors.white,
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return TipDialog(
+                          title: "Tela de Benefícios",
+                          tip: TipsResourse.BENEFITS_SCREEN);
+                    });
+              },
+            )
+          ],
+        ),
+        backgroundColor: Colors.black,
+        body: Consumer<GameProvider>(
+          //
+          builder: (context, gameProvider, child) {
+            return gameProvider.gameModelDTO!.chances.isEmpty
+                ? const Center(
+                child: Icon(Icons.hourglass_empty,
+                    color: Colors.white, size: 25))
+                : ListView.builder(
+                padding: const EdgeInsets.all(10.0),
+                itemCount: gameProvider.gameModelDTO!.chances.length,
+                itemBuilder: (context, index) {
+                  //if(model.hipotecas[index].deadline > 0)
+                  return _benefitsTile(
+                      context, gameProvider.gameModelDTO!.chances[index]);
+                });
+          },
+        ));
   }
 
   Widget _benefitsTile(BuildContext context, Chance chance) {
@@ -114,12 +114,12 @@ class ChancesScreen extends StatelessWidget {
                                     title: "Confirmar uso desta carta?",
                                     textContent: "Deseja utilizar este evento?",
                                     onConfirm: () {
-                                      GameModelController.of(context)
+                                      Provider.of<GameProvider>(context)
                                           .gameModelDTO!
                                           .chances
                                           .removeWhere(
                                               (b) => b.id == chance.id);
-                                      GameModelController.of(context)
+                                      Provider.of<GameProvider>(context)
                                           .eventComposer(
                                               type: LogMsgType.CHANCE_USED);
                                       Navigator.pop(context);

@@ -1,11 +1,10 @@
 import 'dart:async';
 
-import 'package:account_monopoly/model/game_model.dart';
 import 'package:account_monopoly/repository/user_repository.dart';
-import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:scoped_model/scoped_model.dart';
+
+import 'game_provider.dart';
 
 class UserModelDTO{
   final int? id;
@@ -45,21 +44,25 @@ class UserModelDTO{
     );
   }
 }
-class UserModelController extends Model{
+class UserProvider extends ChangeNotifier{
   static const String NEW_USER_SUCCESS_MSG = "Cadastro concluído: ";
   static const String NEW_USER_ERROR_MSG = "Falha ao cadastrar usuário!";
   List<UserModelDTO> allUsers = [];
   UserModelDTO? user;
   UserRepository userRepository =  GetIt.I.get();
-  static UserModelController of(BuildContext context) => ScopedModel.of<UserModelController>(context);
+  //static UserModelController of(BuildContext context) => ScopedModel.of<UserModelController>(context);
   bool isLoading = false;
 
+  UserProvider(){
+    _loadCurrentUser();
+  }
+
   //logar usuario atual ao abrir o app
-  @override
+  /*@override
   void addListener(VoidCallback listener) {
     super.addListener(listener);
     _loadCurrentUser();
-  }
+  }*/
 
   void notify(){
     notifyListeners();

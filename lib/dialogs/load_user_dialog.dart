@@ -1,9 +1,7 @@
-import 'package:flutter/cupertino.dart';
+import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:scoped_model/scoped_model.dart';
-
-import '../model/user_model.dart';
+import 'package:provider/provider.dart';
 import '../repository/user_repository.dart';
 import 'new_user_dialog.dart';
 
@@ -20,13 +18,16 @@ class LoadUserDialogState extends State<LoadUserDialog> {
   String? _dropdownValue = "";
   UserRepository userRepository =  GetIt.I.get();
 
+  late UserProvider userProvider;
+
   static const String CREATE_USER_LABEL = "Criar novo usuário";
   static const String SELECT_ONEOF_LABEL = "Selecionar";
 
 
   @override
   Widget build(BuildContext context) {
-    _localUsersNames = UserModelController.of(context).allUsers!.map((user) => user.username).toList();
+    userProvider = Provider.of<UserProvider>(context);
+    _localUsersNames = userProvider.allUsers!.map((user) => user.username).toList();
     _localUsersNames.add(CREATE_USER_LABEL);
     _localUsersNames.add(SELECT_ONEOF_LABEL);
     _dropdownValue = _localUsersNames.last;
@@ -34,7 +35,7 @@ class LoadUserDialogState extends State<LoadUserDialog> {
         backgroundColor: Theme.of(context).primaryColor,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0)),
-      child: UserModelController.of(context).isLoading ?
+      child: userProvider.isLoading ?
       const SizedBox(height: 30, child: Center(child: Text("Carregando...", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),))) :
       SizedBox(
         height: 300,
@@ -65,8 +66,8 @@ class LoadUserDialogState extends State<LoadUserDialog> {
                         },
                       ).whenComplete(() => Navigator.pop(context));// Mova o Navigator.pop para cá
                     } else if (_dropdownValue != SELECT_ONEOF_LABEL) {
-                      UserModelController.of(context).signIn(
-                        userModelDTO: UserModelController.of(context).allUsers!.firstWhere((u) => u.username == _dropdownValue),
+                      userProvider.signIn(
+                        userModelDTO: userProvider.allUsers!.firstWhere((u) => u.username == _dropdownValue),
                       );
                       Navigator.of(context).pop(); // Mova o Navigator.pop para cá
                     }

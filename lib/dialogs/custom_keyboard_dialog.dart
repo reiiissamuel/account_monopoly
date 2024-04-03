@@ -1,8 +1,7 @@
-import 'package:account_monopoly/model/game_model.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
-import '../enums/keyboard_operation.dart';
+import 'package:provider/provider.dart';
 import '../enums/log_msg_type.dart';
 import '../utils/string_utils.dart';
 import 'confirm_action_dialog.dart';
@@ -10,11 +9,10 @@ import 'confirm_action_dialog.dart';
 class CustomKeyboard extends StatefulWidget {
 
   final String title;
-  final KeyboardOparation keyO;
-  final LogMsgType logMsgType;
+  final LogMsgType eventType;
   final String playerToPayId;
 
-  const CustomKeyboard({super.key, required this.title, required this.keyO, required this.logMsgType, required this.playerToPayId});
+  const CustomKeyboard({super.key, required this.title, required this.eventType, required this.playerToPayId});
 
   @override
   CustomKeyboardState createState() => CustomKeyboardState();
@@ -49,34 +47,31 @@ class CustomKeyboardState extends State<CustomKeyboard> {
               children: [
                 Text(widget.title,
                     style: const TextStyle(
-                        fontSize: 20.0, fontWeight: FontWeight.w300, color: Colors.white)),
-                Container(
-                  height: 50.0,
-                  margin: const EdgeInsets.only(top: 8.0, bottom: 16.0),
-                  padding: const EdgeInsets.all(4.0),
-                  decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 0, 52, 98),
-                      borderRadius: BorderRadius.circular(20.0)),
-                  child: TextField(
-                      cursorColor: Colors.white,
-                      controller: valueController,
-                      readOnly: true,
-                      maxLines: 1,
-                      style: const TextStyle(
-                          fontSize: 25.0,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 2,
-                          color: Colors.white
-                      ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        prefixIcon: Icon(Icons.attach_money, color: Colors.white),
-                      )),
-                ),
+                        fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.white)),
+                TextField(
+                    cursorColor: Colors.white,
+                    controller: valueController,
+                    readOnly: true,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 22.0,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 2,
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(vertical: 8.0),
+                      fillColor: Colors.black12,
+                      filled: true,
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black38, width: 1.0),
+                          borderRadius: BorderRadius.all(Radius.circular(25.0))),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black38, width: 1.0),
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
+                      prefixIcon: Icon(Icons.attach_money, color: Colors.white),
+                    )),
+                const Spacer(flex:1),
                 SizedBox(
                   height: 300.0,
                   child: GridView(
@@ -87,7 +82,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
                     ),
                     //crossAxisCount: 3,
                     children: List.generate(16, (index) {
-                      return numberButton(index);
+                      return numberButton(context, index);
                     }),
                   ),
                 )
@@ -97,25 +92,29 @@ class CustomKeyboardState extends State<CustomKeyboard> {
     );
   }
 
-  Widget numberButton(int i) {
-    return ElevatedButton(
-      style: ButtonStyle(   
-        overlayColor: MaterialStateProperty.all(Colors.blue),
-        backgroundColor: MaterialStateProperty.all(Colors.black),          
-        ),
-      onPressed: i != 15 ? (){buttonFunction(i);} : valueController.text == "0" ? null : (){_finishOperation();},
-      child: buttonChildBuild(i)
+  Widget numberButton(BuildContext context, int i) {
+    return Center(
+      child: ElevatedButton(
+          style: ButtonStyle(
+            elevation: MaterialStateProperty.all(4.0),
+            overlayColor: MaterialStateProperty.all(Colors.white54),
+            backgroundColor: MaterialStateProperty.all(Colors.black38),
+          ),
+          onPressed: i != 15 ? (){buttonFunction(i);} : valueController.text == "0" ? null : (){_finishOperation(context);},
+          child: buttonChildBuild(i)
+      ),
     );
   }
 
-  void _finishOperation(){
+  void _finishOperation(BuildContext context){
+    GameProvider gameProvider = Provider.of<GameProvider>(context, listen: false);
     int value = int.parse(valueController.text.replaceAll(".", ""));
 
-    if(widget.keyO == KeyboardOparation.ACCOUT_UPDATE) {
-      if(GameModelController.of(context).hasEnoughBalance(value)) {
+    if(widget.eventType == LogMsgType.BUY || widget.eventType == LogMsgType.BUILD_HOUSE || widget.eventType == LogMsgType.BUILD_HOTEL) {
+      if(gameProvider.hasEnoughBalance(value)) {
         showDialog(context: context, builder: (BuildContext context){
         return ConfirmActionDialog(title: "Alerta de Compra!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
-          GameModelController.of(context).eventComposer(type: widget.logMsgType, value: value);
+          gameProvider.eventComposer(type: widget.eventType, value: value);
           Navigator.of(context).pop();
           Navigator.of(context).pop();
         });
@@ -124,25 +123,22 @@ class CustomKeyboardState extends State<CustomKeyboard> {
         _paymentFail();
       }
       }
-    else if(widget.keyO == KeyboardOparation.TRANSFER_IN) {
+    else if(widget.eventType == LogMsgType.RECEIVE_FROM_BANK) {
       showDialog(context: context, builder: (BuildContext context){
         return ConfirmActionDialog(title: "Alerta de Rebebimento!", textContent: "Você Confirma o recebimento de $value?", onConfirm: (){
-          GameModelController.of(context).eventComposer(type: LogMsgType.RECEIVE_FROM_BANK, value: value);
+          gameProvider.eventComposer(type: widget.eventType, value: value);
           Navigator.of(context).pop();
           Navigator.of(context).pop();
         });
       });
     }
-    else if(widget.keyO == KeyboardOparation.TRANSFER_OUT){
-          if(GameModelController.of(context).hasEnoughBalance(value)) {
+    else if(widget.eventType == LogMsgType.PAY_BANK){
+          if(gameProvider.hasEnoughBalance(value)) {
             showDialog(context: context, builder: (BuildContext context){
-            return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: widget.playerToPayId == "" ? "Você Confirma o pagamento de $value?"
-                : "Confirmar tranferência de $value para ${GameModelController.of(context).gameModelDTO!.players.firstWhere((p) => p.id == widget.playerToPayId).username}?",
-                onConfirm: (){
-              GameModelController.of(context).eventComposer(
-                  type: widget.logMsgType,
-                  value: value,
-                  destinationPlayer: GameModelController.of(context).gameModelDTO!.players.firstWhere((p) => p.id == widget.playerToPayId)
+            return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
+              gameProvider.eventComposer(
+                  type: widget.eventType,
+                  value: value
               );
               Navigator.of(context).pop();
               Navigator.of(context).pop();
@@ -152,6 +148,23 @@ class CustomKeyboardState extends State<CustomKeyboard> {
             _paymentFail();
           }
     }
+    else if(widget.eventType == LogMsgType.TRANSFER){
+      if(gameProvider.hasEnoughBalance(value)) {
+        showDialog(context: context, builder: (BuildContext context){
+          return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma a transferência de $value?", onConfirm: (){
+            gameProvider.eventComposer(
+                type: widget.eventType,
+                value: value,
+                destinationPlayer: gameProvider.gameModelDTO!.players.firstWhere((p) => p.id == widget.playerToPayId)
+            );
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          });
+        });
+      } else {
+        _paymentFail();
+      }
+    }
   }
 
   int cont = 1;
@@ -160,20 +173,20 @@ class CustomKeyboardState extends State<CustomKeyboard> {
       case 3:
         return Icon(Icons.backspace, color: Theme.of(context).primaryColor);
       case 7:
-        return const Text("C", style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold));
+        return const Text("C", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold, color: Colors.amber));
       case 11:
         return const Icon(Icons.cancel, color: Colors.red);
       case 12:
-        return const Text("00", style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold));
+        return Text("00", style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor));
       case 13:
-        return const Text("0", style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold));
+        return Text("0", style: TextStyle(fontSize: 19.0, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor));
       case 14:
-        return const Text("000", style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold));
+        return Text("000", style: TextStyle(fontSize: 9.0, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor));
       case 15:
         cont = 1;
         return const Icon(Icons.done, color: Colors.green);
       default:
-        return Text("${cont++}", style: const TextStyle(fontSize: 25.0));
+        return Text("${cont++}", style: TextStyle(fontSize: 18.0, color: Theme.of(context).primaryColor));
     }
   }
 

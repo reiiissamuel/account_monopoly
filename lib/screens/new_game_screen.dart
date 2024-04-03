@@ -1,9 +1,11 @@
+import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/widgets/default_dropdown_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:provider/provider.dart';
 
-import '../model/game_model.dart';
+import '../provider/game_provider.dart';
 import '../utils/tips_resourse.dart';
 import '../widgets/tip_icon_button.dart';
 import 'game_screen.dart';
@@ -222,7 +224,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Colors.white),
                 ),
                 onPressed: (){
-                  _showConfirmDialog();
+                  _showConfirmDialog(context);
                 },
               )
             ],
@@ -232,7 +234,8 @@ class NewGameScreenState extends State<NewGameScreen> {
     );
   }
 
-  _showConfirmDialog(){
+  _showConfirmDialog(BuildContext context){
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -271,8 +274,8 @@ class NewGameScreenState extends State<NewGameScreen> {
                     chancesEnabled: isChanceSwitchEnabled,
 
                 );
-
-                GameModelController.of(context).createNewGame(onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: gameData);
+                gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
+                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: gameData);
               },
               child: const Text("Confirmar", style: TextStyle(fontSize: 17.0, color: Colors.white )),
             ),

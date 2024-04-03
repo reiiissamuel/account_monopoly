@@ -1,4 +1,7 @@
 import 'package:account_monopoly/enums/installment_type.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 
 import 'account.dart';
 
@@ -47,22 +50,14 @@ class Balance{
     return false;
   }
 
-  void closeRoundAccount({required Account account}){
-    if(hasAccountInTheRound(round)) {
-      accounts[round] = account;
-    } else {
-      accounts.add(account);
-    }
-  }
-
-  Account openRoundAccount(){
+  void setNextRoundAccount(){
     Account account = Account.empty();
-    if(hasAccountInTheRound(round + 1)) {
+     if(hasAccountInTheRound(round + 1)) {
       account = accounts[round + 1];
     } else{
       account.round = round + 1;
+      accounts.add(account);
     }
-    return account;
   }
 
 

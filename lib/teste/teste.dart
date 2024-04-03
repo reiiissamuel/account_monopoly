@@ -40,7 +40,6 @@ class _ConnectionExampleState extends State<ConnectionExample> {
 
   void openConect(){
     peer = Peer(id: peerId);
-    print("MEU PEER ${peer.id}");
     peer.on("open").listen((event) {
       setState(() {
         connected = true;

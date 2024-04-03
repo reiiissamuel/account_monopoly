@@ -2,7 +2,7 @@ import 'package:account_monopoly/dto/event_dto.dart';
 import 'package:account_monopoly/dto/player.dart';
 import 'package:account_monopoly/enums/log_msg_type.dart';
 import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
-import 'package:account_monopoly/model/game_model.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:peerdart/peerdart.dart';
 import 'dart:developer';
@@ -15,7 +15,7 @@ class PeerConnectionController {
   late DataConnection connWithServer;
   bool isConnected = false;
   bool isServer = false;
-  GameModelController gameModelController;
+  GameProvider gameModelController;
   //Set<String> candidatesPeersId = <String>{};
 
   List<DataConnection> serverActiveConnections = List<DataConnection>.empty();
@@ -28,6 +28,7 @@ class PeerConnectionController {
   
 
   openConnectionsAsHost(){
+    isServer = true;
     peer.on("open").listen((id) {
       isConnected = true;
       log(OPENED_CONNECTION_MSG);
@@ -134,6 +135,9 @@ class PeerConnectionController {
   send(EventDTO event){
     if(isServer){
       for(DataConnection dataConnection in serverActiveConnections){
+        log(dataConnection.peer);
+
+        log(event.sourcePlayer.id);
         if(dataConnection.peer != event.sourcePlayer.id){
           dataConnection.send(event.toMap());
         }

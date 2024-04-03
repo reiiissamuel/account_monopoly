@@ -1,24 +1,25 @@
-import 'package:account_monopoly/model/user_model.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/provider/user_provider.dart';
+import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/splash_screen.dart';
-import 'package:account_monopoly/teste/teste.dart';
-import 'package:account_monopoly/teste/teste2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:scoped_model/scoped_model.dart';
+import 'package:provider/provider.dart';
 import 'package:account_monopoly/configuration/init_db.dart';
 
-import 'model/game_model.dart';
 
 void main() {
   runApp(AccountmonopolyApp());
 }
 
 class AccountmonopolyApp extends StatefulWidget {
+  const AccountmonopolyApp({super.key});
+
   @override
-  _AccountmonopolyAppState createState() => _AccountmonopolyAppState();
+  AccountmonopolyAppState createState() => AccountmonopolyAppState();
 }
 
-class _AccountmonopolyAppState extends State<AccountmonopolyApp> {
+class AccountmonopolyAppState extends State<AccountmonopolyApp> {
 
   final Future _init = InitDb.initialize();
 
@@ -41,36 +42,25 @@ class _AccountmonopolyAppState extends State<AccountmonopolyApp> {
                           home: ConnectionExample() //SplashScreen(),
                       );*/
 
-    return FutureBuilder(
-      future: _init,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return ScopedModel<UserModelController>(
-              model: UserModelController(),
-              child: ScopedModelDescendant<UserModelController>(
-                builder: (context, child, model) {
-                  return ScopedModel(
-                      model: GameModelController(userModelController: model),
-                      child: MaterialApp(
-                          title: 'Account Monopoly',
-                          theme: ThemeData(
-                            primarySwatch: Colors.blue,
-                            primaryColor: const Color.fromARGB(
-                                255, 70, 130, 180),
-                          ),
-                          debugShowCheckedModeBanner: false,
-                          home: SplashScreen(),
-                      ));
-                },
-              ));
-        } else {
-          return const Material(
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => UserProvider()),
+        ChangeNotifierProvider(create: (context) => GameProvider())
+      ],
+      child: MaterialApp(
+        title: 'Account Monopoly',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          primaryColor: const Color.fromARGB(
+              255, 70, 130, 180),
+        ),
+        debugShowCheckedModeBanner: false,
+        routes: {
+          'gameScreen': (context) => const GameScreen(),
+        },
+        home: SplashScreen(),
+      )
     );
   }
 }
+

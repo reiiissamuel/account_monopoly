@@ -1,7 +1,7 @@
 import 'package:account_monopoly/dto/player.dart';
 import 'package:account_monopoly/enums/log_msg_type.dart';
-import 'package:account_monopoly/model/game_model.dart';
 
+import '../provider/game_provider.dart';
 import '../utils/string_utils.dart';
 import 'auction.dart';
 
@@ -12,7 +12,7 @@ class EventDTO{
   final Player? destinationPlayer;
   final Player sourcePlayer;
   late final GameModelDTO? gameData; ///somente enviado nos eventos do tipo HANDSHAKE para passar as confi do jogo para um novo player
-  final int? value;
+  int? value;
 
   Auction? auction;
 
