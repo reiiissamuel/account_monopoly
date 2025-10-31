@@ -9,7 +9,7 @@ import 'package:account_monopoly/configuration/init_db.dart';
 
 
 void main() {
-  runApp(AccountmonopolyApp());
+  runApp(const AccountmonopolyApp());
 }
 
 class AccountmonopolyApp extends StatefulWidget {
@@ -58,7 +58,7 @@ class AccountmonopolyAppState extends State<AccountmonopolyApp> {
         routes: {
           'gameScreen': (context) => const GameScreen(),
         },
-        home: SplashScreen(),
+        home: const SplashScreen(),
       )
     );
   }

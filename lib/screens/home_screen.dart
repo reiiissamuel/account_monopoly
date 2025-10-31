@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import '../dialogs/load_user_dialog.dart';
-import '../provider/user_provider.dart';
-import 'new_game_screen.dart';
+import 'package:account_monopoly/dialogs/load_user_dialog.dart';
+import 'package:account_monopoly/provider/user_provider.dart';
+import 'package:account_monopoly/screens/new_game_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -131,7 +131,7 @@ class HomeScreenState extends State<HomeScreen> {
                                       if (!userProvider.isLoggedIn()) {
                                         return _showNonLoggedDialog(context);
                                       }
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewGameScreen()));
+                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const NewGameScreen()));
                                     },
                                   ),
                                 ),
@@ -190,7 +190,7 @@ class HomeScreenState extends State<HomeScreen> {
         });
   }
 
-  _showNonLoggedDialog(BuildContext context) {
+  void _showNonLoggedDialog(BuildContext context) {
     showDialog(context: context,
       builder: (BuildContext context) {
         return const LoadUserDialog();
@@ -198,7 +198,7 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _showEnterCodeDialog(BuildContext context) {
+  void _showEnterCodeDialog(BuildContext context) {
     final controller = TextEditingController();
 
     showDialog(
@@ -252,7 +252,7 @@ class HomeScreenState extends State<HomeScreen> {
         });
   }
 
-  _userOptionsDialog(BuildContext context) {
+  void _userOptionsDialog(BuildContext context) {
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -260,7 +260,7 @@ class HomeScreenState extends State<HomeScreen> {
             backgroundColor: Colors.black,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0)),
-            child: Container(
+            child: SizedBox(
               height: 300.0,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

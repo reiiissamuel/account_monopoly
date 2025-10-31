@@ -1,15 +1,13 @@
-import 'package:account_monopoly/dto/account.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../enums/keyboard_operation.dart';
-import '../enums/log_msg_type.dart';
-import '../screens/chances_screen.dart';
-import '../screens/set_auction_screen.dart';
-import 'confirm_action_dialog.dart';
-import 'custom_keyboard_dialog.dart';
-import 'loan_dialog.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/screens/chances_screen.dart';
+import 'package:account_monopoly/screens/set_auction_screen.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
+import 'package:account_monopoly/dialogs/custom_keyboard_dialog.dart';
+import 'package:account_monopoly/dialogs/loan_dialog.dart';
 
 class MoreOptionsDialog extends StatelessWidget {
 

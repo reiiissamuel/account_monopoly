@@ -1,5 +1,5 @@
 
-import '../utils/string_utils.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 
 class Player {
   String id = "";

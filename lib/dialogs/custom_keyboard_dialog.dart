@@ -2,9 +2,9 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
-import '../enums/log_msg_type.dart';
-import '../utils/string_utils.dart';
-import 'confirm_action_dialog.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 
 class CustomKeyboard extends StatefulWidget {
 
@@ -96,9 +96,9 @@ class CustomKeyboardState extends State<CustomKeyboard> {
     return Center(
       child: ElevatedButton(
           style: ButtonStyle(
-            elevation: MaterialStateProperty.all(4.0),
-            overlayColor: MaterialStateProperty.all(Colors.white54),
-            backgroundColor: MaterialStateProperty.all(Colors.black38),
+            elevation: WidgetStateProperty.all(4.0),
+            overlayColor: WidgetStateProperty.all(Colors.white54),
+            backgroundColor: WidgetStateProperty.all(Colors.black38),
           ),
           onPressed: i != 15 ? (){buttonFunction(i);} : valueController.text == "0" ? null : (){_finishOperation(context);},
           child: buttonChildBuild(i)

@@ -3,8 +3,8 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../enums/log_msg_type.dart';
-import '../screens/game_balance_screen.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/screens/game_balance_screen.dart';
 
 
 class WinnerDialog extends StatelessWidget {
@@ -64,7 +64,7 @@ class WinnerDialog extends StatelessWidget {
                       ),
                       child: const Text("Análise do jogo", style: TextStyle(fontSize: 16.0, color: Colors.white)),
                       onPressed:  () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => GameBalanceScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
                       },
                     ),
 

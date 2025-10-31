@@ -2,7 +2,7 @@
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 
-import '../dto/chance.dart';
+import 'package:account_monopoly/dto/chance.dart';
 
 class ChanceDialog extends StatelessWidget {
 

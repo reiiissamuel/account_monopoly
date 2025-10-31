@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:provider/provider.dart';
 
-import '../dto/player.dart';
+import 'package:account_monopoly/dto/player.dart';
 
 /*
 * Esse grafico mostra a relação de quanto cada jogador pagou a você e recebeu de vocÊ
 * */
 
 class ChartOne extends StatelessWidget {
+  const ChartOne({super.key});
+
 
   @override
   Widget build(BuildContext context) {

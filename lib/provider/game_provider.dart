@@ -2,7 +2,6 @@ import 'dart:collection';
 
 import 'package:account_monopoly/configuration/peer_connection_controller.dart';
 import 'package:account_monopoly/enums/installment_type.dart';
-import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/dto/player.dart';
@@ -11,13 +10,13 @@ import 'package:account_monopoly/exception/game_already_in_player_list_exception
 import 'package:flutter/material.dart';
 import 'package:peerdart/peerdart.dart';
 
-import '../dto/account.dart';
-import '../dto/auction.dart';
-import '../dto/balance.dart';
-import '../dto/chance.dart';
-import '../dto/event_dto.dart';
-import '../dto/mortgage.dart';
-import '../enums/log_msg_type.dart';
+import 'package:account_monopoly/dto/account.dart';
+import 'package:account_monopoly/dto/auction.dart';
+import 'package:account_monopoly/dto/balance.dart';
+import 'package:account_monopoly/dto/chance.dart';
+import 'package:account_monopoly/dto/event_dto.dart';
+import 'package:account_monopoly/dto/mortgage.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
 
 class GameProvider extends ChangeNotifier {
   late UserProvider userModelController;
@@ -42,7 +41,7 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  processComingEvent(EventDTO event) {
+  void processComingEvent(EventDTO event) {
     isLoading = true;
     notifyListeners();
     if(events.isEmpty || event.eventId != lastEventReceived?.eventId){
@@ -106,7 +105,7 @@ class GameProvider extends ChangeNotifier {
     _logComposer(event);
   }
 
-  eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value,
+  Future<void> eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value,
     Player ?sourcePlayer, Auction ?auction, int ?installments}) async {
     notifyChanges(true);
 
@@ -167,7 +166,7 @@ class GameProvider extends ChangeNotifier {
         gameModelDTO!.balance.generateInstallments(
             tax: (installments! * gameModelDTO!.levelTax).floor(),
             type: InstallmentType.LOAN_INSTALLMENT,
-            installments: installments!,
+            installments: installments,
             total: value);
         break;
       case LogMsgType.AUCTION_START:
@@ -175,7 +174,7 @@ class GameProvider extends ChangeNotifier {
         event.auction = auction;
         event.value = auction!.startValue;
         event.auction!.whichPlayersIdStillIn.add(Map.of({gameModelDTO!.player.id : false}));
-        gameModelDTO!.auctions.add(auction!);
+        gameModelDTO!.auctions.add(auction);
         break;
       case LogMsgType.AUCTION_END:
         isThereAuction = false;
@@ -185,7 +184,7 @@ class GameProvider extends ChangeNotifier {
         break;
       case LogMsgType.AUCTION_LEAVE:
         isThereAuction = false;
-        gameModelDTO!.auctions.last!.whichPlayersIdStillIn.firstWhere((e) => e.containsKey([gameModelDTO!.player.id]))[gameModelDTO!.player.id] = false;
+        gameModelDTO!.auctions.last.whichPlayersIdStillIn.firstWhere((e) => e.containsKey([gameModelDTO!.player.id]))[gameModelDTO!.player.id] = false;
         event.auction = gameModelDTO!.auctions.last;
         break;
       case LogMsgType.AUCTION_PAY:
@@ -225,12 +224,12 @@ class GameProvider extends ChangeNotifier {
     notifyChanges(false);
   }
 
-  _sendEvent(EventDTO event) {
+  void _sendEvent(EventDTO event) {
     peerConnectionController!.send(event);
     //processComingEvent(event);
   }
 
-  _logComposer(EventDTO event) {
+  void _logComposer(EventDTO event) {
     if (event.type.messageScope != null) {
       gameModelDTO!.logs.add(
           event.type.messageScope
@@ -252,7 +251,7 @@ class GameProvider extends ChangeNotifier {
     gameModelDTO!.player = Player.of(
       id:  GameProvider._generatePlayerId(
           usermodelname: userModelController.user!.username,
-          usermodelId: userModelController.user!.id!,
+          usermodelId: userModelController.user!.id,
           gameId: gameModelDTO!.id),
       userModelId: usermodelId,
       gameId: generatedGameId,
@@ -278,7 +277,7 @@ class GameProvider extends ChangeNotifier {
   Future<void> getGameById({required GameModelDTO gameModelDTO,  required Function onFail, required Function onSuccess}) async {
     isLoading = true;
     notifyListeners();
-    gameModelDTO!.player.isHost = false;
+    gameModelDTO.player.isHost = false;
     this.gameModelDTO = gameModelDTO;
     _createPeerConnectionController(peerId: this.gameModelDTO!.player.id);
     try {
@@ -306,7 +305,7 @@ class GameProvider extends ChangeNotifier {
       _createPeerConnectionController(
           peerId: GameProvider._generatePlayerId(
               usermodelname: userModelController.user!.username,
-              usermodelId: userModelController.user!.id!,
+              usermodelId: userModelController.user!.id,
               gameId: gameId)
       );
       peerConnectionController!.connectToHost(destinationPeerId);
@@ -334,7 +333,7 @@ class GameProvider extends ChangeNotifier {
     });
   }
 
-  static _generatePlayerId({required usermodelname, required usermodelId, required gameId}){
+  static String _generatePlayerId({required usermodelname, required usermodelId, required gameId}){
     return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
   }
 
@@ -361,7 +360,7 @@ class GameProvider extends ChangeNotifier {
 
   //in game methods
 
-  _updateMortgageCountdown(){
+  void _updateMortgageCountdown(){
     for(var mortgage in gameModelDTO!.mortgages){
       mortgage.deadline -= 1;
       if(mortgage.deadline <= 0){
@@ -379,10 +378,10 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  _proccessCloseTurn(int ?installments){
+  void _proccessCloseTurn(int ?installments){
     if(installments != null){
       gameModelDTO!.balance.generateInstallments(
-          tax: (installments! * gameModelDTO!.levelTax).floor(),
+          tax: (installments * gameModelDTO!.levelTax).floor(),
           type: InstallmentType.ACCOUNT_INSTALLMENT,
           installments: installments,
           total: gameModelDTO!.account.getTotal());
@@ -403,7 +402,7 @@ class GameProvider extends ChangeNotifier {
     return false;
   }
 
-  _updateBalance(int value) {
+  void _updateBalance(int value) {
     gameModelDTO!.currentGameBalance += value;
     notifyListeners();
   }

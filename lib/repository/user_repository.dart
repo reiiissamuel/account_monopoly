@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:sembast/sembast.dart';
 
-import '../provider/user_provider.dart';
+import 'package:account_monopoly/provider/user_provider.dart';
 
 abstract class UserRepository {
 

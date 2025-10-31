@@ -2,8 +2,8 @@ import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import '../repository/user_repository.dart';
-import 'new_user_dialog.dart';
+import 'package:account_monopoly/repository/user_repository.dart';
+import 'package:account_monopoly/dialogs/new_user_dialog.dart';
 
 class LoadUserDialog extends StatefulWidget {
   const LoadUserDialog({super.key});
@@ -27,7 +27,7 @@ class LoadUserDialogState extends State<LoadUserDialog> {
   @override
   Widget build(BuildContext context) {
     userProvider = Provider.of<UserProvider>(context);
-    _localUsersNames = userProvider.allUsers!.map((user) => user.username).toList();
+    _localUsersNames = userProvider.allUsers.map((user) => user.username).toList();
     _localUsersNames.add(CREATE_USER_LABEL);
     _localUsersNames.add(SELECT_ONEOF_LABEL);
     _dropdownValue = _localUsersNames.last;
@@ -67,7 +67,7 @@ class LoadUserDialogState extends State<LoadUserDialog> {
                       ).whenComplete(() => Navigator.pop(context));// Mova o Navigator.pop para cá
                     } else if (_dropdownValue != SELECT_ONEOF_LABEL) {
                       userProvider.signIn(
-                        userModelDTO: userProvider.allUsers!.firstWhere((u) => u.username == _dropdownValue),
+                        userModelDTO: userProvider.allUsers.firstWhere((u) => u.username == _dropdownValue),
                       );
                       Navigator.of(context).pop(); // Mova o Navigator.pop para cá
                     }

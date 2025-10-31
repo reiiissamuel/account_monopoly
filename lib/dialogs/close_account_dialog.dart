@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import '../dto/account.dart';
-import '../provider/game_provider.dart';
-import '../screens/home_screen.dart';
-import '../utils/string_utils.dart';
-import 'confirm_action_dialog.dart';
-import 'loan_dialog.dart';
-import 'new_mortgage_dialog.dart';
+import 'package:account_monopoly/dto/account.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/screens/home_screen.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
+import 'package:account_monopoly/dialogs/loan_dialog.dart';
+import 'package:account_monopoly/dialogs/new_mortgage_dialog.dart';
 
 
 class CloseAccountDialog extends StatelessWidget {

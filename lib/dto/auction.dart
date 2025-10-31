@@ -21,7 +21,7 @@ class Auction {
     return whichPlayersIdStillIn.where((e) => e.containsValue(true)).length >= 2;
   }
 
-  toMap() {
+  Map<String, Object> toMap() {
     return {
     "id": id,
     "auctionCaller": auctionCaller,

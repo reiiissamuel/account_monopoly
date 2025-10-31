@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../dialogs/tip_alert_dialog.dart';
+import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
 
 class TipIconButton extends StatelessWidget {
 

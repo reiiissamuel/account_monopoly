@@ -4,7 +4,7 @@ import 'package:account_monopoly/repository/user_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'game_provider.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 
 class UserModelDTO{
   final int? id;
@@ -101,7 +101,7 @@ class UserProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  getAllLocalUsers() async {
+  Future<void> getAllLocalUsers() async {
     notifyListeners();
     isLoading = true;
     allUsers = await userRepository.getAllUsers();
@@ -164,15 +164,18 @@ class UserProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  checkHasGameById(String gameId){
-    if(user!.games.isNotEmpty){
+  bool checkHasGameById(String gameId) {
+    if (user!.games.isNotEmpty) {
       try {
-        GameModelDTO game = user!.games.firstWhere((game) => game.id == gameId);
+        // Tenta encontrar o jogo. Se encontrar, retorna true.
+        user!.games.firstWhere((game) => game.id == gameId);
         return true;
       } on StateError {
+        // Se não encontrar (StateError), retorna false.
         return false;
       }
     }
+    return false; 
   }
 
 }

@@ -3,10 +3,10 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../dialogs/confirm_action_dialog.dart';
-import '../dialogs/tip_alert_dialog.dart';
-import '../dto/chance.dart';
-import '../utils/tips_resourse.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
+import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
+import 'package:account_monopoly/dto/chance.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
 
 class ChancesScreen extends StatelessWidget {
   const ChancesScreen({super.key});
@@ -28,7 +28,7 @@ class ChancesScreen extends StatelessWidget {
                 showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return TipDialog(
+                      return const TipDialog(
                           title: "Tela de Benefícios",
                           tip: TipsResourse.BENEFITS_SCREEN);
                     });

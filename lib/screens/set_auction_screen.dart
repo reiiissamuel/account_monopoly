@@ -3,8 +3,8 @@ import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../dto/auction.dart';
-import '../enums/log_msg_type.dart';
+import 'package:account_monopoly/dto/auction.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
 
 class SetAuctionScreen extends StatefulWidget {
   const SetAuctionScreen({super.key});
@@ -76,6 +76,7 @@ class SetAuctionScreenState extends State<SetAuctionScreen> {
                                     if (text == null || text.isEmpty) {
                                       return "Este campo deve ser preenchido!";
                                     }
+                                    return null;
                                   },
                                 ),
                                 const SizedBox(height: 8.0),
@@ -107,6 +108,7 @@ class SetAuctionScreenState extends State<SetAuctionScreen> {
                                         text.isEmpty) {
                                       return "Este campo só aceita números e ponto!";
                                     }
+                                    return null;
                                   },
                                 ),
                                 const SizedBox(height: 32.0),

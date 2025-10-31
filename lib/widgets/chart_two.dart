@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:provider/provider.dart';
 
-import '../dto/account.dart';
-import '../enums/pie_chart_type.dart';
-import '../provider/game_provider.dart';
+import 'package:account_monopoly/dto/account.dart';
+import 'package:account_monopoly/enums/pie_chart_type.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 
 /*
 * esse grafico da uma descrição dos gastos, ou lucros, podendo ser por rodada ou geral

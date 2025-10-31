@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import '../dialogs/confirm_action_dialog.dart';
-import '../provider/game_provider.dart';
-import '../utils/string_utils.dart';
-import 'game_screen.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/screens/game_screen.dart';
 
 
 class MyGamesScreen extends StatelessWidget {

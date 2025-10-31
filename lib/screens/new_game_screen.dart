@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import '../dto/player.dart';
-import '../provider/game_provider.dart';
-import '../utils/tips_resourse.dart';
-import '../widgets/tip_icon_button.dart';
-import 'game_screen.dart';
+import 'package:account_monopoly/dto/player.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
+import 'package:account_monopoly/screens/game_screen.dart';
 
 class NewGameScreen extends StatefulWidget {
   const NewGameScreen({super.key});
@@ -37,7 +37,7 @@ class NewGameScreenState extends State<NewGameScreen> {
   bool isMortgageEnabled = false;
 
 
-  bool _enableConfirmButton = true;
+  final bool _enableConfirmButton = true;
 
   @override
   void initState() {
@@ -104,7 +104,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                         items: spinnerItems,
                         onChange: (data) => setState(() => dropdownValue = data ?? dropdownValue),)
                   ),
-                  Expanded(
+                  const Expanded(
                       flex: 1,
                       child: TipIconButton(title: "Limite de Jogadores", tip: TipsResourse.PLAYERS_LIMIT_TIP))
                 ],
@@ -123,7 +123,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                     onChange: (data) => setState(() => dropdownBonusValue = data ?? dropdownBonusValue),
 
                     )),
-                  Expanded(
+                  const Expanded(
                       flex: 1,
                       child: TipIconButton(title: "Bônus da Rodada", tip: TipsResourse.ROUND_BONUS_TIP))
                 ],
@@ -143,7 +143,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                           dropdownLoanTax = data ?? dropdownLoanTax;
                         }))
                  ),
-                 Expanded(
+                 const Expanded(
                      flex:1,
                      child: TipIconButton(title: "Nível dos juros:", tip: TipsResourse.LOAN_TAX_TIP))
                 ],
@@ -162,7 +162,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                         ),
                         trailing: Switch(
                           // thumb color (round icon)
-                          activeColor: Theme.of(context).primaryColor,
+                          activeThumbColor: Theme.of(context).primaryColor,
                           activeTrackColor: Colors.white,
                           inactiveThumbColor: Colors.blueGrey.shade600,
                           inactiveTrackColor: Colors.grey.shade400,
@@ -179,7 +179,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                         ),
                         trailing: Switch(
                           // thumb color (round icon)
-                          activeColor: Theme.of(context).primaryColor,
+                          activeThumbColor: Theme.of(context).primaryColor,
                           activeTrackColor: Colors.white,
                           inactiveThumbColor: Colors.blueGrey.shade600,
                           inactiveTrackColor: Colors.grey.shade400,
@@ -196,7 +196,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                         ),
                         trailing: Switch(
                           // thumb color (round icon)
-                          activeColor: Theme.of(context).primaryColor,
+                          activeThumbColor: Theme.of(context).primaryColor,
                           activeTrackColor: Colors.white,
                           inactiveThumbColor: Colors.blueGrey.shade600,
                           inactiveTrackColor: Colors.grey.shade400,
@@ -237,7 +237,7 @@ class NewGameScreenState extends State<NewGameScreen> {
     );
   }
 
-  _showConfirmDialog(BuildContext context){
+  void _showConfirmDialog(BuildContext context){
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     showDialog(
       context: context,

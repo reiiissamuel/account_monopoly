@@ -2,9 +2,9 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../enums/log_msg_type.dart';
-import '../utils/string_utils.dart';
-import 'confirm_action_dialog.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 
 class LoanDialog extends StatefulWidget {
 

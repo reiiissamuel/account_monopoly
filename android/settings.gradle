@@ -1,11 +1,21 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
 include ':app'
 
-def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
-def properties = new Properties()
+// O Flutter usa este arquivo para carregar a lista de plugins externos.
+// A sintaxe abaixo é o padrão moderno para inclusão de plugins
+def flutterProject = project(':app').hasProperty('flutter') ? project(':app').property('flutter') : null
+if (flutterProject?.with='flutter-plugin') {
+    apply from: flutterProject
+} else if (flutterProject) {
+    apply from: "$flutterProject"
+}
 
-assert localPropertiesFile.exists()
-localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
-
-def flutterSdkPath = properties.getProperty("flutter.sdk")
-assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
-apply from: "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
+// Mantenha esta linha para carregar os plugins do pubspec.yaml
+apply from: new File(settingsDir, '.flutter-plugins-dependencies.gradle')

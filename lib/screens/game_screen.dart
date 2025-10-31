@@ -8,19 +8,19 @@ import 'package:account_monopoly/screens/game_balance_screen.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:provider/provider.dart';
 
-import '../dialogs/account_description.dart';
-import '../dialogs/chance_dialog.dart';
-import '../dialogs/close_account_dialog.dart';
-import '../dialogs/confirm_action_dialog.dart';
-import '../dialogs/custom_keyboard_dialog.dart';
-import '../dialogs/more_options_dialog.dart';
-import '../dialogs/table_info_dialog.dart';
-import '../dto/chance.dart';
-import '../provider/game_provider.dart';
-import '../widgets/game_icon_button_builder.dart';
-import 'beneficiaries_screen.dart';
-import 'home_screen.dart';
-import 'mortgage_screen.dart';
+import 'package:account_monopoly/dialogs/account_description.dart';
+import 'package:account_monopoly/dialogs/chance_dialog.dart';
+import 'package:account_monopoly/dialogs/close_account_dialog.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
+import 'package:account_monopoly/dialogs/custom_keyboard_dialog.dart';
+import 'package:account_monopoly/dialogs/more_options_dialog.dart';
+import 'package:account_monopoly/dialogs/table_info_dialog.dart';
+import 'package:account_monopoly/dto/chance.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
+import 'package:account_monopoly/screens/beneficiaries_screen.dart';
+import 'package:account_monopoly/screens/home_screen.dart';
+import 'package:account_monopoly/screens/mortgage_screen.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -120,7 +120,7 @@ class GameScreenState extends State<GameScreen> {
                         return ConfirmActionDialog(
                             title: "Quer mesmo sair deste jogo?",
                             textContent: "Você poderá entrar nele novamete\n"
-                            "indo até a sessão \'jogos ativos\'",
+                            "indo até a sessão 'jogos ativos'",
                             onConfirm: (){
                               Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
                             }
@@ -149,7 +149,7 @@ class GameScreenState extends State<GameScreen> {
                                 if(_chances[eventDeckCount].effect! > 0) {
                                   gameProvider.gameModelDTO!.account.qtdEventGain += _chances[eventDeckCount].effect!;
                                 } else if(_chances[eventDeckCount].effect! < 0){
-                                  gameProvider.gameModelDTO!.account.qtdEventPay += (-_chances[eventDeckCount].effect!)!;
+                                  gameProvider.gameModelDTO!.account.qtdEventPay += (-_chances[eventDeckCount].effect!);
                                 }
                                 return ChanceDialog(_chances[eventDeckCount++]);
                               });
@@ -275,7 +275,7 @@ class GameScreenState extends State<GameScreen> {
                                   imgPath: "icons/bills.png",  
                                   title: "Ver Fatura", 
                                   onPressed: (){
-                                    _dialogCaller(context, AccountDescription());
+                                    _dialogCaller(context, const AccountDescription());
                                   }
                                 ),
 

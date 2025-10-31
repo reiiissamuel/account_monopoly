@@ -13,8 +13,10 @@ class ChartThree extends StatelessWidget {
 
   List<ChartSource> sources = [];
 
+  ChartThree({super.key});
 
-  _buildChartSource(GameProvider gameProvider){
+
+  void _buildChartSource(GameProvider gameProvider){
     for (var ac in gameProvider.gameModelDTO!.balance.accounts) {
       sources.add(
           ChartSource(

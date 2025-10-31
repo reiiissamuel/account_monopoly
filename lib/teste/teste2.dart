@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:peerdart/peerdart.dart';
 
 class DataConnectionExample extends StatefulWidget {
-  const DataConnectionExample({Key? key}) : super(key: key);
+  const DataConnectionExample({super.key});
 
   @override
   State<DataConnectionExample> createState() => _DataConnectionExampleState();
@@ -46,7 +46,7 @@ class _DataConnectionExampleState extends State<DataConnectionExample> {
         connected = true;
       });
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Coneccao aberta")));
+          .showSnackBar(const SnackBar(content: Text("Coneccao aberta")));
     });
 
     peer.on("close").listen((id) {
@@ -65,12 +65,12 @@ class _DataConnectionExampleState extends State<DataConnectionExample> {
 
       conn.on("open").listen((data) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("SRV-Conecao recebida")));
+            .showSnackBar(const SnackBar(content: Text("SRV-Conecao recebida")));
       });
 
       conn.on("close").listen((event) {
         ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("SRV-Coneccao fechada")));
+          .showSnackBar(const SnackBar(content: Text("SRV-Coneccao fechada")));
       setState(() {
         connected = false;
       });
@@ -90,7 +90,7 @@ class _DataConnectionExampleState extends State<DataConnectionExample> {
 
     conn.on("open").listen((event) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Coneccao aberta aqui")));
+          .showSnackBar(const SnackBar(content: Text("Coneccao aberta aqui")));
       setState(() {
         connected = true;
       });
@@ -98,7 +98,7 @@ class _DataConnectionExampleState extends State<DataConnectionExample> {
       connection.on("close").listen((event) {
         setState(() {
           ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Coneccao fechou")));
+            .showSnackBar(const SnackBar(content: Text("Coneccao fechou")));
           connected = false;
         });
       });
@@ -109,7 +109,7 @@ class _DataConnectionExampleState extends State<DataConnectionExample> {
       });
       conn.on("binary").listen((data) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Got binary!")));
+            .showSnackBar(const SnackBar(content: Text("Got binary!")));
       });
     });
   }
@@ -162,8 +162,8 @@ class _DataConnectionExampleState extends State<DataConnectionExample> {
               TextField(
                 controller: _msg_controller,
               ),
-              SizedBox(height: 20),
-              isServer ? Icon(Icons.computer, color: Colors.blue) : Icon(Icons.mobile_screen_share,  color: Colors.black)
+              const SizedBox(height: 20),
+              isServer ? const Icon(Icons.computer, color: Colors.blue) : const Icon(Icons.mobile_screen_share,  color: Colors.black)
 
 
             ],

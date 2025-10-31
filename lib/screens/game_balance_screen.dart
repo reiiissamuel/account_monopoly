@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../enums/pie_chart_type.dart';
-import '../widgets/chart_one.dart';
-import '../widgets/chart_three.dart';
-import '../widgets/chart_two.dart';
+import 'package:account_monopoly/enums/pie_chart_type.dart';
+import 'package:account_monopoly/widgets/chart_one.dart';
+import 'package:account_monopoly/widgets/chart_three.dart';
+import 'package:account_monopoly/widgets/chart_two.dart';
 
 
 class GameBalanceScreen extends StatelessWidget {
@@ -18,7 +18,7 @@ class GameBalanceScreen extends StatelessWidget {
         child: ListView(
           children: [
             ChartThree(),
-            ChartOne(),
+            const ChartOne(),
             ChartTwo(chartTitle: "Gastos na Rodada Atual", chartType: PieChartType.ROUND_EXPANSES),
             ChartTwo(chartTitle: "Ganhos na Rodada Atual", chartType: PieChartType.ROUND_PROFIT),
             ChartTwo(chartTitle: "Gastos Gerais no Jogo", chartType: PieChartType.GENERAL_EXPANSES),

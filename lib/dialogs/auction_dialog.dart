@@ -2,8 +2,8 @@ import 'package:account_monopoly/enums/log_msg_type.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../dto/auction.dart';
-import '../provider/game_provider.dart';
+import 'package:account_monopoly/dto/auction.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 
 class AuctionDialog extends StatefulWidget {
   const AuctionDialog({super.key});

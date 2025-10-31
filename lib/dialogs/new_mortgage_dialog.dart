@@ -3,9 +3,9 @@ import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../dto/mortgage.dart';
-import '../enums/log_msg_type.dart';
-import 'confirm_action_dialog.dart';
+import 'package:account_monopoly/dto/mortgage.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 
 class NewMortgageDialog extends StatefulWidget {
   const NewMortgageDialog({super.key});
@@ -78,6 +78,7 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                         if(text!.isEmpty) {
                           return "Este campo deve ser preenchido";
                         }
+                        return null;
                       },
                     ),
                     const SizedBox(height: 16.0),
@@ -105,6 +106,7 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                         if(text!.isEmpty || !equal.hasMatch(text) || !equal2.hasMatch(text)) {
                           return "Este campo só aceita números e ponto!";
                         }
+                        return null;
                       },
                     ),
                     const SizedBox(height: 32.0),

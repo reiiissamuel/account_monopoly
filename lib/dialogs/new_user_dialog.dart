@@ -69,6 +69,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                   keyboardType: TextInputType.text,
                   validator: (text) {
                     if(text == null || text.isEmpty || text.length < 2) return VALIDATION_NAME_ERROR_MSG;
+                    return null;
                   },
                 ),
                 const SizedBox(height: 16.0),
@@ -91,6 +92,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                   ),
                   validator: (text) {
                     if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return VALIDATION_USERNAME_ERROR_MSG;
+                    return null;
                   },
                 ),
                 const SizedBox(height: 16.0),

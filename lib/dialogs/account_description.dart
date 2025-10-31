@@ -2,8 +2,7 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../dto/account.dart';
-import '../utils/string_utils.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 
 class AccountDescription extends StatelessWidget {
 

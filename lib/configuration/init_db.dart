@@ -1,9 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 
-import '../repository/user_repository.dart';
+import 'package:account_monopoly/repository/user_repository.dart';
 
 class InitDb {
   static Future initialize() async {
@@ -11,7 +10,7 @@ class InitDb {
     _registerRepositories();
   }
 
-  static _registerRepositories(){
+  static void _registerRepositories(){
     GetIt.I.registerLazySingleton<UserRepository>(() => SembastUserRepository());
   }
 

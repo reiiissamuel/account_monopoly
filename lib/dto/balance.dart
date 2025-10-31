@@ -1,9 +1,6 @@
 import 'package:account_monopoly/enums/installment_type.dart';
-import 'package:account_monopoly/provider/game_provider.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:provider/provider.dart';
 
-import 'account.dart';
+import 'package:account_monopoly/dto/account.dart';
 
 class Balance{
   int round = 0;
@@ -21,7 +18,7 @@ class Balance{
         accounts[i].qtdEventPay + accounts[i].qtdHome + accounts[i].qtdHotel + accounts[i].ir + accounts[i].transferOut + accounts[i].otherPaymentsOut;
   }
 
-  generateInstallments({required int installments, required int total, required InstallmentType type, required int tax}){
+  void generateInstallments({required int installments, required int total, required InstallmentType type, required int tax}){
     int totalPlusTax = total + ((total * tax) / 100).floor();
     int installment = (totalPlusTax / installments).floor();
 

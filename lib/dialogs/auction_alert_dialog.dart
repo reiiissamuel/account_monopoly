@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'auction_dialog.dart';
+import 'package:account_monopoly/dialogs/auction_dialog.dart';
 
 
 class AuctionAlert extends StatelessWidget {

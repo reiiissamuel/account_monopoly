@@ -1,9 +1,9 @@
 import 'package:account_monopoly/dto/player.dart';
 import 'package:account_monopoly/enums/log_msg_type.dart';
 
-import '../provider/game_provider.dart';
-import '../utils/string_utils.dart';
-import 'auction.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/dto/auction.dart';
 
 class EventDTO{
 
@@ -21,7 +21,7 @@ class EventDTO{
     this.eventId = eventId ?? "${StringUtils.generateUUID(size: 8)}-${sourcePlayer.username}";
   }
 
-  toMap() {
+  Map<String, dynamic> toMap() {
     return {
       "eventId": eventId,
       "LogMsgType": type,

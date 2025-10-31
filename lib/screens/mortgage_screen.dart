@@ -2,11 +2,11 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../dialogs/confirm_action_dialog.dart';
-import '../dialogs/new_mortgage_dialog.dart';
-import '../dto/mortgage.dart';
-import '../enums/log_msg_type.dart';
-import '../utils/string_utils.dart';
+import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
+import 'package:account_monopoly/dialogs/new_mortgage_dialog.dart';
+import 'package:account_monopoly/dto/mortgage.dart';
+import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 
 class MortgageScreen extends StatefulWidget{
   const MortgageScreen({super.key});

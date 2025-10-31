@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:peerdart/peerdart.dart';
 
 class ConnectionExample extends StatefulWidget {
-  const ConnectionExample({Key? key}) : super(key: key);
+  const ConnectionExample({super.key});
   @override
   State<ConnectionExample> createState() => _ConnectionExampleState();
 }
@@ -158,8 +158,8 @@ class _ConnectionExampleState extends State<ConnectionExample> {
               TextField( 
                 controller: _msg_controller,
               ),
-              SizedBox(height: 20),
-              isServer ? Icon(Icons.computer, color: Colors.blue) : Icon(Icons.mobile_screen_share,  color: Colors.black)
+              const SizedBox(height: 20),
+              isServer ? const Icon(Icons.computer, color: Colors.blue) : const Icon(Icons.mobile_screen_share,  color: Colors.black)
 
 
             ],

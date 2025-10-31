@@ -6,7 +6,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:peerdart/peerdart.dart';
 import 'dart:developer';
 
-import '../utils/string_utils.dart';
 
 class PeerConnectionController {
   String myPeerId;
@@ -31,7 +30,7 @@ class PeerConnectionController {
       required this.peer,
       required this.myPeerId});
 
-  openConnectionsAsHost() {
+  void openConnectionsAsHost() {
     isServer = true;
     peer.on("open").listen((id) {
       isConnected = true;
@@ -79,7 +78,7 @@ class PeerConnectionController {
     });
   }
 
-  connectToHost(String peerSourceId) async {
+  Future<void> connectToHost(String peerSourceId) async {
     connWithServer = peer.connect(peerSourceId);
     connWithServer.on("open").listen((event) {
       isConnected = true;
@@ -118,7 +117,7 @@ class PeerConnectionController {
     return isConnected;
   }
 
-  closeConnection() {
+  void closeConnection() {
     if (isServer) {
       serverActiveConnections = [];
       isServer = false;
@@ -130,7 +129,7 @@ class PeerConnectionController {
     isConnected = false;
   }
 
-  reconnect() {
+  void reconnect() {
     //peer = peer ?? Peer(id: myPeerId);
     try{
       String nextPeerId = _getNextServerCandidatePeerId();
@@ -139,7 +138,7 @@ class PeerConnectionController {
       } else {
         connectToHost(nextPeerId);
       }
-    } on StateError catch(e){
+    } on StateError {
       openConnectionsAsHost();
     }
   }
@@ -150,7 +149,7 @@ class PeerConnectionController {
         .id;
   }
 
-  send(EventDTO event) {
+  void send(EventDTO event) {
     if (isServer) {
       for (DataConnection dataConnection in serverActiveConnections) {
         log(dataConnection.peer);
