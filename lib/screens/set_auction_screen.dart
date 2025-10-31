@@ -144,7 +144,7 @@ class SetAuctionScreenState extends State<SetAuctionScreen> {
                                         if (_formKey.currentState!.validate()) {
                                           Auction auction = Auction(
                                               id: StringUtils.generateUUID(size: 7),
-                                              auctionCaller: gameProvider.player.username,
+                                              auctionCaller: gameProvider.gameModelDTO!.player.username,
                                               propertyName: _nameController.text,
                                               startValue: int.parse(_priceController.text.replaceAll(".", "")),
                                               endValue: 0,

@@ -302,7 +302,7 @@ class HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.w500,
                               color: Colors.white)),
                       onPressed: () {
-                        Provider.of<UserProvider>(context).signOut();
+                        Provider.of<UserProvider>(context, listen: false).signOut();
                         Navigator.of(context).pop();
                       },
                     ),

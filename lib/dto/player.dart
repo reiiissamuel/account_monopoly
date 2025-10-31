@@ -13,7 +13,7 @@ class Player {
 
   Player({required this.id, required this.username, required this.receivedFrom, required this.payedTo, required this.isHost});
 
-  Player.of({required this.username, required userModelId, required gameId, required this.isHost}){
+  Player.of({required this.id, required this.username, required userModelId, required gameId, required this.isHost}){
     id = "$username-$userModelId-${StringUtils.generateUUID(size: 5)}-$gameId";
   }
 
@@ -38,4 +38,14 @@ class Player {
       "isHost": isHost
     };
   }
+
+  @override
+  bool equals(Player other) {
+    if (identical(this, other)) return true;
+
+    return other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

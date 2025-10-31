@@ -1,7 +1,6 @@
 import 'package:account_monopoly/dto/event_dto.dart';
 import 'package:account_monopoly/dto/player.dart';
 import 'package:account_monopoly/enums/log_msg_type.dart';
-import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:peerdart/peerdart.dart';
@@ -16,18 +15,23 @@ class PeerConnectionController {
   bool isConnected = false;
   bool isServer = false;
   GameProvider gameModelController;
+
   //Set<String> candidatesPeersId = <String>{};
 
   List<DataConnection> serverActiveConnections = List<DataConnection>.empty();
 
   static const String OPENED_CONNECTION_MSG = "Peer aberto para conexões.";
-  static const String CONNECTION_RECEIVED_MSG = "Nova conexão recebida do peer:";
+  static const String CONNECTION_RECEIVED_MSG =
+      "Nova conexão recebida do peer:";
   static const String PEER_CONNECTION_CLOSED = "Jogador offline:";
   static const String HOST_CONNECTION_CLOSED = "Jogador e host offline:";
-  PeerConnectionController({required this.gameModelController, required this.peer, required this.myPeerId});
-  
 
-  openConnectionsAsHost(){
+  PeerConnectionController(
+      {required this.gameModelController,
+      required this.peer,
+      required this.myPeerId});
+
+  openConnectionsAsHost() {
     isServer = true;
     peer.on("open").listen((id) {
       isConnected = true;
@@ -36,6 +40,7 @@ class PeerConnectionController {
 
     peer.on("close").listen((id) {
       closeConnection();
+      reconnect();
     });
 
     peer.on<DataConnection>("connection").listen((event) {
@@ -46,8 +51,7 @@ class PeerConnectionController {
         log('$CONNECTION_RECEIVED_MSG $data');
         gameModelController.eventComposer(
             type: LogMsgType.SERVER_HAND_SHAKE,
-            destinationPlayer: Player.ofDefinedId(username: "", id: data)
-        );
+            destinationPlayer: Player.ofDefinedId(username: "", id: data));
       });
 
       event.on("data").listen((data) {
@@ -56,10 +60,15 @@ class PeerConnectionController {
       });
 
       event.on("close").listen((event) {
-        DataConnection closedNode = serverActiveConnections.firstWhere((c) => !c.open);
-        serverActiveConnections.removeWhere((c) => c.connectionId == closedNode.peer);
+        DataConnection closedNode =
+            serverActiveConnections.firstWhere((c) => !c.open);
+        serverActiveConnections
+            .removeWhere((c) => c.connectionId == closedNode.peer);
         log('$PEER_CONNECTION_CLOSED $closedNode');
-        gameModelController.eventComposer(type: LogMsgType.LOST_CONNECTION, sourcePlayer: gameModelController.gameModelDTO!.players.firstWhere((p) => p.id == closedNode.peer));
+        gameModelController.eventComposer(
+            type: LogMsgType.LOST_CONNECTION,
+            sourcePlayer: gameModelController.gameModelDTO!.othersPlayers
+                .firstWhere((p) => p.id == closedNode.peer));
       });
 
       event.on('disconnected').listen((event) {
@@ -70,28 +79,22 @@ class PeerConnectionController {
     });
   }
 
-  connectToHost(String peerSourceId){
+  connectToHost(String peerSourceId) async {
     connWithServer = peer.connect(peerSourceId);
     connWithServer.on("open").listen((event) {
-      isConnected = true;});
+      isConnected = true;
+    });
 
     connWithServer.on("close").listen((event) {
       log(HOST_CONNECTION_CLOSED);
       closeConnection();
       late DataConnection closedNode;
       closedNode = serverActiveConnections.firstWhere((c) => !c.open);
-      gameModelController.processComingEvent(
-        EventDTO(
-            type: LogMsgType.LOST_CONNECTION,
-            sourcePlayer: gameModelController.gameModelDTO!.players.firstWhere((p) => p.id == closedNode.peer))
-      );
-      String nextPeerId = _getNextServerCandidatePeerId();
-      peer = Peer(id: myPeerId);
-      if(myPeerId == nextPeerId){
-        openConnectionsAsHost();
-      } else {
-        connectToHost(nextPeerId);
-      }
+      gameModelController.processComingEvent(EventDTO(
+          type: LogMsgType.LOST_CONNECTION,
+          sourcePlayer: gameModelController.gameModelDTO!.othersPlayers
+              .firstWhere((p) => p.id == closedNode.peer)));
+      reconnect();
     });
 
     connWithServer.on("data").listen((data) {
@@ -100,12 +103,11 @@ class PeerConnectionController {
 
     connWithServer.on('disconnected').listen((event) {
       //todo tratar desonexão
-      print("Desconectado");
     });
 
-    connWithServer.on('peer-unavailable').listen((event) {
+    /*connWithServer.on('peer-unavailable').listen((event) {
       throw PeerUnavailableException;
-    });
+    });*/
   }
 
   Future<bool> _hasInternet() async {
@@ -115,13 +117,9 @@ class PeerConnectionController {
     }
     return isConnected;
   }
-  
-  String _getNextServerCandidatePeerId(){
-    return gameModelController.gameModelDTO!.players.firstWhere((p) => !p.isHost).id;
-  }
 
-  closeConnection(){
-    if(isServer){
+  closeConnection() {
+    if (isServer) {
       serverActiveConnections = [];
       isServer = false;
     } else {
@@ -132,13 +130,33 @@ class PeerConnectionController {
     isConnected = false;
   }
 
-  send(EventDTO event){
-    if(isServer){
-      for(DataConnection dataConnection in serverActiveConnections){
+  reconnect() {
+    //peer = peer ?? Peer(id: myPeerId);
+    try{
+      String nextPeerId = _getNextServerCandidatePeerId();
+      if (myPeerId == nextPeerId) {
+        openConnectionsAsHost();
+      } else {
+        connectToHost(nextPeerId);
+      }
+    } on StateError catch(e){
+      openConnectionsAsHost();
+    }
+  }
+
+  String _getNextServerCandidatePeerId() {
+    return gameModelController.gameModelDTO!.othersPlayers
+        .firstWhere((p) => !p.isHost)
+        .id;
+  }
+
+  send(EventDTO event) {
+    if (isServer) {
+      for (DataConnection dataConnection in serverActiveConnections) {
         log(dataConnection.peer);
 
         log(event.sourcePlayer.id);
-        if(dataConnection.peer != event.sourcePlayer.id){
+        if (dataConnection.peer != event.sourcePlayer.id) {
           dataConnection.send(event.toMap());
         }
       }
@@ -146,5 +164,4 @@ class PeerConnectionController {
       connWithServer.send(event.toMap());
     }
   }
-
 }

@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/widgets/default_dropdown_menu.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
+import '../dto/player.dart';
 import '../provider/game_provider.dart';
 import '../utils/tips_resourse.dart';
 import '../widgets/tip_icon_button.dart';
@@ -265,7 +268,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                     id: generatedGameId,
                     currentGameBalance: int.parse(_initialBalanceController.text.replaceAll(".", "")),
                     limitPlayer: dropdownValue,
-                    players: [],
+                    othersPlayers: HashSet<Player>(),
                     initalGameBalance:  int.parse(_initialBalanceController.text.replaceAll(".", "")),
                     roundBonus: int.parse(dropdownBonusValue.replaceAll(".", "")),
                     levelTax: StringUtils.setTax(dropdownLoanTax),
@@ -275,7 +278,7 @@ class NewGameScreenState extends State<NewGameScreen> {
 
                 );
                 gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: gameData);
+                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, game: gameData);
               },
               child: const Text("Confirmar", style: TextStyle(fontSize: 17.0, color: Colors.white )),
             ),

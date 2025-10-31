@@ -155,7 +155,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
             gameProvider.eventComposer(
                 type: widget.eventType,
                 value: value,
-                destinationPlayer: gameProvider.gameModelDTO!.players.firstWhere((p) => p.id == widget.playerToPayId)
+                destinationPlayer: gameProvider.gameModelDTO!.othersPlayers.firstWhere((p) => p.id == widget.playerToPayId)
             );
             Navigator.of(context).pop();
             Navigator.of(context).pop();

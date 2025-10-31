@@ -85,7 +85,7 @@ class AuctionDialogState extends State<AuctionDialog> {
                               ),),
                             const SizedBox(height: 16.0),
 
-                            (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.player.username)
+                            (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.gameModelDTO!.player.username)
                                 ?
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -94,14 +94,14 @@ class AuctionDialogState extends State<AuctionDialog> {
                                     borderRadius: BorderRadius.circular(20.0)
                                 ),
                               ),
-                              onPressed: (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.player.username) ?  () {
+                              onPressed: (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.gameModelDTO!.player.username) ?  () {
                                 gameProvider.eventComposer(type: LogMsgType.AUCTION_END);
                                 Navigator.of(context).pop();
                                 Navigator.of(context).pop();
                               } : null,
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.player.username)
+                                child: (currentAuction.areTherePlayersIn() && currentAuction.buyer == gameProvider.gameModelDTO!.player.username)
                                     ? const Text("Concluir Compra", style: TextStyle(color: Colors.white))
                                     : const Text("Sair", style: TextStyle(color: Colors.white)),
                               ),
@@ -119,7 +119,7 @@ class AuctionDialogState extends State<AuctionDialog> {
                                   ),
                                   onPressed: (
                                       gameProvider.hasEnoughBalance(currentAuction.currentValue)
-                                          && currentAuction.buyer!=gameProvider.player.username) ? (){
+                                          && currentAuction.buyer!=gameProvider.gameModelDTO!.player.username) ? (){
                                     if(currentAuction.buyer.isEmpty){
                                       gameProvider.eventComposer(type: LogMsgType.AUCTION_PAY);
                                     } else {
@@ -141,7 +141,7 @@ class AuctionDialogState extends State<AuctionDialog> {
                                     ),
                                   ),
                                   onPressed: (gameProvider.hasEnoughBalance(currentAuction.currentValue)
-                                          && currentAuction.buyer!=gameProvider.player.username) ? () {
+                                          && currentAuction.buyer!=gameProvider.gameModelDTO!.player.username) ? () {
                                     if(currentAuction.buyer.isEmpty){
                                       gameProvider.eventComposer(type: LogMsgType.AUCTION_PAY);
                                     } else {
@@ -164,7 +164,7 @@ class AuctionDialogState extends State<AuctionDialog> {
                                 onPressed: (gameProvider.hasEnoughBalance(
                                             currentAuction.currentValue) &&
                                         currentAuction.buyer !=
-                                            gameProvider.player.username)
+                                            gameProvider.gameModelDTO!.player.username)
                                     ? () => gameProvider.eventComposer(
                                         type: LogMsgType.AUCTION_RAISE,
                                         value: 250000)
@@ -186,7 +186,7 @@ class AuctionDialogState extends State<AuctionDialog> {
                                     ),
                                   ),
                                   onPressed:  (gameProvider.hasEnoughBalance(currentAuction.currentValue)
-                                          && currentAuction.buyer!=gameProvider.player.username)
+                                          && currentAuction.buyer!=gameProvider.gameModelDTO!.player.username)
                                       ? () => gameProvider.eventComposer(type: LogMsgType.AUCTION_RAISE, value: 500000)
                                       : null,
                                   child: const Padding(
@@ -201,7 +201,7 @@ class AuctionDialogState extends State<AuctionDialog> {
                                         borderRadius: BorderRadius.circular(20.0)
                                     ),
                                   ),
-                                  onPressed: currentAuction.buyer!=gameProvider.player.username ? ()  {
+                                  onPressed: currentAuction.buyer!=gameProvider.gameModelDTO!.player.username ? ()  {
                                       gameProvider.eventComposer(type: LogMsgType.AUCTION_LEAVE);
                                       Navigator.of(context).pop();
                                       Navigator.of(context).pop();

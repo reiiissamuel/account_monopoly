@@ -93,10 +93,10 @@ class UserProvider extends ChangeNotifier{
     });
   }
 
-  Future<void> updateUser()async {
+  Future<void> updateUser() async {
     isLoading = true;
     notifyListeners();
-    userRepository.updateUser(user!);
+    await userRepository.updateUser(user!);
     isLoading = false;
     notifyListeners();
   }
@@ -159,7 +159,7 @@ class UserProvider extends ChangeNotifier{
     isLoading = true;
     notifyListeners();
     user!.games.removeWhere((game) => game.id == gameId);
-    userRepository.updateUser(user!);
+    await userRepository.updateUser(user!);
     isLoading = false;
     notifyListeners();
   }

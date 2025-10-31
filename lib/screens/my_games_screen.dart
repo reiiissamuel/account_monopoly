@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../dialogs/confirm_action_dialog.dart';
 import '../provider/game_provider.dart';
 import '../utils/string_utils.dart';
+import 'game_screen.dart';
 
 
 class MyGamesScreen extends StatelessWidget {
@@ -75,7 +76,7 @@ class MyGamesScreen extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             Text(
-              'Criador: ${game.player.username}',
+              'Id: ${game.id}',
               style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -151,7 +152,7 @@ class MyGamesScreen extends StatelessWidget {
 
   Future<void> _onSuccess() async {
     Navigator.of(_scafoldKey.currentState!.context).pop();
-    //Navigator.pushReplacement(_scafoldKey.currentState!.context, MaterialPageRoute(builder: (context) => GameScreen()))
-     //   .then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());
+    Navigator.pushReplacement(_scafoldKey.currentState!.context, MaterialPageRoute(builder: (context) => const GameScreen()));
+        //.then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());
   }
 }

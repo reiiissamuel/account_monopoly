@@ -26,15 +26,15 @@ class BeneficiariesScreen extends StatelessWidget {
             centerTitle: true,
           ),
           backgroundColor: Colors.black,
-          body: gameProvider.gameModelDTO!.players.isEmpty ?
+          body: gameProvider.gameModelDTO!.othersPlayers.isEmpty ?
           Center(
             child: Icon(Icons.person, size: 60.0, color: Theme.of(context).primaryColor)
           )
           : ListView.builder(
               padding: const EdgeInsets.all(10.0),
-              itemCount: gameProvider.gameModelDTO!.players.length,
+              itemCount: gameProvider.gameModelDTO!.othersPlayers.length,
               itemBuilder: (context, index) {
-                return _beneficiaryTile(context, gameProvider.gameModelDTO!.players[index]);
+                return _beneficiaryTile(context, gameProvider.gameModelDTO!.othersPlayers.toList(growable: false)[index]);
               }),
         );
       },

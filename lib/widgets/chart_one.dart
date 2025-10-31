@@ -14,7 +14,7 @@ class ChartOne extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    List<Player> players = Provider.of<GameProvider>(context).gameModelDTO!.players;
+    List<Player> players = Provider.of<GameProvider>(context).gameModelDTO!.othersPlayers.toList(growable: false);
 
     List<charts.Series<Player, String>> series = [
       charts.Series(

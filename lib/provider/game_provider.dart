@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:account_monopoly/configuration/peer_connection_controller.dart';
 import 'package:account_monopoly/enums/installment_type.dart';
 import 'package:account_monopoly/exception/peer_unavailable_exception.dart';
@@ -19,7 +21,7 @@ import '../enums/log_msg_type.dart';
 
 class GameProvider extends ChangeNotifier {
   late UserProvider userModelController;
-  late Player player;
+  //late Player player;
   PeerConnectionController? peerConnectionController;
   GameModelDTO? gameModelDTO;
   bool isLoading = false;
@@ -62,19 +64,19 @@ class GameProvider extends ChangeNotifier {
         if(destinationPlayer != null || destinationPlayer!.id == userModelController.user!.id.toString()) {
           _updateBalance(value!);
         }
-        gameModelDTO!.players
+        gameModelDTO!.othersPlayers
             .firstWhere((p) => p.id == sourceplayer.id)
             .receivedFrom += value!;
         break;
       case LogMsgType.AUCTION_START:
         isThereAuction = true;
-        event.auction!.whichPlayersIdStillIn.add(Map.of({player.id : true}));
+        event.auction!.whichPlayersIdStillIn.add(Map.of({gameModelDTO!.player.id : true}));
         gameModelDTO!.auctions.add(event.auction!);
         break;
       case LogMsgType.AUCTION_END:
         isThereAuction = false;
         gameModelDTO!.auctions.last = event.auction!;
-        if(gameModelDTO!.auctions.last.auctionCaller == player.username){
+        if(gameModelDTO!.auctions.last.auctionCaller == gameModelDTO!.player.username){
           _updateBalance(gameModelDTO!.auctions.last.endValue);
         }
         gameModelDTO!.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
@@ -83,21 +85,20 @@ class GameProvider extends ChangeNotifier {
         gameModelDTO!.auctions.last = event.auction!;
         break;
       case LogMsgType.JOIN_TABLE:
-        int i = gameModelDTO!.players.indexWhere((p) => p.id == sourceplayer.id);
-        i >= 0 ? gameModelDTO!.players[i] = sourceplayer : gameModelDTO!.players.add(sourceplayer);
+        gameModelDTO!.othersPlayers.add(sourceplayer);
         break;
       case LogMsgType.SERVER_HAND_SHAKE:
-        _dealCameHandShakeEvent(event);
+        _dealHostHandShakeEvent(event);
         break;
       case LogMsgType.BANKRUPTCY:
         if (event.sourcePlayer.isHost) {
           //todo vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
         }
-        gameModelDTO!.players.removeWhere((p) =>
+        gameModelDTO!.othersPlayers.removeWhere((p) =>
         p.id == sourceplayer.id);
         break;
       case LogMsgType.LOST_CONNECTION:
-        gameModelDTO!.players.removeWhere((p) =>
+        gameModelDTO!.othersPlayers.removeWhere((p) =>
         p.id == sourceplayer.id);
       default:
         break;
@@ -113,7 +114,7 @@ class GameProvider extends ChangeNotifier {
     EventDTO(
         type: type,
         destinationPlayer: destinationPlayer,
-        sourcePlayer: sourcePlayer ?? player,
+        sourcePlayer: sourcePlayer ?? gameModelDTO!.player,
         value: value);
 
     switch (event.type) {
@@ -136,7 +137,7 @@ class GameProvider extends ChangeNotifier {
       case LogMsgType.TRANSFER:
         gameModelDTO!.account.transferOut += value!;
         _updateBalance(-value);
-        gameModelDTO!.players
+        gameModelDTO!.othersPlayers
             .firstWhere((p) => p.id == destinationPlayer!.id)
             .payedTo += value;
         break;
@@ -173,7 +174,7 @@ class GameProvider extends ChangeNotifier {
         isThereAuction = true;
         event.auction = auction;
         event.value = auction!.startValue;
-        event.auction!.whichPlayersIdStillIn.add(Map.of({player.id : false}));
+        event.auction!.whichPlayersIdStillIn.add(Map.of({gameModelDTO!.player.id : false}));
         gameModelDTO!.auctions.add(auction!);
         break;
       case LogMsgType.AUCTION_END:
@@ -184,22 +185,22 @@ class GameProvider extends ChangeNotifier {
         break;
       case LogMsgType.AUCTION_LEAVE:
         isThereAuction = false;
-        gameModelDTO!.auctions.last!.whichPlayersIdStillIn.firstWhere((e) => e.containsKey([player.id]))[player.id] = false;
+        gameModelDTO!.auctions.last!.whichPlayersIdStillIn.firstWhere((e) => e.containsKey([gameModelDTO!.player.id]))[gameModelDTO!.player.id] = false;
         event.auction = gameModelDTO!.auctions.last;
         break;
       case LogMsgType.AUCTION_PAY:
-        gameModelDTO!.auctions.last.buyer = player.username;
+        gameModelDTO!.auctions.last.buyer = gameModelDTO!.player.username;
         gameModelDTO!.auctions.last.currentValue = gameModelDTO!.auctions.last.startValue;
         event.auction = gameModelDTO!.auctions.last;
         event.value = gameModelDTO!.auctions.last.startValue;
         break;
       case (LogMsgType.AUCTION_RAISE):
-        gameModelDTO!.auctions.last.buyer = player.username;
+        gameModelDTO!.auctions.last.buyer = gameModelDTO!.player.username;
         gameModelDTO!.auctions.last.currentValue += value!;
         event.auction = gameModelDTO!.auctions.last;
         break;
       case LogMsgType.BANKRUPTCY:
-        if (gameModelDTO!.players.isNotEmpty) {
+        if (gameModelDTO!.othersPlayers.isNotEmpty) {
           gameModelDTO!.youBankrupt = true;
         }
         break;
@@ -207,19 +208,20 @@ class GameProvider extends ChangeNotifier {
         gameModelDTO!.youWon = true;
         break;
       case LogMsgType.SERVER_HAND_SHAKE:
-        player.isHost = true;
-        int i = gameModelDTO!.players.indexWhere((p) => p.id == player.id);
-        i >= 0 ? gameModelDTO!.players[i] = player : gameModelDTO!.players.add(player);
+        gameModelDTO!.player.isHost = true;
+         //int i = gameModelDTO!.othersPlayers.indexWhere((p) => p.id == gameModelDTO!.player.id);
+        //i >= 0 ? gameModelDTO!.othersPlayers[i] = gameModelDTO!.player : gameModelDTO!.othersPlayers.add(gameModelDTO!.player);
         event.gameData = gameModelDTO!.toInitialTemplate();
         break;
       case LogMsgType.LOST_CONNECTION:
-        gameModelDTO!.players.removeWhere((p) => p.id == event.sourcePlayer.id);
+        gameModelDTO!.othersPlayers.removeWhere((p) => p.id == event.sourcePlayer.id);
         break;
       default:
         break;
     }
     _sendEvent(event);
     _logComposer(event);
+    await _updateUserModel();
     notifyChanges(false);
   }
 
@@ -232,34 +234,38 @@ class GameProvider extends ChangeNotifier {
     if (event.type.messageScope != null) {
       gameModelDTO!.logs.add(
           event.type.messageScope
-          !.replaceAll('{SOURCE}', event.sourcePlayer.username == player.username ? 'Você' : event.sourcePlayer.username)
+          !.replaceAll('{SOURCE}', event.sourcePlayer.username == gameModelDTO!.player.username ? 'Você' : event.sourcePlayer.username)
               .replaceAll('{VALUE}', StringUtils.currencyFormat(event.value.toString()))
-              .replaceAll('{DEST}', event.destinationPlayer != null && event.destinationPlayer!.username == player.username ? 'Você' : event.sourcePlayer.username)
+              .replaceAll('{DEST}', event.destinationPlayer != null && event.destinationPlayer!.username == gameModelDTO!.player.username ? 'Você' : event.sourcePlayer.username)
       );
     }
   }
 
-  void createNewGame({required GameModelDTO gameModelDTO, required Function onFail, required Function onSuccess}) async {
+  void createNewGame({required GameModelDTO game, required Function onFail, required Function onSuccess}) async {
     isLoading = true;
     notifyListeners();
     String usermodelname = userModelController.user!.username;
     int usermodelId = userModelController.user!.id!;
     String generatedGameId = StringUtils.generateUUID(size: 8);
 
-    player = Player.of(
+    gameModelDTO = game;
+    gameModelDTO!.player = Player.of(
+      id:  GameProvider._generatePlayerId(
+          usermodelname: userModelController.user!.username,
+          usermodelId: userModelController.user!.id!,
+          gameId: gameModelDTO!.id),
       userModelId: usermodelId,
       gameId: generatedGameId,
       username: usermodelname,
       isHost: true
     );
 
-    this.gameModelDTO = gameModelDTO;
+
     try{
-      _createPeerConnectionController(peerId: player.id);
-      this.gameModelDTO!.players.add(player);
+      _createPeerConnectionController(peerId: gameModelDTO!.player.id);
       peerConnectionController!.openConnectionsAsHost();
-      userModelController.user!.games.add(gameModelDTO);
-      _updateUserModel();
+      userModelController.user!.games.add(gameModelDTO!);
+      await _updateUserModel();
     } catch (e) {
       onFail("Algo deu errado!");
     } finally{
@@ -269,15 +275,15 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  void getGameById({required GameModelDTO gameModelDTO,  required Function onFail, required Function onSuccess}){
+  Future<void> getGameById({required GameModelDTO gameModelDTO,  required Function onFail, required Function onSuccess}) async {
     isLoading = true;
     notifyListeners();
+    gameModelDTO!.player.isHost = false;
+    this.gameModelDTO = gameModelDTO;
+    _createPeerConnectionController(peerId: this.gameModelDTO!.player.id);
     try {
-      this.gameModelDTO = gameModelDTO;
-      _createPeerConnectionController(peerId: this.gameModelDTO!.player.id);
-
-      peerConnectionController!.connectToHost(gameModelDTO.players.firstWhere((p) => p.isHost).id);
-    } on PeerUnavailableException catch(e){
+      peerConnectionController!.reconnect();
+    } on Exception catch(e) {
       onFail(e);
     }
     isLoading = false;
@@ -317,12 +323,13 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _createPeerConnectionController({required String peerId}){
+    Peer peer = Peer(id: peerId);
     peerConnectionController = PeerConnectionController(
-        gameModelController: this, peer: Peer(id: peerId), myPeerId: peerId);
+        gameModelController: this, peer: peer, myPeerId: peerId);
   }
 
-  void _updateUserModel(){
-    userModelController.updateUser().catchError((e) => {
+  Future<void> _updateUserModel() async {
+    await userModelController.updateUser().catchError((e) => {
       throw e
     });
   }
@@ -331,22 +338,22 @@ class GameProvider extends ChangeNotifier {
     return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
   }
 
-  void _dealCameHandShakeEvent(EventDTO event){
+  void _dealHostHandShakeEvent(EventDTO event){
     if(gameModelDTO == null){
       gameModelDTO = event.gameData;
     } else {
-      gameModelDTO!.players.clear();
-      gameModelDTO!.players.addAll(event.gameData!.players);
+      gameModelDTO!.othersPlayers.clear();
     }
 
-    Player player = Player.ofDefinedId(
-      id: peerConnectionController!.myPeerId,
-      username: userModelController.user!.username
+    gameModelDTO!.othersPlayers.add(event.sourcePlayer); //add hostplayer as otherplayer
+    gameModelDTO!.player = Player.ofDefinedId(
+        id: peerConnectionController!.myPeerId,
+        username: userModelController.user!.username
     );
     _sendEvent(EventDTO(
         type: LogMsgType.JOIN_TABLE,
         destinationPlayer: event.sourcePlayer,
-        sourcePlayer: player,
+        sourcePlayer: gameModelDTO!.player,
         value: 0));
     isLoading = false;
     notifyListeners();
@@ -419,7 +426,7 @@ class GameModelDTO{
   Player player = Player.empty();
   Account account = Account.empty();
   Balance balance = Balance.empty();
-  List<Player> players = List<Player>.empty();
+  Set<Player> othersPlayers = HashSet<Player>();
   List<Mortgage> mortgages = [];
   List<String> logs = [];
   //List<Investment> investments= List<Investment>();
@@ -434,9 +441,9 @@ class GameModelDTO{
 
   GameModelDTO.empty();
   GameModelDTO({Player ?player, required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.roundBonus,
-    required this.levelTax, required this.limitPlayer, required this.players, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
+    required this.levelTax, required this.limitPlayer, required this.othersPlayers, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
   GameModelDTO.initAllFields({required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.account,
-    required this.balance, required this.players, required this.mortgages, required this.logs, required this.chances, required this.roundBonus,
+    required this.balance, required this.othersPlayers, required this.mortgages, required this.logs, required this.chances, required this.roundBonus,
     required this.youBankrupt, required this.auctions, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
  
   GameModelDTO toInitialTemplate(){
@@ -447,8 +454,8 @@ class GameModelDTO{
       roundBonus: roundBonus,
       player: player,
       levelTax: levelTax,
-      limitPlayer: limitPlayer, 
-      players: players,
+      limitPlayer: limitPlayer,
+      othersPlayers: othersPlayers,
       auctionEnabled: auctionEnabled,
       mortgageEnabled: mortgageEnabled,
       chancesEnabled: chancesEnabled
@@ -463,7 +470,7 @@ class GameModelDTO{
       'account': account.toMap(),
       'balance': balance.toMap(),
       'player' : player.toMap(),
-      'players': players.map((player) => player.toMap()).toList(),
+      'othersPlayers': othersPlayers.map((player) => player.toMap()).toList(),
       'mortgages': mortgages.map((mortgage) => mortgage.toMap()).toList(),
       'logs': logs,
       'chances': chances.map((chance) => chance.toMap()).toList(),
@@ -483,7 +490,7 @@ class GameModelDTO{
         currentGameBalance: map['currentGameBalance'] as int,
         account: Account.fromMap(map['account']),
         balance: Balance.fromMap(map['balance']),
-        players: (map['players'] as List<dynamic>).map((p) => Player.fromMap(p as Map<String, dynamic>)).toList(),
+        othersPlayers: (map['othersPlayers'] as List<dynamic>).map((p) => Player.fromMap(p as Map<String, dynamic>)).toSet(),
         mortgages: (map['mortgages'] as List<dynamic>).map((h) => Mortgage.fromMap(h as Map<String, dynamic>)).toList(),
         logs: (map['logs'] as List<dynamic>).cast<String>(),
         chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
