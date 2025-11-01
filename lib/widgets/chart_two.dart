@@ -1,7 +1,6 @@
 import 'package:account_monopoly/utils/string_utils.dart';
-import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:fl_chart/fl_chart.dart'; // Novo pacote de gráficos
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dto/account.dart';
@@ -9,42 +8,62 @@ import 'package:account_monopoly/enums/pie_chart_type.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 
 /*
-* esse grafico da uma descrição dos gastos, ou lucros, podendo ser por rodada ou geral
-* */
+* Esse gráfico dá uma descrição dos gastos, ou lucros, podendo ser por rodada ou geral,
+* utilizando o pacote fl_chart.
+*/
 
 class ChartTwo extends StatelessWidget {
-
-  String chartTitle = "";
-  PieChartType chartType;
-  late GameProvider gameProvider;
+  final String chartTitle;
+  final PieChartType chartType;
+  
+  // Lista de fontes de dados do gráfico. Não precisa de 'late' ou inicialização complexa.
   List<ChartSource> sources = [];
 
   ChartTwo({super.key, required this.chartTitle, required this.chartType});
 
-   void _buildChartSources(PieChartType type, GameProvider gameProvider){
+  // Cores adaptadas do MaterialPalette (charts_flutter) para Color (fl_chart/Flutter)
+  static final Map<String, Color> _palette = {
+    "Transferencia": Colors.purple.shade500,
+    "Compras": Colors.green.shade500,
+    "Construções": Colors.blue.shade500,
+    "Eventos": Colors.red.shade500,
+    "Parcelamento": Colors.yellow.shade500,
+    "I. Renda": Colors.grey.shade500,
+    "Outros": Colors.lime.shade500,
+    "Bonus": Colors.green.shade500, // Reutilizando cores
+    "Hipotecas": Colors.red.shade500, // Reutilizando cores
+    "Empréstimo": Colors.yellow.shade700,
+    "Restituição": Colors.grey.shade700,
+    "Leilões": Colors.deepOrange.shade500,
+  };
 
-     (type == PieChartType.GENERAL_EXPANSES ||  type == PieChartType.ROUND_EXPANSES) ?
-     sources = [
-       ChartSource(indice: "Transferencia", value: 0, color: MaterialPalette.purple.shadeDefault),
-       ChartSource(indice: "Compras", value: 0, color: MaterialPalette.green.shadeDefault),
-       ChartSource(indice: "Construções", value: 0, color: MaterialPalette.blue.shadeDefault),
-       ChartSource(indice: "Eventos", value: 0, color: MaterialPalette.red.shadeDefault),
-       ChartSource(indice: "Parcelamento", value: 0, color: MaterialPalette.yellow.shadeDefault),
-       ChartSource(indice: "I. Renda", value: 0, color: MaterialPalette.gray.shadeDefault),
-       ChartSource(indice: "Outros", value: 0, color: MaterialPalette.lime.shadeDefault)
-     ]
-         :
-     sources = [
-       ChartSource(indice: "Transferencia", value: 0, color: MaterialPalette.purple.shadeDefault),
-       ChartSource(indice: "Bonus", value: 0, color: MaterialPalette.green.shadeDefault),
-       ChartSource(indice: "Eventos", value: 0, color: MaterialPalette.blue.shadeDefault),
-       ChartSource(indice: "Hipotecas", value: 0, color: MaterialPalette.red.shadeDefault),
-       ChartSource(indice: "Empréstimo", value: 0, color: MaterialPalette.yellow.shadeDefault),
-       ChartSource(indice: "Restituição", value: 0, color: MaterialPalette.gray.shadeDefault),
-       ChartSource(indice: "Leilões", value: 0, color: MaterialPalette.deepOrange.shadeDefault),
-       ChartSource(indice: "Outros", value: 0, color: MaterialPalette.lime.shadeDefault)
-     ];
-    switch(type){
+  void _buildChartSources(PieChartType type, GameProvider gameProvider) {
+    // 1. Inicializa a lista de fontes (gastos ou lucros)
+    if (type == PieChartType.GENERAL_EXPANSES || type == PieChartType.ROUND_EXPANSES) {
+      sources = [
+        ChartSource(indice: "Transferencia", value: 0, color: _palette["Transferencia"]!),
+        ChartSource(indice: "Compras", value: 0, color: _palette["Compras"]!),
+        ChartSource(indice: "Construções", value: 0, color: _palette["Construções"]!),
+        ChartSource(indice: "Eventos", value: 0, color: _palette["Eventos"]!),
+        ChartSource(indice: "Parcelamento", value: 0, color: _palette["Parcelamento"]!),
+        ChartSource(indice: "I. Renda", value: 0, color: _palette["I. Renda"]!),
+        ChartSource(indice: "Outros", value: 0, color: _palette["Outros"]!)
+      ];
+    } else { // Lucros
+      sources = [
+        ChartSource(indice: "Transferencia", value: 0, color: _palette["Transferencia"]!),
+        ChartSource(indice: "Bonus", value: 0, color: _palette["Bonus"]!),
+        ChartSource(indice: "Eventos", value: 0, color: _palette["Eventos"]!),
+        ChartSource(indice: "Hipotecas", value: 0, color: _palette["Hipotecas"]!),
+        ChartSource(indice: "Empréstimo", value: 0, color: _palette["Empréstimo"]!),
+        ChartSource(indice: "Restituição", value: 0, color: _palette["Restituição"]!),
+        ChartSource(indice: "Leilões", value: 0, color: _palette["Leilões"]!),
+        ChartSource(indice: "Outros", value: 0, color: _palette["Outros"]!)
+      ];
+    }
+
+    // 2. Preenche os valores
+    switch (type) {
       case PieChartType.GENERAL_EXPANSES:
         for (Account ac in gameProvider.gameModelDTO!.balance.accounts) {
           sources[0].value += ac.transferOut;
@@ -88,62 +107,134 @@ class ChartTwo extends StatelessWidget {
         sources[6].value += gameProvider.gameModelDTO!.account.otherPaymentsOut;
         break;
     }
+    
+    // 3. Remove itens com valor zero, pois o fl_chart não os renderiza bem.
+    sources.removeWhere((source) => source.value == 0);
+  }
+
+
+  // Converte a lista de ChartSource (filtrada) em PieChartSectionData
+  List<PieChartSectionData> _createSections(BuildContext context) {
+    return sources.asMap().entries.map((entry) {
+      final int index = entry.key;
+      final ChartSource data = entry.value;
+
+      return PieChartSectionData(
+        color: data.color,
+        value: data.value.toDouble(),
+        title: StringUtils.currencyFormat(data.value.toString()), // Exibe o valor formatado
+        radius: 50, // Tamanho do raio
+        titleStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Color(0xffffffff),
+        ),
+        // Adiciona um Tooltip (rótulo) simples para que o usuário saiba o que é
+        badgeWidget: null, // Pode ser usado para ícones
+        // Rótulo principal, caso você queira um rótulo flutuante
+        titlePositionPercentageOffset: 0.55, 
+      );
+    }).toList();
+  }
+
+  // Constrói a legenda (já que o fl_chart não tem uma embutida robusta)
+  Widget _buildLegend(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: sources.map((source) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2.0),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: source.color,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '${source.indice}: ${StringUtils.currencyFormat(source.value.toString())}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      )).toList(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final gameProvider = Provider.of<GameProvider>(context);
+    _buildChartSources(chartType, gameProvider);
+    
+    // Verifica se há dados para exibir. Se não houver, mostra uma mensagem.
+    if (sources.isEmpty) {
+        return Container(
+          height: 220,
+          padding: const EdgeInsets.all(2.0),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: Center(
+              child: Text(
+                'Nenhum dado disponível para este gráfico.',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          ),
+        );
+    }
 
-    _buildChartSources(chartType, Provider.of<GameProvider>(context));
-
-    List<charts.Series<ChartSource, String> > series =[
-      charts.Series<ChartSource, String>(
-          id: "expansesround",
-          data: sources,
-          domainFn: (ChartSource source, _) => source.indice,
-          measureFn: (ChartSource source, _) => source.value,
-          colorFn: (ChartSource source, _) => source.color,
-          labelAccessorFn: (ChartSource row, _) =>'${row.indice}:${row.value}',
-      )];
+    final sections = _createSections(context);
 
     return Container(
-      height: 220,
+      height: 250, // Aumentei um pouco para acomodar a legenda melhor
       padding: const EdgeInsets.all(2.0),
       child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: Padding(
-          padding: const EdgeInsets.all(4.0),
+          padding: const EdgeInsets.all(8.0),
           child: Column(
             children: <Widget>[
               Text(
                 chartTitle,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 12),
               Expanded(
-              child: charts.PieChart<String>(series, animate: true,defaultRenderer:  charts.ArcRendererConfig(arcRatio: 1,
-                  arcWidth: 50), behaviors: [
-                charts.DatumLegend(
-                  // Positions for "start" and "end" will be left and right respectively
-                  // for widgets with a build context that has directionality ltr.
-                  // For rtl, "start" and "end" will be right and left respectively.
-                  // Since this example has directionality of ltr, the legend is
-                  // positioned on the right side of the chart.
-                  position: charts.BehaviorPosition.end,
-                  // By default, if the position of the chart is on the left or right of
-                  // the chart, [horizontalFirst] is set to false. This means that the
-                  // legend entries will grow as new rows first instead of a new column.
-                  horizontalFirst: false,
-                  // This defines the padding around each legend entry.
-                  cellPadding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
-                  // Set [showMeasures] to true to display measures in series legend.
-                  showMeasures: true,
-                  // Configure the measure value to be shown by default in the legend.
-                  legendDefaultMeasure: charts.LegendDefaultMeasure.firstValue,
-                  // Optionally provide a measure formatter to format the measure value.
-                  // If none is specified the value is formatted as a decimal.
-                  measureFormatter: (value) {
-                    return value == null ? '-' : StringUtils.currencyFormat(value.toString());
-                  },
+                child: Row(
+                  children: [
+                    // Gráfico de Pizza (Ocupa 40% da largura)
+                    Expanded(
+                      flex: 4,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 2, // Espaçamento entre as fatias
+                          centerSpaceRadius: 40, // Raio do buraco central (donut)
+                          startDegreeOffset: -90, // Começa em cima
+                          borderData: FlBorderData(show: false),
+                          sections: sections,
+                          pieTouchData: PieTouchData(enabled: false), // Desabilita o toque para simplicidade
+                        ),
+                        swapAnimationDuration: const Duration(milliseconds: 150),
+                        swapAnimationCurve: Curves.linear,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Legenda (Ocupa 60% da largura)
+                    Expanded(
+                      flex: 6,
+                      child: SingleChildScrollView(
+                        child: _buildLegend(context),
+                      ),
+                    ),
+                  ],
                 ),
-              ],))
+              ),
             ],
           ),
         ),
@@ -155,7 +246,7 @@ class ChartTwo extends StatelessWidget {
 class ChartSource {
   String indice;
   int value;
-  Color color = MaterialPalette.green.shadeDefault;
+  Color color; // Cor agora é um objeto Color padrão do Flutter
 
   ChartSource(
       {required this.indice,
