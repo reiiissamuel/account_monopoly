@@ -58,9 +58,9 @@ class MoreOptionsDialog extends StatelessWidget {
                     eventType: LogMsgType.RECEIVE_FROM_BANK)),
             _optionButton(context: context, img: "icons/paybank.png", title: "Pagar banco",
                 dialog: const CustomKeyboard(
-                  title: "Digite o valor a ser pago",
-                  playerToPayId: "",
-                  eventType: LogMsgType.PAY_BANK,
+                    title: "Digite o valor a ser pago",
+                    playerToPayId: "",
+                    eventType: LogMsgType.PAY_BANK,
                 )),
 
             _optionButton(context: context, img: "icons/bit.png", title: "Leiloar Propriedade",
@@ -104,11 +104,11 @@ Widget _optionButton({required BuildContext context, required String img, requir
                 if (screen != null) {
                   Navigator.push(
                       context, MaterialPageRoute(builder: (context) => screen));
-                } else {
+                } else if (dialog != null) { // Adicionamos esta verificação
                   showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return dialog!;
+                        return dialog; // <--- AQUI ESTÁ A CORREÇÃO PRINCIPAL
                       });
                 }
               },
