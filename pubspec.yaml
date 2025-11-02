@@ -44,6 +44,12 @@ dependencies:
   flutter_signin_button: ^2.0.0
   connectivity_plus: ^7.0.0
 
+dependency_overrides:
+  # Força o uso da versão moderna do flutter_webrtc.
+  # Esta versão contém as correções necessárias para o Android V2 embedding,
+  # resolvendo o erro 'cannot find symbol Registrar'.
+  flutter_webrtc: ^1.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

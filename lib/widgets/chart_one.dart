@@ -47,7 +47,7 @@ class ChartOne extends StatelessWidget {
                     titlesData: _getTitlesData(context, players), // Configura rótulos X e Y
                     borderData: FlBorderData(show: false),
                     gridData: const FlGridData(show: true, drawVerticalLine: false),
-                    barTouchData: BarTouchData(enabled: false), // Desabilita o toque para simplicidade
+                    barTouchData: const BarTouchData(enabled: false), // Desabilita o toque para simplicidade
                     barGroups: barGroups,
                   ),
                   swapAnimationDuration: const Duration(milliseconds: 150), // Animação
