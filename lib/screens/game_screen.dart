@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/auction_alert_dialog.dart';
@@ -10,12 +10,11 @@ import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/account_description.dart';
 import 'package:account_monopoly/dialogs/chance_dialog.dart';
-import 'package:account_monopoly/dialogs/close_account_dialog.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/custom_keyboard_dialog.dart';
 import 'package:account_monopoly/dialogs/more_options_dialog.dart';
 import 'package:account_monopoly/dialogs/table_info_dialog.dart';
-import 'package:account_monopoly/dto/chance.dart';
+import 'package:account_monopoly/domain/chance.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
 import 'package:account_monopoly/screens/beneficiaries_screen.dart';
@@ -45,7 +44,7 @@ class GameScreenState extends State<GameScreen> {
 
     Future.delayed(Duration.zero, () {
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
-      gameProvider.gameModelDTO!.balance.accounts.add(gameProvider.gameModelDTO!.account);
+      gameProvider.gameModelDTO!.player.financialReport.balances.add(gameProvider.gameModelDTO!.player.roundBalance);
       if (gameProvider.gameModelDTO!.chancesEnabled) {
         _getAllEvents();
       }
@@ -105,7 +104,7 @@ class GameScreenState extends State<GameScreen> {
                 actions: <Widget>[
                   Center(
                     child: Text(
-                      gameProvider.gameModelDTO!.balance.round.toString(),
+                      gameProvider.gameModelDTO!.currentRound.toString(),
                       style: const TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
@@ -147,9 +146,9 @@ class GameScreenState extends State<GameScreen> {
                                 }
 
                                 if(_chances[eventDeckCount].effect! > 0) {
-                                  gameProvider.gameModelDTO!.account.qtdEventGain += _chances[eventDeckCount].effect!;
+                                  gameProvider.gameModelDTO!.player.roundBalance.qtdEventGain += _chances[eventDeckCount].effect!;
                                 } else if(_chances[eventDeckCount].effect! < 0){
-                                  gameProvider.gameModelDTO!.account.qtdEventPay += (-_chances[eventDeckCount].effect!);
+                                  gameProvider.gameModelDTO!.player.roundBalance.qtdEventPay += (-_chances[eventDeckCount].effect!);
                                 }
                                 return ChanceDialog(_chances[eventDeckCount++]);
                               });
@@ -191,10 +190,10 @@ class GameScreenState extends State<GameScreen> {
                                       )
                                       :
                                       Text(
-                                        "R\$ ${StringUtils.currencyFormat(gameProvider.gameModelDTO!.currentGameBalance.toString())}",
+                                        "R\$ ${StringUtils.currencyFormat(gameProvider.gameModelDTO!.player.currentCredit.toString())}",
                                         style: TextStyle(
                                             fontSize: 27.0,
-                                            color: _verifyCase(gameProvider.gameModelDTO!.currentGameBalance),
+                                            color: _verifyCase(gameProvider.gameModelDTO!.player.currentCredit),
                                             fontWeight: FontWeight.w500),
                                       ),
                                       IconButton(
@@ -249,7 +248,7 @@ class GameScreenState extends State<GameScreen> {
                                                 transitionDuration: const Duration(milliseconds: 200),
                                                 pageBuilder: (BuildContext context, Animation animation,
                                                     Animation secondAnimation){
-                                                  return CloseAccountDialog();
+                                                  //return CloseAccountDialog();
                                                 });
                                           },
                                         )
@@ -364,7 +363,7 @@ class GameScreenState extends State<GameScreen> {
     });
   }
 
-  Color _verifyCase(int balance){
+  Color _verifyCase(num balance){
     if(balance >= 1500000){
       return Colors.green;
     }else if(balance < 200000){

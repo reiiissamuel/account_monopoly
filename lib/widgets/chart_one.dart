@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart'; // Importação do novo pacote
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/dto/player.dart';
+import 'package:account_monopoly/domain/model/player.dart';
 
 /*
 * Esse gráfico mostra a relação de quanto cada jogador pagou a você e recebeu de você

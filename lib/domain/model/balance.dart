@@ -1,4 +1,4 @@
-class Account{
+class Balance{
   //dados reeferentes a fatura e pagamento posterior
   int round = 0;
   int previousAccountInstallment = 0; //parcela de fatura anterior
@@ -23,7 +23,7 @@ class Account{
   int auctionIn = 0;
 
 
-  Account(
+  Balance(
       {
         required this.round,
         required this.previousAccountInstallment,
@@ -45,7 +45,7 @@ class Account{
         required this.loanIn,
         required this.auctionIn});
 
-  Account.empty(); //valor de referencia para pagamento da fatura
+  Balance.empty(); //valor de referencia para pagamento da fatura
 
 
   int getTotal(){
@@ -76,8 +76,8 @@ class Account{
     };
   }
 
-  factory Account.fromMap(Map<String, dynamic> map) {
-    return Account(
+  factory Balance.fromMap(Map<String, dynamic> map) {
+    return Balance(
         round: map['round'] as int,
         previousAccountInstallment: map['previousAccountInstallment'] as int,
         loanInstallment: map['loanInstallment'] as int,

@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/widgets/default_dropdown_menu.dart';
@@ -7,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/dto/player.dart';
+import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
@@ -266,13 +267,11 @@ class NewGameScreenState extends State<NewGameScreen> {
                 String generatedGameId = StringUtils.generateUUID(size: 8); 
                 GameModelDTO gameData = GameModelDTO(
                     id: generatedGameId,
-                    currentGameBalance: int.parse(_initialBalanceController.text.replaceAll(".", "")),
                     limitPlayer: dropdownValue,
                     othersPlayers: HashSet<Player>(),
-                    initalGameBalance:  int.parse(_initialBalanceController.text.replaceAll(".", "")),
+                    initalGameCredit:  int.parse(_initialBalanceController.text.replaceAll(".", "")),
                     roundBonus: int.parse(dropdownBonusValue.replaceAll(".", "")),
                     levelTax: StringUtils.setTax(dropdownLoanTax),
-                    auctionEnabled: isAuctionSwitchEnabled,
                     mortgageEnabled: isMortgageEnabled,
                     chancesEnabled: isChanceSwitchEnabled,
 

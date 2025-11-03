@@ -1,11 +1,11 @@
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
-import 'package:account_monopoly/dto/chance.dart';
+import 'package:account_monopoly/domain/chance.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 
 class ChancesScreen extends StatelessWidget {

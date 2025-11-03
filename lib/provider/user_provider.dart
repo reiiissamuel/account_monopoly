@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/repository/user_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'package:account_monopoly/provider/game_provider.dart';
 
 class UserModelDTO{
   final int? id;

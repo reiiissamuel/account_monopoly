@@ -1,9 +1,10 @@
-import 'package:account_monopoly/dto/player.dart';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/model/game_model_dto.dart';
+import 'package:account_monopoly/domain/model/player.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
-import 'package:account_monopoly/dto/auction.dart';
+import 'package:account_monopoly/domain/model/auction.dart';
 
 class EventDTO{
 

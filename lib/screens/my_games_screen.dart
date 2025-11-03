@@ -1,4 +1,5 @@
 
+import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -41,17 +42,13 @@ class MyGamesScreen extends StatelessWidget {
           builder: (context, userProvider, Widget? child) {
             if(userProvider.isLoading){
               return const Center(child: CircularProgressIndicator());
-            } else if (userProvider.user!.games != null || userProvider.user!.games.isNotEmpty){
+            } else {
               return ListView.builder(
                   padding: const EdgeInsets.all(10.0),
                   itemCount: userProvider.user!.games.length,
                   itemBuilder: (context, index) {
                     return _gameTile(context, userProvider.user!.games[index]);
                   });
-            } else{
-              return Center(
-                child: Icon(Icons.save, color: Theme.of(context).primaryColor, size: 100.0),
-              );
             }
           })
     );
@@ -85,7 +82,7 @@ class MyGamesScreen extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                "Saldo atual: ${StringUtils.currencyFormat(game.currentGameBalance.toString())} R\$",
+                "Saldo atual: ${StringUtils.currencyFormat(game.player.currentCredit.toString())} R\$",
                 style: const TextStyle(color: Colors.white, fontSize: 20.0),
               ),
             ),

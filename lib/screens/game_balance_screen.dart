@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:account_monopoly/enums/pie_chart_type.dart';
+import 'package:account_monopoly/domain/enums/pie_chart_type.dart';
 import 'package:account_monopoly/widgets/chart_one.dart';
 import 'package:account_monopoly/widgets/chart_three.dart';
 import 'package:account_monopoly/widgets/chart_two.dart';

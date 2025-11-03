@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/new_mortgage_dialog.dart';
-import 'package:account_monopoly/dto/mortgage.dart';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/model/mortgage.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 
 class MortgageScreen extends StatefulWidget{
@@ -43,7 +43,7 @@ class MortgageScreenState extends State<MortgageScreen> {
               ],
             ),
             backgroundColor: Colors.black,
-            body: gameProvider.gameModelDTO!.mortgages.isEmpty ?
+            body: gameProvider.gameModelDTO!.player.mortgages.isEmpty ?
                 Center(
                   child: IconButton(icon: const Icon(Icons.add, size: 60.0), color: Theme.of(context).primaryColor, onPressed: (){
                     showDialog(
@@ -56,10 +56,10 @@ class MortgageScreenState extends State<MortgageScreen> {
 
           : ListView.builder(
                 padding: const EdgeInsets.all(10.0),
-                itemCount: gameProvider.gameModelDTO!.mortgages.length,
+                itemCount: gameProvider.gameModelDTO!.player.mortgages.length,
                 itemBuilder: (context, index) {
                   //if(model.mortgages[index].deadline > 0)
-                    return _mortgageTile(context, gameProvider.gameModelDTO!.mortgages[index]);
+                    return _mortgageTile(context, gameProvider.gameModelDTO!.player.mortgages[index]);
                 }),
         );
       },
@@ -117,7 +117,7 @@ class MortgageScreenState extends State<MortgageScreen> {
                           onConfirm: (){
 
                             gameProvider.eventComposer(type: LogMsgType.PAY_BANK, value: mortgage.valueToPay);
-                            gameProvider.gameModelDTO!.mortgages.removeWhere((h) => h.id == mortgage.id);
+                            gameProvider.gameModelDTO!.player.mortgages.removeWhere((h) => h.id == mortgage.id);
                             Navigator.of(context).pop();
                           });
                     });

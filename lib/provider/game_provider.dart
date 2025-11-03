@@ -1,22 +1,18 @@
-import 'dart:collection';
 
 import 'package:account_monopoly/configuration/peer_connection_controller.dart';
-import 'package:account_monopoly/enums/installment_type.dart';
+import 'package:account_monopoly/domain/enums/installment_type.dart';
+import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
-import 'package:account_monopoly/dto/player.dart';
+import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:peerdart/peerdart.dart';
 
-import 'package:account_monopoly/dto/account.dart';
-import 'package:account_monopoly/dto/auction.dart';
-import 'package:account_monopoly/dto/balance.dart';
-import 'package:account_monopoly/dto/chance.dart';
-import 'package:account_monopoly/dto/event_dto.dart';
-import 'package:account_monopoly/dto/mortgage.dart';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/model/auction.dart';
+import 'package:account_monopoly/domain/event_dto.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 
 class GameProvider extends ChangeNotifier {
   late UserProvider userModelController;
@@ -78,7 +74,7 @@ class GameProvider extends ChangeNotifier {
         if(gameModelDTO!.auctions.last.auctionCaller == gameModelDTO!.player.username){
           _updateBalance(gameModelDTO!.auctions.last.endValue);
         }
-        gameModelDTO!.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
+        gameModelDTO!.player.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
         break;
       case (LogMsgType.AUCTION_RAISE || LogMsgType.AUCTION_PAY):
         gameModelDTO!.auctions.last = event.auction!;
@@ -118,52 +114,55 @@ class GameProvider extends ChangeNotifier {
 
     switch (event.type) {
       case LogMsgType.CLOSE_TURN:
-        event.value = -(gameModelDTO!.account.getTotal());
+        event.value = -(gameModelDTO!.player.roundBalance.getTotal());
         _proccessCloseTurn(installments);
         _updateMortgageCountdown();
         break;
       case LogMsgType.CURRENT_ACCOUNT_UPDATE_UP:
         event.value = 200000;
-        gameModelDTO!.account.restituicao = 200000;
+        gameModelDTO!.player.roundBalance.restituicao = 200000;
         break;
       case LogMsgType.CURRENT_ACCOUNT_UPDATE_DOWN:
         event.value = 200000;
-        gameModelDTO!.account.ir = 200000;
+        gameModelDTO!.player.roundBalance.ir = 200000;
         break;
       case LogMsgType.ROUND_BONUS:
-        gameModelDTO!.account.bonus += gameModelDTO!.roundBonus;
+        gameModelDTO!.player.roundBalance.bonus += gameModelDTO!.roundBonus;
         break;
       case LogMsgType.TRANSFER:
-        gameModelDTO!.account.transferOut += value!;
+        gameModelDTO!.player.roundBalance.transferOut += value!;
         _updateBalance(-value);
         gameModelDTO!.othersPlayers
             .firstWhere((p) => p.id == destinationPlayer!.id)
             .payedTo += value;
         break;
       case LogMsgType.BUY:
-        gameModelDTO!.account.qtdPurchases += value!;
+        gameModelDTO!.player.roundBalance.qtdPurchases += value!;
+        _updateBalance(-value);
         break;
       case LogMsgType.PAY_BANK:
-        gameModelDTO!.account.otherPaymentsOut += value!;
+        gameModelDTO!.player.roundBalance.otherPaymentsOut += value!;
         _updateBalance(-value);
         break;
       case LogMsgType.RECEIVE_FROM_BANK:
         _updateBalance(value!);
         break;
       case LogMsgType.BUILD_HOUSE:
-        gameModelDTO!.account.qtdHome += value!;
+        gameModelDTO!.player.roundBalance.qtdHome += value!;
+        _updateBalance(-value);
         break;
       case LogMsgType.BUILD_HOTEL:
-        gameModelDTO!.account.qtdHotel += value!;
+        gameModelDTO!.player.roundBalance.qtdHotel += value!;
+        _updateBalance(-value);
         break;
       case LogMsgType.MORTGAGE:
-        gameModelDTO!.account.mortgagesIn += value!;
+        gameModelDTO!.player.roundBalance.mortgagesIn += value!;
         _updateBalance(value);
         break;
       case LogMsgType.LOAN:
-        gameModelDTO!.account.loanIn += value!;
+        gameModelDTO!.player.roundBalance.loanIn += value!;
         _updateBalance(value);
-        gameModelDTO!.balance.generateInstallments(
+        gameModelDTO!.player.financialReport.generateInstallments(
             tax: (installments! * gameModelDTO!.levelTax).floor(),
             type: InstallmentType.LOAN_INSTALLMENT,
             installments: installments,
@@ -180,7 +179,7 @@ class GameProvider extends ChangeNotifier {
         isThereAuction = false;
         gameModelDTO!.auctions.last.setFinalValue();
         _updateBalance(-gameModelDTO!.auctions.last.endValue);
-        gameModelDTO!.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
+        gameModelDTO!.player.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
         break;
       case LogMsgType.AUCTION_LEAVE:
         isThereAuction = false;
@@ -253,6 +252,7 @@ class GameProvider extends ChangeNotifier {
           usermodelname: userModelController.user!.username,
           usermodelId: userModelController.user!.id,
           gameId: gameModelDTO!.id),
+      currentCredit: gameModelDTO!.initalGameCredit,
       userModelId: usermodelId,
       gameId: generatedGameId,
       username: usermodelname,
@@ -361,7 +361,7 @@ class GameProvider extends ChangeNotifier {
   //in game methods
 
   void _updateMortgageCountdown(){
-    for(var mortgage in gameModelDTO!.mortgages){
+    for(var mortgage in gameModelDTO!.player.mortgages){
       mortgage.deadline -= 1;
       if(mortgage.deadline <= 0){
         Auction auction = Auction(
@@ -380,126 +380,37 @@ class GameProvider extends ChangeNotifier {
 
   void _proccessCloseTurn(int ?installments){
     if(installments != null){
-      gameModelDTO!.balance.generateInstallments(
+      gameModelDTO!.player.financialReport.generateInstallments(
           tax: (installments * gameModelDTO!.levelTax).floor(),
           type: InstallmentType.ACCOUNT_INSTALLMENT,
           installments: installments,
-          total: gameModelDTO!.account.getTotal());
-      gameModelDTO!.account.isInInstallment = true;
+          total: gameModelDTO!.player.roundBalance.getTotal());
+      gameModelDTO!.player.roundBalance.isInInstallment = true;
     } else {
-      _updateBalance(-(gameModelDTO!.account.getTotal()));
+      _updateBalance(-(gameModelDTO!.player.roundBalance.getTotal()));
     }
-    //gameModelDTO!.balance.closeRoundAccount(account: gameModelDTO!.account);
-    gameModelDTO!.balance.setNextRoundAccount();
-    gameModelDTO!.balance.round += 1;
-    gameModelDTO!.account = gameModelDTO!.balance.accounts[gameModelDTO!.balance.round];
+    //gameModelDTO!.player.balance.closeRoundAccount(account: gameModelDTO!.account);
+    gameModelDTO!.player.financialReport.setNextRoundBalance();
+    gameModelDTO!.player.financialReport.round += 1;
+    gameModelDTO!.player.roundBalance = gameModelDTO!.player.financialReport.balances[gameModelDTO!.player.financialReport.round];
   }
 
   bool hasEnoughBalance(int value) {
-    if (value <= gameModelDTO!.currentGameBalance) {
+    if (value <= gameModelDTO!.player.currentCredit) {
       return true;
     }
     return false;
   }
 
   void _updateBalance(int value) {
-    gameModelDTO!.currentGameBalance += value;
+    gameModelDTO!.player.currentCredit += value;
     notifyListeners();
   }
 
   bool hasAnyLoanRunning() {
-    return gameModelDTO!.balance.accounts
+    return gameModelDTO!.player.financialReport.balances
         .getRange(
-        gameModelDTO!.balance.round, (gameModelDTO!.balance.accounts.isNotEmpty ? gameModelDTO!.balance.accounts.length : 0))
+        gameModelDTO!.player.financialReport.round, (gameModelDTO!.player.financialReport.balances.isNotEmpty ? gameModelDTO!.player.financialReport.balances.length : 0))
         .any((a) => a.loanInstallment > 0);
-  }
-}
-
-class GameModelDTO{
-  String id = "";
-  int currentGameBalance = 0;
-  int initalGameBalance = 0;
-  int limitPlayer = 0;
-  int levelTax = 0;
-  int roundBonus = 0;
-  Player player = Player.empty();
-  Account account = Account.empty();
-  Balance balance = Balance.empty();
-  Set<Player> othersPlayers = HashSet<Player>();
-  List<Mortgage> mortgages = [];
-  List<String> logs = [];
-  //List<Investment> investments= List<Investment>();
-  List<Chance> chances = [];
-  List<Auction> auctions = [];
-
-  bool auctionEnabled = false;
-  bool mortgageEnabled = false;
-  bool chancesEnabled = false;
-  bool youWon = false;
-  bool youBankrupt = false;
-
-  GameModelDTO.empty();
-  GameModelDTO({Player ?player, required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.roundBonus,
-    required this.levelTax, required this.limitPlayer, required this.othersPlayers, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
-  GameModelDTO.initAllFields({required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.account,
-    required this.balance, required this.othersPlayers, required this.mortgages, required this.logs, required this.chances, required this.roundBonus,
-    required this.youBankrupt, required this.auctions, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
- 
-  GameModelDTO toInitialTemplate(){
-    return GameModelDTO(
-      id: id,
-      initalGameBalance: initalGameBalance,
-      currentGameBalance: initalGameBalance,
-      roundBonus: roundBonus,
-      player: player,
-      levelTax: levelTax,
-      limitPlayer: limitPlayer,
-      othersPlayers: othersPlayers,
-      auctionEnabled: auctionEnabled,
-      mortgageEnabled: mortgageEnabled,
-      chancesEnabled: chancesEnabled
-    );
-  }
-
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'currentGameBalance': currentGameBalance,
-      'account': account.toMap(),
-      'balance': balance.toMap(),
-      'player' : player.toMap(),
-      'othersPlayers': othersPlayers.map((player) => player.toMap()).toList(),
-      'mortgages': mortgages.map((mortgage) => mortgage.toMap()).toList(),
-      'logs': logs,
-      'chances': chances.map((chance) => chance.toMap()).toList(),
-      'initalGameBalance': initalGameBalance,
-      'youBankrupt': youBankrupt,
-      'auctions': auctions,
-      'auctionEnabled': auctionEnabled,
-      'mortgageEnabled': mortgageEnabled,
-      'chancesEnabled': chancesEnabled,
-      'roundBonus': roundBonus
-    };
-  }
-
-  factory GameModelDTO.fromMap(Map<String, dynamic> map) {
-    return GameModelDTO.initAllFields(
-        id: map['id'] as String,
-        currentGameBalance: map['currentGameBalance'] as int,
-        account: Account.fromMap(map['account']),
-        balance: Balance.fromMap(map['balance']),
-        othersPlayers: (map['othersPlayers'] as List<dynamic>).map((p) => Player.fromMap(p as Map<String, dynamic>)).toSet(),
-        mortgages: (map['mortgages'] as List<dynamic>).map((h) => Mortgage.fromMap(h as Map<String, dynamic>)).toList(),
-        logs: (map['logs'] as List<dynamic>).cast<String>(),
-        chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
-        auctions: (map['auctions'] as List<dynamic>).map((b) => Auction.fromMap(b as Map<String, dynamic>)).toList(),
-        roundBonus:  map['roundBonus'] as int,
-        initalGameBalance: map['initalGameBalance'] as int,
-        youBankrupt: map['youBankrupt'] as bool,
-        auctionEnabled: map['auctionEnabled'] as bool,
-        mortgageEnabled: map['mortgageEnabled'] as bool,
-        chancesEnabled: map['chancesEnabled'] as bool
-    );
   }
 }

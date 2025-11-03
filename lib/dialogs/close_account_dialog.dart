@@ -1,9 +1,9 @@
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/dto/account.dart';
+import 'package:account_monopoly/domain/model/balance.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/home_screen.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -12,11 +12,11 @@ import 'package:account_monopoly/dialogs/loan_dialog.dart';
 import 'package:account_monopoly/dialogs/new_mortgage_dialog.dart';
 
 
-class CloseAccountDialog extends StatelessWidget {
+class CloseBalanceDialog extends StatelessWidget {
 
- late Account account;
+ late Balance account;
 
-  CloseAccountDialog({super.key});
+  CloseBalanceDialog({super.key});
 
   @override
   Widget build(BuildContext context) {

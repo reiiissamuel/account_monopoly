@@ -1,6 +1,6 @@
-import 'package:account_monopoly/dto/event_dto.dart';
-import 'package:account_monopoly/dto/player.dart';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/event_dto.dart';
+import 'package:account_monopoly/domain/model/player.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:peerdart/peerdart.dart';
@@ -101,7 +101,7 @@ class PeerConnectionController {
     });
 
     connWithServer.on('disconnected').listen((event) {
-      //todo tratar desonexão
+      //TODO tratar desonexão
     });
 
     /*connWithServer.on('peer-unavailable').listen((event) {

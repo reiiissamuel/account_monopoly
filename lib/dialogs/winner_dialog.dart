@@ -3,7 +3,7 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
 
 

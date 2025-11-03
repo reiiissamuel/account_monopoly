@@ -3,8 +3,8 @@ import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/dto/mortgage.dart';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/model/mortgage.dart';
+import 'package:account_monopoly/domain/enums/log_msg_type.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 
 class NewMortgageDialog extends StatefulWidget {
@@ -155,7 +155,7 @@ class NewMortgageDialogState extends State<NewMortgageDialog> {
                                       mortgage.valueToPay = toPay;
                                       mortgage.deadline = DEADLINE;
                                       mortgage.auctionMinValue = (toPay /2).floor();
-                                      gameProvider.gameModelDTO!.mortgages.add(mortgage);
+                                      gameProvider.gameModelDTO!.player.mortgages.add(mortgage);
 
                                       gameProvider.eventComposer(type: LogMsgType.MORTGAGE, value: toReceive);
                                       Navigator.pop(context);

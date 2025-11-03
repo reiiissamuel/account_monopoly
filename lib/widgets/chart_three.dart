@@ -23,13 +23,13 @@ class ChartThree extends StatelessWidget {
 
     // Note: Use 'gameModelDTO!.balance.accounts.reversed' se você quiser a ordem da rodada mais recente para a mais antiga
     // Se 'ac.round' for sequencial, a ordem do For é suficiente.
-    for (var ac in gameProvider.gameModelDTO!.balance.accounts) {
-      if (processedRounds.add(ac.round)) {
+    for (var ba in gameProvider.gameModelDTO!.player.financialReport.balances) {
+      if (processedRounds.add(ba.round)) {
         sources.add(
           ChartSource(
-            round: ac.round,
-            inComming: gameProvider.gameModelDTO!.balance.getRoundIncomming(ac.round).toInt(),
-            outGoing: gameProvider.gameModelDTO!.balance.getRoundOutGoing(ac.round).toInt(),
+            round: ba.round,
+            inComming: gameProvider.gameModelDTO!.player.financialReport.getRoundIncomming(ba.round).toInt(),
+            outGoing: gameProvider.gameModelDTO!.player.financialReport.getRoundOutGoing(ba.round).toInt(),
           )
         );
       }

@@ -1,11 +1,10 @@
+import 'package:account_monopoly/domain/model/balance.dart';
+import 'package:account_monopoly/domain/enums/pie_chart_type.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart'; // Novo pacote de gráficos
 import 'package:provider/provider.dart';
-
-import 'package:account_monopoly/dto/account.dart';
-import 'package:account_monopoly/enums/pie_chart_type.dart';
-import 'package:account_monopoly/provider/game_provider.dart';
 
 /*
 * Esse gráfico dá uma descrição dos gastos, ou lucros, podendo ser por rodada ou geral,
@@ -65,46 +64,46 @@ class ChartTwo extends StatelessWidget {
     // 2. Preenche os valores
     switch (type) {
       case PieChartType.GENERAL_EXPANSES:
-        for (Account ac in gameProvider.gameModelDTO!.balance.accounts) {
-          sources[0].value += ac.transferOut;
-          sources[1].value += ac.qtdPurchases;
-          sources[2].value += (ac.qtdHome + ac.qtdHotel);
-          sources[3].value += ac.qtdEventPay;
-          sources[4].value += ac.previousAccountInstallment;
-          sources[5].value += ac.ir;
-          sources[6].value += ac.otherPaymentsOut;
+        for (Balance ba in gameProvider.gameModelDTO!.player.financialReport.balances) {
+          sources[0].value += ba.transferOut;
+          sources[1].value += ba.qtdPurchases;
+          sources[2].value += (ba.qtdHome + ba.qtdHotel);
+          sources[3].value += ba.qtdEventPay;
+          sources[4].value += ba.previousAccountInstallment;
+          sources[5].value += ba.ir;
+          sources[6].value += ba.otherPaymentsOut;
         }
         break;
       case PieChartType.GENERAL_PROFIT:
-        for (Account ac in gameProvider.gameModelDTO!.balance.accounts) {
-          sources[0].value += ac.transferIn;
-          sources[1].value += ac.bonus;
-          sources[2].value += ac.qtdEventGain;
-          sources[3].value += ac.mortgagesIn;
-          sources[4].value += ac.loanIn;
-          sources[5].value += ac.restituicao;
-          sources[6].value += ac.auctionIn;
-          sources[7].value += ac.otherReceives;
+        for (Balance ba in gameProvider.gameModelDTO!.player.financialReport.balances) {
+          sources[0].value += ba.transferIn;
+          sources[1].value += ba.bonus;
+          sources[2].value += ba.qtdEventGain;
+          sources[3].value += ba.mortgagesIn;
+          sources[4].value += ba.loanIn;
+          sources[5].value += ba.restituicao;
+          sources[6].value += ba.auctionIn;
+          sources[7].value += ba.otherReceives;
         }
         break;
       case PieChartType.ROUND_PROFIT:
-        sources[0].value += gameProvider.gameModelDTO!.account.transferIn;
-        sources[1].value += gameProvider.gameModelDTO!.account.bonus;
-        sources[2].value += gameProvider.gameModelDTO!.account.qtdEventGain;
-        sources[3].value += gameProvider.gameModelDTO!.account.mortgagesIn;
-        sources[4].value += gameProvider.gameModelDTO!.account.loanIn;
-        sources[5].value += gameProvider.gameModelDTO!.account.restituicao;
-        sources[6].value += gameProvider.gameModelDTO!.account.auctionIn;
-        sources[7].value += gameProvider.gameModelDTO!.account.otherReceives;
+        sources[0].value += gameProvider.gameModelDTO!.player.roundBalance.transferIn;
+        sources[1].value += gameProvider.gameModelDTO!.player.roundBalance.bonus;
+        sources[2].value += gameProvider.gameModelDTO!.player.roundBalance.qtdEventGain;
+        sources[3].value += gameProvider.gameModelDTO!.player.roundBalance.mortgagesIn;
+        sources[4].value += gameProvider.gameModelDTO!.player.roundBalance.loanIn;
+        sources[5].value += gameProvider.gameModelDTO!.player.roundBalance.restituicao;
+        sources[6].value += gameProvider.gameModelDTO!.player.roundBalance.auctionIn;
+        sources[7].value += gameProvider.gameModelDTO!.player.roundBalance.otherReceives;
         break;
       case PieChartType.ROUND_EXPANSES:
-        sources[0].value += gameProvider.gameModelDTO!.account.transferOut;
-        sources[1].value += gameProvider.gameModelDTO!.account.qtdPurchases;
-        sources[2].value += (gameProvider.gameModelDTO!.account.qtdHome + gameProvider.gameModelDTO!.account.qtdHotel);
-        sources[3].value += gameProvider.gameModelDTO!.account.qtdEventPay;
-        sources[4].value += gameProvider.gameModelDTO!.account.previousAccountInstallment;
-        sources[5].value += gameProvider.gameModelDTO!.account.ir;
-        sources[6].value += gameProvider.gameModelDTO!.account.otherPaymentsOut;
+        sources[0].value += gameProvider.gameModelDTO!.player.roundBalance.transferOut;
+        sources[1].value += gameProvider.gameModelDTO!.player.roundBalance.qtdPurchases;
+        sources[2].value += (gameProvider.gameModelDTO!.player.roundBalance.qtdHome + gameProvider.gameModelDTO!.player.roundBalance.qtdHotel);
+        sources[3].value += gameProvider.gameModelDTO!.player.roundBalance.qtdEventPay;
+        sources[4].value += gameProvider.gameModelDTO!.player.roundBalance.previousAccountInstallment;
+        sources[5].value += gameProvider.gameModelDTO!.player.roundBalance.ir;
+        sources[6].value += gameProvider.gameModelDTO!.player.roundBalance.otherPaymentsOut;
         break;
     }
     
@@ -245,7 +244,7 @@ class ChartTwo extends StatelessWidget {
 
 class ChartSource {
   String indice;
-  int value;
+  num value;
   Color color; // Cor agora é um objeto Color padrão do Flutter
 
   ChartSource(
