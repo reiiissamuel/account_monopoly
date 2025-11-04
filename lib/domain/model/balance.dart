@@ -1,106 +1,127 @@
-class Balance{
-  //dados reeferentes a fatura e pagamento posterior
-  int round = 0;
-  int previousAccountInstallment = 0; //parcela de fatura anterior
-  int loanInstallment = 0;
-  int qtdPurchases = 0;
-  int qtdEventPay = 0;
-  int qtdHome = 0;
-  int qtdHotel = 0;
-  int qtdEventGain = 0;
-  int bonus = 0;
-  int ir = 0; //imposto de renda
-  int restituicao = 0;
-  bool isInInstallment = false; //retorna true se a fatura foi parcelada
+class Balance {
+  // ATRIBUTOS MUTÁVEIS (Acumuladores da Rodada)
+  double sharePurchasesOut = 0.0;
+  double shareSalesIn = 0.0;
+  double eventIn = 0.0;
+  double eventOut = 0.0;
+  double buildingPurchasesOut = 0.0;
+  double bonusIn = 0.0;
+  double incomeTaxOut = 0.0;
+  double refundIn = 0.0;
+  double dividendsIn = 0.0;
+  
+  // Campos genéricos/transferências (Mantidos mutáveis e com nomes mais simples)
+  double transferIn = 0.0;
+  double transferOut = 0.0;
+  double otherIn = 0.0; 
+  double otherOut = 0.0; 
 
-  //dados somente para armazenamento todo ver possibilidade de usar dto separado
-  int transferIn = 0;
-  int transferOut = 0;
-  int mortgagesIn = 0; //
-  int otherReceives = 0;//
-  int otherPaymentsOut = 0; //
-  int loanIn = 0;  //
-  int auctionIn = 0;
+  // Construtor principal para desserialização (aceita todos os campos nomeados)
+  Balance({
+    this.sharePurchasesOut = 0.0,
+    this.shareSalesIn = 0.0,
+    this.eventIn = 0.0,
+    this.eventOut = 0.0,
+    this.buildingPurchasesOut = 0.0,
+    this.bonusIn = 0.0,
+    this.incomeTaxOut = 0.0,
+    this.refundIn = 0.0,
+    this.dividendsIn = 0.0,
+    this.transferIn = 0.0,
+    this.transferOut = 0.0,
+    this.otherIn = 0.0,
+    this.otherOut = 0.0,
+  });
 
+  // Construtor vazio (conveniente para inicializar no Player)
+  Balance.empty();
 
-  Balance(
-      {
-        required this.round,
-        required this.previousAccountInstallment,
-        required this.loanInstallment,
-        required this.qtdPurchases,
-        required this.qtdEventPay,
-        required this.qtdHome,
-        required this.qtdHotel,
-        required this.qtdEventGain,
-        required this.bonus,
-        required this.ir,
-        required this.restituicao,
-        required this.isInInstallment,
-        required this.transferIn,
-        required this.transferOut,
-        required this.mortgagesIn,
-        required this.otherReceives,
-        required this.otherPaymentsOut,
-        required this.loanIn,
-        required this.auctionIn});
+  // GETTER: Entradas
+  double get roundIncomes => 
+      shareSalesIn +
+      eventIn +
+      refundIn +
+      dividendsIn +
+      transferIn +
+      otherIn +
+      bonusIn;
 
-  Balance.empty(); //valor de referencia para pagamento da fatura
+  // GETTER: Saídas
+  double get roundOutcomes => 
+      sharePurchasesOut +
+      buildingPurchasesOut +
+      incomeTaxOut +
+      otherOut + 
+      transferOut +
+      eventOut;
 
+  // GETTER: Fluxo de Caixa da Rodada
+  double get roundFinalBalance => roundIncomes - roundOutcomes;
 
-  int getTotal(){
-    return previousAccountInstallment + loanInstallment + qtdPurchases + qtdEventPay + qtdHome + qtdHotel - qtdEventGain - bonus + ir - restituicao;
+  // Adicionamos um método utilitário para "resetar" a rodada (chamado no fim do turno)
+  Balance copyAndReset() {
+    // Retorna uma cópia do Balanço atual (para ser armazenado no histórico)
+    // E reseta o objeto atual do Player (Player.roundBalance) para 0
+    
+    var historicalRecord = Balance(
+      sharePurchasesOut: sharePurchasesOut,
+      shareSalesIn: shareSalesIn,
+      eventIn: eventIn,
+      eventOut: eventOut,
+      buildingPurchasesOut: buildingPurchasesOut,
+      bonusIn: bonusIn,
+      incomeTaxOut: incomeTaxOut,
+      refundIn: refundIn,
+      dividendsIn: dividendsIn,
+      transferIn: transferIn,
+      transferOut: transferOut,
+      otherIn: otherIn,
+      otherOut: otherOut,
+    );
+    
+    // Zera o Balanço do Jogador
+    sharePurchasesOut = shareSalesIn = eventIn = eventOut = buildingPurchasesOut = 0.0;
+    bonusIn = incomeTaxOut = refundIn = dividendsIn = 0.0;
+    transferIn = transferOut = otherIn = otherOut = 0.0;
+    
+    return historicalRecord;
   }
-
+  
+  // toMap e fromMap (ajustados para novos nomes de campos)
   Map<String, dynamic> toMap() {
     return {
-      'round':  round,
-      'previousAccountInstallment': previousAccountInstallment,
-      'loanInstallment': loanInstallment,
-      'qtdEventPay': qtdEventPay,
-      'qtdHome': qtdHome,
-      'qtdHotel':  qtdHotel,
-      'qtdEventGain': qtdEventGain,
-      'bonus': bonus,
-      'ir': ir,
-      'restituicao': restituicao,
-      'isInInstallment':  isInInstallment,
+      'sharePurchasesOut': sharePurchasesOut,
+      'shareSalesIn': shareSalesIn,
+      'eventIn': eventIn,
+      'eventOut': eventOut,
+      'buildingPurchasesOut': buildingPurchasesOut,
+      'bonusIn': bonusIn,
+      'incomeTaxOut': incomeTaxOut,
+      'refundIn': refundIn,
+      'dividendsIn': dividendsIn,
       'transferIn': transferIn,
       'transferOut': transferOut,
-      'mortgagesIn': mortgagesIn,
-      'otherReceives':  otherReceives,
-      'otherPaymentsOut': otherPaymentsOut,
-      'loanIn': loanIn,
-      'auctionIn': qtdEventPay,
-      'qtdPurchases': qtdPurchases
+      'otherIn': otherIn,
+      'otherOut': otherOut,
     };
   }
 
   factory Balance.fromMap(Map<String, dynamic> map) {
+    // Note: Usando map['key'] as double? ?? 0.0 para desserialização segura
     return Balance(
-        round: map['round'] as int,
-        previousAccountInstallment: map['previousAccountInstallment'] as int,
-        loanInstallment: map['loanInstallment'] as int,
-        qtdEventPay: map['qtdEventPay'] as int,
-        qtdHome: map['qtdHome']  as int,
-        qtdHotel: map['qtdHotel']  as int,
-        qtdEventGain: map['qtdEventGain'] as int,
-        bonus: map['bonus'] as int,
-        ir: map['ir'] as int,
-        restituicao: map['restituicao'] as int,
-        isInInstallment: map['isInInstallment'],
-        transferIn: map['transferIn']  as int,
-        mortgagesIn: map['mortgagesIn']  as int,
-        transferOut: map['transferOut'] as int,
-        otherReceives: map['otherReceives'] as int,
-        otherPaymentsOut: map['otherPaymentsOut']  as int,
-        loanIn: map['loanIn'] as int,
-        auctionIn: map['auctionIn']  as int,
-        qtdPurchases: map['qtdPurchases']  as int
+      sharePurchasesOut: map['sharePurchasesOut'] as double? ?? 0.0,
+      shareSalesIn: map['shareSalesIn'] as double? ?? 0.0,
+      eventIn: map['eventIn'] as double? ?? 0.0,
+      eventOut: map['eventOut'] as double? ?? 0.0,
+      buildingPurchasesOut: map['buildingPurchasesOut'] as double? ?? 0.0,
+      bonusIn: map['bonusIn'] as double? ?? 0.0,
+      incomeTaxOut: map['incomeTaxOut'] as double? ?? 0.0,
+      refundIn: map['refundIn'] as double? ?? 0.0,
+      dividendsIn: map['dividendsIn'] as double? ?? 0.0,
+      transferIn: map['transferIn'] as double? ?? 0.0,
+      transferOut: map['transferOut'] as double? ?? 0.0,
+      otherIn: map['otherIn'] as double? ?? 0.0,
+      otherOut: map['otherOut'] as double? ?? 0.0,
     );
   }
-
-
 }
-
-

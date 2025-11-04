@@ -1,83 +1,56 @@
-import 'package:account_monopoly/domain/enums/installment_type.dart';
 
 import 'package:account_monopoly/domain/model/balance.dart';
 
-class FinancialReport{
-  int round = 0;
-  int profit = 0;
-  int expanses = 0;
-  List<Balance> balances = [];
+class FinancialReport {
+  
+  final Map<int, Balance> historicalBalances;
 
-  num getRoundIncomming(int i){
-    return balances[i].bonus + balances[i].qtdEventGain + balances[i].restituicao + balances[i].transferIn +
-        balances[i].mortgagesIn + balances[i].otherReceives + balances[i].loanIn + balances[i].auctionIn;
+  FinancialReport({
+    required this.historicalBalances
+  });
+
+  FinancialReport.empty() : historicalBalances = {};
+
+  double get totalIncome {
+    return historicalBalances.values.fold(0.0, (sum, balance) => sum + balance.roundIncomes);
   }
 
-  num getRoundOutGoing(int i){
-    return  balances[i].previousAccountInstallment + balances[i].loanInstallment + balances[i].qtdPurchases +
-        balances[i].qtdEventPay + balances[i].qtdHome + balances[i].qtdHotel + balances[i].ir + balances[i].transferOut + balances[i].otherPaymentsOut;
+  double get totalExpenses {
+    return historicalBalances.values.fold(0.0, (sum, balance) => sum + balance.roundOutcomes);
   }
+  
+  double get netProfit => totalIncome - totalExpenses;
 
-  void generateInstallments({required int installments, required int total, required InstallmentType type, required int tax}){
-    int totalPlusTax = total + ((total * tax) / 100).floor();
-    int installment = (totalPlusTax / installments).floor();
-
-    for(int i = 1; i <= installments; i++){
-      if(hasBalanceInTheRound(round + i)) {
-        type == InstallmentType.LOAN_INSTALLMENT
-            ? balances[round + i].loanInstallment += installment
-            : balances[round + i].previousAccountInstallment += installment;
-      } else{
-        Balance newBalance = Balance.empty();
-        type == InstallmentType.LOAN_INSTALLMENT
-            ? newBalance.loanInstallment = installment
-            : newBalance.previousAccountInstallment = installment;
-        newBalance.round = round + i;
-        balances.add(newBalance);
-      }
+  
+  void addRoundBalance(int roundId, Balance completedRoundBalance) {
+    if (historicalBalances.containsKey(roundId)) {
+      throw Exception("Tentativa de adicionar o balanço da rodada $roundId duas vezes.");
     }
+    historicalBalances[roundId] = completedRoundBalance;
   }
-
-  bool hasBalanceInTheRound(int round) {
-    for (var account in balances) {
-      if (account.round == round) {
-        return true;
-      }
-    }
-    return false;
+  
+  Balance? getBalanceByRound(int roundId) {
+      return historicalBalances[roundId];
   }
-
-  void setNextRoundBalance(){
-    Balance account = Balance.empty();
-     if(hasBalanceInTheRound(round + 1)) {
-      account = balances[round + 1];
-    } else{
-      account.round = round + 1;
-      balances.add(account);
-    }
-  }
-
-
-  FinancialReport({required this.round, required this.profit, required this.expanses, required this.balances});
-
-
-  FinancialReport.empty();
 
   Map<String, dynamic> toMap() {
     return {
-      'round':  round,
-      'profit': profit,
-      'expanses': expanses,
-      'balances': balances.map((account) => account.toMap()).toList()
+      // Serializa o Map diretamente (chave: string, valor: toMap())
+      'historicalBalances': historicalBalances.map((key, value) => MapEntry(key, value.toMap()))
     };
   }
 
   factory FinancialReport.fromMap(Map<String, dynamic> map) {
-    return FinancialReport(
-        round: map['round'] as int,
-        profit: map['profit'] as int,
-        expanses: map['expanses'] as int,
-        balances: (map['balances'] as List<dynamic>).map((account) => Balance.fromMap(account as Map<String, dynamic>)).toList()
-    );
-  }
+        final serializedBalances = map['historicalBalances'] as Map<String, dynamic>? ?? {};
+        final Map<int, Balance> deserializedBalances = serializedBalances.map(
+            (keyString, valueMap) {
+                final int roundId = int.parse(keyString); 
+                final Balance balance = Balance.fromMap(valueMap as Map<String, dynamic>);
+                return MapEntry(roundId, balance);
+            }
+        );
+        return FinancialReport(
+            historicalBalances: deserializedBalances,
+        );
+    }
 }

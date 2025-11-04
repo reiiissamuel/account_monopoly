@@ -5,7 +5,6 @@ import 'package:account_monopoly/repository/user_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
 
-
 class UserModelDTO{
   final int? id;
   final String name;

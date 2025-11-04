@@ -27,7 +27,7 @@ class StringUtils {
     return result;
   }
 
-  static int setTax(String taxLevel){
+  static double setTax(String taxLevel){
     switch(taxLevel){
       case "Normal":
         return 5;
