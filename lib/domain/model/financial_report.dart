@@ -4,6 +4,7 @@ import 'package:account_monopoly/domain/model/balance.dart';
 class FinancialReport {
   
   final Map<int, Balance> historicalBalances;
+  final List<double> dividendsReceived = [];
 
   FinancialReport({
     required this.historicalBalances

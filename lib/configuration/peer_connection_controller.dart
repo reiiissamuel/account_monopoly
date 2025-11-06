@@ -1,6 +1,6 @@
-import 'package:account_monopoly/domain/event_dto.dart';
+import 'package:account_monopoly/domain/model/event_dto.dart';
 import 'package:account_monopoly/domain/model/player.dart';
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:peerdart/peerdart.dart';
@@ -49,7 +49,7 @@ class PeerConnectionController {
       event.on("open").listen((data) {
         log('$CONNECTION_RECEIVED_MSG $data');
         gameModelController.eventComposer(
-            type: LogMsgType.SERVER_HAND_SHAKE,
+            type: EventType.serverHandShake,
             destinationPlayer: Player.ofDefinedId(username: "", id: data));
       });
 
@@ -65,9 +65,8 @@ class PeerConnectionController {
             .removeWhere((c) => c.connectionId == closedNode.peer);
         log('$PEER_CONNECTION_CLOSED $closedNode');
         gameModelController.eventComposer(
-            type: LogMsgType.LOST_CONNECTION,
-            sourcePlayer: gameModelController.gameModelDTO!.othersPlayers
-                .firstWhere((p) => p.id == closedNode.peer));
+            type: EventType.lostConnection,
+            sourcePlayer: gameModelController.gameModelDTO!.othersPlayers[closedNode.peer]);
       });
 
       event.on('disconnected').listen((event) {
@@ -90,9 +89,9 @@ class PeerConnectionController {
       late DataConnection closedNode;
       closedNode = serverActiveConnections.firstWhere((c) => !c.open);
       gameModelController.processComingEvent(EventDTO(
-          type: LogMsgType.LOST_CONNECTION,
-          sourcePlayer: gameModelController.gameModelDTO!.othersPlayers
-              .firstWhere((p) => p.id == closedNode.peer)));
+          type: EventType.lostConnection,
+          sourcePlayer: gameModelController.gameModelDTO!.othersPlayers[closedNode.peer]!)
+      );
       reconnect();
     });
 
@@ -144,9 +143,7 @@ class PeerConnectionController {
   }
 
   String _getNextServerCandidatePeerId() {
-    return gameModelController.gameModelDTO!.othersPlayers
-        .firstWhere((p) => !p.isHost)
-        .id;
+    return gameModelController.gameModelDTO!.othersPlayers.values.firstWhere((p) => !p.isHost).id;
   }
 
   void send(EventDTO event) {

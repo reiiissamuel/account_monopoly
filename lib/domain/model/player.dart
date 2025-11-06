@@ -71,7 +71,41 @@ class Player {
     loans: [],
     portfolio: {},
   );
+
+   Player.ofDefinedId({required String username, required id}) : this(
+    id: id,
+    username: username,
+    isHost: false,
+    currentCredit: 0.0,
+    incomeTax: 0.0,
+    financialReport: FinancialReport.empty(),
+    roundBalance: Balance.empty(),
+    loans: [],
+    portfolio: {});
   
+  void upgradePortfolio(String propertyId, int sharesAmount, double totalCost) {
+    if(portfolio.containsKey(propertyId)) {
+        portfolio[propertyId]!.sharesOwned += sharesAmount;
+      } else {
+        portfolio[propertyId] = ShareHolder(
+          playerId: id,
+          propertyId: propertyId,
+          sharesOwned: sharesAmount,
+          investmentValue: totalCost,
+        );
+      }
+  }
+
+  void downgradePortfolio(String propertyId, int sharesAmount){
+    if(!portfolio.containsKey(propertyId)) return;
+
+    if(sharesAmount >= portfolio[propertyId]!.sharesOwned){
+      portfolio.remove(propertyId);
+    } else {
+      portfolio[propertyId]!.sharesOwned -= sharesAmount;
+    }
+  }
+
   factory Player.fromMap(Map<String, dynamic> map) {
     double credit = (map["currentCredit"] as num).toDouble();
     double incomeTax = (map["incomeTax"] as num? ?? 0).toDouble();
@@ -83,7 +117,7 @@ class Player {
       username: map["username"] as String,
       isHost: map["isHost"] as bool,
       currentCredit: credit,
-      incomeTax: incomeTax,
+      incomeTax: incomeTax, 
       receivedFrom: received,
       payedTo: payed,
       financialReport: FinancialReport.fromMap(map['financialReport']),
@@ -97,9 +131,10 @@ class Player {
     );
   }
   
-  void receiveCredit(double amount) {
+  void receiveCredit(double amount, double incomeTaxRate) {
     if (amount > 0) {
       currentCredit += amount;
+      incomeTax += amount * incomeTaxRate;
     }
   }
 

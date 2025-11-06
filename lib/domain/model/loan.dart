@@ -36,12 +36,7 @@ class Loan {
   void reduceTerm() {
       roundsToPayOff -= 1;
   }
-
-  void finishLoan() {
-    principalPaid = totalDue;
-    roundsToPayOff = 0;
-  }
-
+  
   Map<String, dynamic> toMap(){
     return {
       'id': id,
