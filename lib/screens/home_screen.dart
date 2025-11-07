@@ -1,6 +1,7 @@
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
+import 'package:account_monopoly/screens/my_properties_versions_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -120,6 +121,8 @@ class HomeScreenState extends State<HomeScreen> {
                                           borderRadius: BorderRadius.circular(20.0)
                                       ),
                                       splashFactory: InkRipple.splashFactory,
+                                      shadowColor: Theme.of(context).primaryColor,
+                                      elevation: 10,
                                     ),
                                     child: const Text("Novo Jogo",
                                         style: TextStyle(
@@ -145,6 +148,8 @@ class HomeScreenState extends State<HomeScreen> {
                                       ),
                                       backgroundColor: Colors.black,
                                       splashFactory: InkRipple.splashFactory,
+                                      shadowColor: Theme.of(context).primaryColor,
+                                      elevation: 10,
                                     ),
                                     child: const Text("Entrar com Código",
                                         style: TextStyle(
@@ -169,6 +174,8 @@ class HomeScreenState extends State<HomeScreen> {
                                         ),
                                         backgroundColor: Colors.black,
                                         splashFactory: InkRipple.splashFactory,
+                                        shadowColor: Theme.of(context).primaryColor,
+                                        elevation: 10,
                                       ),
                                       child: const Text("Jogos Ativos",
                                           style: TextStyle(
@@ -182,6 +189,30 @@ class HomeScreenState extends State<HomeScreen> {
                                         Navigator.push(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
                                       },
                                     )),
+                                SizedBox(
+                                    height: 50.0,
+                                    width: 200.0,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20.0)
+                                        ),
+                                        backgroundColor: Colors.black,
+                                        splashFactory: InkRipple.splashFactory,
+                                        shadowColor: Theme.of(context).primaryColor,
+                                      ),
+                                      child: const Text("Propriedades",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 20.0,
+                                              color: Colors.white)),
+                                      onPressed: () {
+                                        if (!userProvider.isLoggedIn()) {
+                                          return _showNonLoggedDialog(context);
+                                        }
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) => MyPropertiesVesionsScreen()));
+                                      },
+                                    ))
                               ],
                             )))
                   ],

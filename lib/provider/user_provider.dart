@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:account_monopoly/domain/model/game_model_dto.dart';
+import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/repository/user_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,25 +12,68 @@ class UserModelDTO{
   final String username;
   final DateTime lastLogged;
   final List<GameModelDTO> games;
+  Map<String, List<Property>>? propertiesVersion;
 
-  UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged, required this.games});
+  UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged, required this.games, this.propertiesVersion});
 
+// Método de SERIALIZAÇÃO (toDoMap) - NOVO E CORRIGIDO
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'name': name,
       'username': username,
       'lastLogged': lastLogged.toIso8601String(),
-      'games': games.map((game) => game.toMap()).toList()
+      
+      'games': games.map((game) => game.toMap()).toList(),
+      
+      'propertiesVersion': propertiesVersion!.map(
+        (key, propertyList) => MapEntry(
+          key,
+          // Mapeia cada Property dentro da lista para Map<String, dynamic>
+          propertyList.map((property) => property.toMap()).toList(),
+        ),
+      ),
     };
   }
 
-  factory UserModelDTO.fromMap(int id, Map<String, dynamic> map) {
+factory UserModelDTO.fromMap(int id, Map<String, dynamic> map) {
+    // 1. Acesso Seguro e Verificação de Tipo (Correção Principal)
+    final dynamic rawPropertiesVersion = map['propertiesVersion'];
+    Map<String, dynamic> propertiesVersionMap = {};
+
+    // Se o tipo for realmente um Map, usamos ele.
+    // Caso contrário (se for List, null, ou outro tipo inesperado), usamos o mapa vazio {}.
+    if (rawPropertiesVersion is Map) {
+      propertiesVersionMap = Map<String, dynamic>.from(rawPropertiesVersion);
+    } else {
+      // Opcional: Adicione um log para rastrear dados corrompidos
+      print('Warning: propertiesVersion expected Map but found ${rawPropertiesVersion.runtimeType}. Treating as empty map.');
+    }
+
     return UserModelDTO(
-        id: id,
-        name: map['name'] as String,
-        username: map['username'] as String,
-        lastLogged: DateTime.parse(map['lastLogged']  as String),
-        games: (map['games'] as List<dynamic>).map((gameMap) => GameModelDTO.fromMap(gameMap as Map<String, dynamic>)).toList()
+      id: id,
+      name: map['name'] as String,
+      username: map['username'] as String,
+      lastLogged: DateTime.parse(map['lastLogged'] as String),
+      games: (map['games'] as List<dynamic>)
+          .map((gameMap) =>
+              GameModelDTO.fromMap(gameMap as Map<String, dynamic>))
+          .toList(),
+      
+      // 2. Mapeamento do propertiesVersionMap (agora garantido ser um Map)
+      propertiesVersion: propertiesVersionMap.map(
+        (key, value) {
+          // Garantindo que 'value' é uma lista (fallback para [])
+          final List<dynamic> propertyList = (value is List) ? value : [];
+
+          return MapEntry(
+            key,
+            propertyList
+                .map((p) => Property.fromMap(p as Map<String, dynamic>))
+                .toList(),
+          );
+        },
+      ),
     );
   }
 
@@ -44,8 +88,8 @@ class UserModelDTO{
   }
 }
 class UserProvider extends ChangeNotifier{
-  static const String NEW_USER_SUCCESS_MSG = "Cadastro concluído: ";
-  static const String NEW_USER_ERROR_MSG = "Falha ao cadastrar usuário!";
+  static final String NEW_USER_SUCCESS_MSG = "Cadastro concluído: ";
+  static final String NEW_USER_ERROR_MSG = "Falha ao cadastrar usuário!";
   List<UserModelDTO> allUsers = [];
   UserModelDTO? user;
   UserRepository userRepository =  GetIt.I.get();
@@ -158,6 +202,27 @@ class UserProvider extends ChangeNotifier{
     isLoading = true;
     notifyListeners();
     user!.games.removeWhere((game) => game.id == gameId);
+    await userRepository.updateUser(user!);
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> newProperty(String versionId, Property property) async {
+    try{
+      notifyListeners();
+      throwIf(user?.propertiesVersion?[versionId]?.contains(property) == true, Exception("Já existe uma propriedade com este código neste lote."));
+      user!.propertiesVersion![versionId]!.add(property);
+    } on Exception {
+      rethrow;
+    } finally{
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteProperties(String versionId) async {
+    isLoading = true;
+    notifyListeners();
+    user!.propertiesVersion!.remove(versionId);
     await userRepository.updateUser(user!);
     isLoading = false;
     notifyListeners();

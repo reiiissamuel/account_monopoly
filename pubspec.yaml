@@ -43,6 +43,7 @@ dependencies:
   google_sign_in: ^7.2.0
   flutter_signin_button: ^2.0.0
   connectivity_plus: ^7.0.0
+  icons_plus: ^5.0.0
 
 dependency_overrides:
   # Força o uso da versão moderna do flutter_webrtc.
