@@ -32,6 +32,7 @@ class GameProvider extends ChangeNotifier {
 
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
+  bool get forbiddenAction => ledger.isBlacklisted(currentPlayer.id);
 
   void notifyChanges(bool isLoading) {
     this.isLoading = isLoading;

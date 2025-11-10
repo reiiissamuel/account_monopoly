@@ -1,8 +1,7 @@
-import 'dart:collection';
-
 import 'package:account_monopoly/domain/model/chance.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
 import 'package:account_monopoly/domain/model/player.dart';
+import 'package:flutter/widgets.dart';
 
 class GameModelDTO{
   String id = "";
@@ -19,13 +18,14 @@ class GameModelDTO{
   bool auctionEnabled = false;
   bool mortgageEnabled = false;
   bool chancesEnabled = false;
-  Player winner = Player.empty();
+  Player? winner;
 
   GameModelDTO.empty();
   GameModelDTO({Player ?player, required ledger, required this.id, required this.initalGameCredit, required this.roundBonus,
     required this.limitPlayer, required this.othersPlayers, required this.mortgageEnabled, required this.chancesEnabled});
   GameModelDTO.initAllFields({required this.player, required ledeger, required this.id, required this.initalGameCredit, required this.limitPlayer,
-    required this.othersPlayers, required this.logs, required this.chances, required this.roundBonus, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
+    required this.othersPlayers, required this.logs, required this.chances, required this.roundBonus, required this.auctionEnabled,
+     required this.mortgageEnabled, required this.chancesEnabled, this.winner});
  
   GameModelDTO toInitialTemplate(){
     return GameModelDTO(
@@ -58,7 +58,8 @@ class GameModelDTO{
       'mortgageEnabled': mortgageEnabled,
       'chancesEnabled': chancesEnabled,
       'roundBonus': roundBonus,
-      'limitPlayer': limitPlayer
+      'limitPlayer': limitPlayer,
+      'winner': winner
     };
   }
 
@@ -66,7 +67,7 @@ class GameModelDTO{
     return GameModelDTO.initAllFields(
         id: map['id'] as String,
         othersPlayers: (map['othersPlayers'] as Map<String, dynamic>? ?? {}).map(
-          (key, value) => MapEntry(key, Player.fromMap(value as Map<String, dynamic>)),
+          (key, p) => MapEntry(key, Player.fromMap(p as Map<String, dynamic>)),
         ),
         logs: (map['logs'] as List<dynamic>).cast<String>(),
         chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
@@ -75,9 +76,10 @@ class GameModelDTO{
         auctionEnabled: map['auctionEnabled'] as bool,
         mortgageEnabled: map['mortgageEnabled'] as bool,
         chancesEnabled: map['chancesEnabled'] as bool,
-        player: Player.fromMap(map['player'] as Map<String, dynamic>),
+        player: Player.empty(),//Player.fromMap(map['player'] as Map<String, dynamic>),
         ledeger: Ledger.empty(),
-        limitPlayer: map['limitPlayer'] as int
+        limitPlayer: map['limitPlayer'] as int,
+        winner: Player.fromMap(map['winner'] as Map<String, dynamic>? ?? {})
     );
   }
 }

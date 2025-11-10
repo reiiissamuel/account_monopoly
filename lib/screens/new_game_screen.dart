@@ -42,6 +42,7 @@ class NewGameScreenState extends State<NewGameScreen> {
 
   @override
   void initState() {
+    super.initState();
     _initialBalanceController.selection = TextSelection.collapsed(offset: _initialBalanceController.text.length);
     setState(() {
       _initialBalanceController.text.isEmpty ? _initialBalanceController.text = "1.500.000" : null;
@@ -264,20 +265,20 @@ class NewGameScreenState extends State<NewGameScreen> {
             ),
             TextButton(
               onPressed: !_enableConfirmButton ? null : () async {
-                String generatedGameId = StringUtils.generateUUID(size: 8); 
+                /* String generatedGameId = StringUtils.generateUUID(size: 8); 
                 GameModelDTO gameData = GameModelDTO(
                     id: generatedGameId,
                     limitPlayer: dropdownValue,
                     othersPlayers: HashSet<Player>(),
                     initalGameCredit:  int.parse(_initialBalanceController.text.replaceAll(".", "")),
                     roundBonus: int.parse(dropdownBonusValue.replaceAll(".", "")),
-                    levelTax: StringUtils.setTax(dropdownLoanTax),
+                    interestRate: StringUtils.setTax(dropdownLoanTax),
                     mortgageEnabled: isMortgageEnabled,
                     chancesEnabled: isChanceSwitchEnabled,
 
                 );
                 gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, game: gameData);
+                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, game: gameData); */
               },
               child: const Text("Confirmar", style: TextStyle(fontSize: 17.0, color: Colors.white )),
             ),

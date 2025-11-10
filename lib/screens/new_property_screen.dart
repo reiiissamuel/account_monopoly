@@ -1,30 +1,45 @@
 import 'package:account_monopoly/domain/enums/property_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart'; 
 
 class NewPropertyScreen extends StatelessWidget {
-  const NewPropertyScreen({super.key});
+  // Dados que você quer passar
+  final String? versionId;
+  final Property? property; 
+
+  const NewPropertyScreen({super.key, this.versionId, this.property});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastrar Nova Propriedade'),
+        title: Text(versionId == null ? 'Cadastrar Nova Propriedade' : 'Atualizar Propriedade'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.black,
-      body: const PropertyRegistrationForm(),
+      body: PropertyRegistrationForm(
+        versionId: versionId,
+        property: property,
+      ),
     );
   }
 }
 
 class PropertyRegistrationForm extends StatefulWidget {
-  const PropertyRegistrationForm({super.key});
+  final String? versionId;
+  final Property? property;
+
+  const PropertyRegistrationForm({
+    super.key, 
+    this.versionId,
+    this.property,
+  });
 
   @override
   State<PropertyRegistrationForm> createState() => _PropertyRegistrationFormState();
@@ -35,12 +50,13 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
 
   // Variáveis para armazenar os valores dos campos
   String _name = '';
-  double _basePrice = 0.0;
+  double _basePrice = 0;
   String _versionid = '';
   PropertyType _propertyType = PropertyType.stocks; // Valor inicial
   Color _colorSignature = Colors.grey; // Valor inicial
-  Icon _iconSignature = Icon(Bootstrap.building); // Valor inicial
+  Icon _iconSignatureData = const Icon(Bootstrap.building); // Valor inicial
   String _propertyId = '';
+  double _rentPrice = 0;
 
   // Lista de cores pré-definidas para seleção
   final List<Color> availableColors = [
@@ -65,7 +81,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     Colors.lime
   ];
 
-  final List<Icon> availableIcons = [
+  final List<Icon> availableIconsData = [
     const Icon(Bootstrap.minecart_loaded),
     const Icon(BoxIcons.bx_taxi),
     const Icon(BoxIcons.bx_train),
@@ -79,12 +95,30 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     const Icon(Bootstrap.telephone_fill),
   ];
 
+  @override
+  void initState(){
+    super.initState();
+    _versionid = widget.versionId ?? '';
+    if(widget.property != null){
+      _name = widget.property!.name;
+      _basePrice = widget.property!.basePrice;
+      _propertyType = widget.property!.propertyType;
+      _colorSignature = widget.property!.colorSignature;
+      _iconSignatureData = widget.property!.iconSignature; // Valor inicial
+      _propertyId = widget.property!.id;
+      _rentPrice = widget.property!.currentRent;
+    }
+  }
+
   // Helper para criar TextFormFields para texto (String)
-  Widget _buildField({required String label, required ValueChanged<dynamic> onSave, required TextInputFormatter inputType, required String alertMsg, int? maxLength}) {
+  Widget _buildField({required String label, required ValueChanged<dynamic> onSave, required TextInputFormatter inputType,
+   required String alertMsg, bool? enabled, int? maxLength, String? initialValue}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
+        enabled: enabled,
         maxLength: maxLength,
+        initialValue: initialValue,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70),
@@ -160,79 +194,60 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     );
   }
 
-  Widget _buildIconSelector() {
-  // 💡 Assumindo que 'availableIcons' é uma List<IconData>
-  final List<IconData> availableIcons = [
-    Icons.home,
-    Icons.business,
-    Icons.train,
-    Icons.local_shipping,
-    Icons.apartment,
-    Icons.airport_shuttle,
-  ];
-
-  // 💡 Assumindo que '_iconSignature' é um IconData? (o ícone atualmente selecionado)
-  IconData? _iconSignature = Icons.home; // Exemplo de estado inicial
-
-  // Lógica de setState e Color/Border (simplificada para demonstração)
-  void setState(VoidCallback fn) {
-    // No ambiente de produção do Flutter, isso atualizará o widget
-    fn();
-  }
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Icone da propriedade:',
-        style: TextStyle(color: Colors.white70, fontSize: 16),
-      ),
-      const SizedBox(height: 8),
-      SizedBox(
-        height: 50,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: availableIcons.length,
-          itemBuilder: (context, index) {
-            final icon = availableIcons[index]; 
-            final isSelected = _iconSignature == icon; 
-            
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _iconSignature = icon;
-                });
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.blueAccent : Colors.grey.shade700, 
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? Colors.white : Colors.transparent, 
-                    width: 3,
+   Widget _buildIconSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Icone da propriedade:',
+          style: TextStyle(color: Colors.white70, fontSize: 16),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 50,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: availableIconsData.length,
+            itemBuilder: (context, index) {
+              final iconData = availableIconsData[index]; 
+              final isSelected = _iconSignatureData == iconData; 
+              
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _iconSignatureData = iconData; // Armazena IconData
+                  });
+                },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700, 
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.transparent, 
+                      width: 3,
+                    ),
+                  ),
+                  child: Icon(
+                    iconData.icon, // Exibe IconData
+                    size: 20, 
+                    color: Colors.white, 
                   ),
                 ),
-                child: Icon(
-                  icon,
-                  size: 20, 
-                  color: Colors.white, 
-                ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-      ),
-      const SizedBox(height: 16),
-    ],
-  );
-}
+        const SizedBox(height: 16),
+      ],
+    );
+  }
 
 
   // Dropdown para Tipo de Propriedade
-  Widget _buildTypeDropdown() {
+  Widget _buildTypeDropdown({required PropertyType? initialValue}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<PropertyType>(
@@ -246,13 +261,13 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
           filled: true,
         ),
         dropdownColor: Colors.grey.shade900,
-        value: _propertyType,
+        initialValue: initialValue,
         style: const TextStyle(color: Colors.white),
         items: PropertyType.values.map((PropertyType type) {
           return DropdownMenuItem<PropertyType>(
             value: type,
             child: Text(
-              type.toString().split('.').last, // Exibe apenas o nome do enum
+              type.description, // Exibe apenas o nome do enum
               style: const TextStyle(color: Colors.white),
             ),
           );
@@ -292,7 +307,8 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
           basePrice: _basePrice,
           colorSignature: _colorSignature,
           propertyType: _propertyType,
-          iconSignature: _iconSignature
+          iconSignature: _iconSignatureData,
+          currentRent: _rentPrice
         );
         
         Provider.of<UserProvider>(context, listen: false).newProperty(_versionid, newProperty);
@@ -309,7 +325,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     } on Exception catch(e){
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro na tentativa de cadastro: ${e.toString()}'),
+            content: Text('Erro na tentativa de cadastro: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -330,22 +346,28 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
               label:'Versão do tabuleiro', 
               onSave: (value) => _versionid = value,
               inputType: FilteringTextInputFormatter.allow(RegExp(r'[\w \s]')),
-              alertMsg: "Nome sem caracteres especiais"
+              alertMsg: "Nome sem caracteres especiais",
+              initialValue: _versionid,
+              enabled: widget.versionId == null
             ),
             _buildField(
               label: 'Nome da Propriedade', 
               onSave: (value) => _name = value,
-              inputType: FilteringTextInputFormatter.allow(RegExp(r'[\w \s]')),
-              alertMsg: "Nome sem caracteres especiais"
+              inputType: FilteringTextInputFormatter.allow(RegExp(r'[\w \s ^~´`Ç]')),
+              alertMsg: "Nome sem caracteres especiais",
+              initialValue: _name
             ),
             _buildField(
-              label:'Escolha um código de 4 letras', 
-              onSave:(value) => _propertyId = value,
-              inputType: FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
-              alertMsg: 'O código deve ter 4 letras maiúsculas',
-              maxLength: 4
-            ),
-            _buildTypeDropdown(),
+                label:'Escolha um código de 4 letras', 
+                onSave:(value) => _propertyId = value,
+                inputType: FilteringTextInputFormatter.allow(RegExp(r'[A-Z \s ^~´`Ç]')),
+                alertMsg: 'O código deve ter 4 letras maiúsculas',
+                maxLength: 4,
+                initialValue: _propertyId,
+                enabled: widget.versionId == null
+              )
+            ,
+            _buildTypeDropdown(initialValue: _propertyType),
 
             _propertyType == PropertyType.stocks ? _buildColorSelector() : _buildIconSelector(),
           
@@ -359,16 +381,25 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             const SizedBox(height: 16),
             _buildField(
               label: 'Preço Base', 
-              onSave: (value) => _basePrice = value,
+              onSave: (value) => _basePrice = double.parse(value),
               inputType:  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-              alertMsg: "insira um número válido"
+              alertMsg: "insira um número válido",
+              initialValue: _basePrice.toString()
+            ),
+            const SizedBox(height: 16),
+            _buildField(
+              label: 'Aluguel inicial', 
+              onSave: (value) => _rentPrice = double.parse(value),
+              inputType:  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+              alertMsg: "insira um número válido",
+              initialValue: _rentPrice.toString()
             ),
             
             const SizedBox(height: 30),
             
             ElevatedButton.icon(
               icon: const Icon(Icons.save),
-              label: const Text('Cadastrar Propriedade'),
+              label: Text(widget.versionId == null ? 'Cadastrar Propriedade' : 'Atualizar Propriedade'),
               onPressed: _submitForm,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,

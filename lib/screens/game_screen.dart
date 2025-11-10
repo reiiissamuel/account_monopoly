@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:account_monopoly/dialogs/auction_alert_dialog.dart';
 import 'package:account_monopoly/dialogs/winner_dialog.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -14,7 +13,7 @@ import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/custom_keyboard_dialog.dart';
 import 'package:account_monopoly/dialogs/more_options_dialog.dart';
 import 'package:account_monopoly/dialogs/table_info_dialog.dart';
-import 'package:account_monopoly/domain/chance.dart';
+import 'package:account_monopoly/domain/model/chance.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
 import 'package:account_monopoly/screens/beneficiaries_screen.dart';
@@ -44,7 +43,6 @@ class GameScreenState extends State<GameScreen> {
 
     Future.delayed(Duration.zero, () {
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
-      gameProvider.gameModelDTO!.player.financialReport.balances.add(gameProvider.gameModelDTO!.player.roundBalance);
       if (gameProvider.gameModelDTO!.chancesEnabled) {
         _getAllEvents();
       }
@@ -66,11 +64,8 @@ class GameScreenState extends State<GameScreen> {
               color: Theme.of(context).primaryColor,
             ));
           }
-          if (gameProvider.youWon) {
+          if (gameProvider.gameModelDTO!.winner != null) {
             return const WinnerDialog(); // return when context player is the winner
-          }
-          if (gameProvider.isThereAuction) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => _dialogCaller(context, const AuctionAlert()));
           }
           return Scaffold(
               appBar: AppBar(
@@ -85,21 +80,13 @@ class GameScreenState extends State<GameScreen> {
                 ),
                 centerTitle: true,
                 leading: Center(
-                  child: !gameProvider.isThereAuction
-                      ? IconButton(
+                  child: IconButton(
                           icon: const Icon(Icons.broadcast_on_personal_rounded,
                               color: Colors.green),
                           onPressed: () {
                             _dialogCaller(context, const TableInfoDialog());
                           },
                         )
-                      : IconButton(
-                          icon: const Icon(Icons.install_mobile,
-                              color: Colors.white),
-                          onPressed: () {
-                            _dialogCaller(context, const TableInfoDialog());
-                          },
-                        ),
                 ),
                 actions: <Widget>[
                   Center(
@@ -137,7 +124,7 @@ class GameScreenState extends State<GameScreen> {
                           shape:const CircleBorder(
                               side: BorderSide(color: Colors.black)
                           ),
-                          onPressed: gameProvider.isThereAuction ? null : (){
+                          onPressed: (){
                             _dialogCaller(context, ConfirmActionDialog(title: "???", textContent: "Deseja pegar uma carta evento?", onConfirm:(){
                               Navigator.of(context).pop();
                               showDialog(context: context, builder: (BuildContext context){
@@ -146,9 +133,9 @@ class GameScreenState extends State<GameScreen> {
                                 }
 
                                 if(_chances[eventDeckCount].effect! > 0) {
-                                  gameProvider.gameModelDTO!.player.roundBalance.qtdEventGain += _chances[eventDeckCount].effect!;
+                                  //gameProvider.gameModelDTO!.player.roundBalance.qtdEventGain += _chances[eventDeckCount].effect!;
                                 } else if(_chances[eventDeckCount].effect! < 0){
-                                  gameProvider.gameModelDTO!.player.roundBalance.qtdEventPay += (-_chances[eventDeckCount].effect!);
+                                  //gameProvider.gameModelDTO!.player.roundBalance.qtdEventPay += (-_chances[eventDeckCount].effect!);
                                 }
                                 return ChanceDialog(_chances[eventDeckCount++]);
                               });
@@ -219,8 +206,8 @@ class GameScreenState extends State<GameScreen> {
                                             ),
                                             backgroundColor: Theme.of(context).primaryColor
                                           ),
-                                          onPressed: gameProvider.isThereAuction ? null : (){
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MortgageScreen()));
+                                          onPressed: (){
+                                            //Navigator.push(context, MaterialPageRoute(builder: (context) => const MortgageScreen()));
                                           },
                                           child: const Text(
                                             "Hipotécas",
@@ -235,21 +222,11 @@ class GameScreenState extends State<GameScreen> {
                                             backgroundColor: Theme.of(context).primaryColor
                                           ),
                                           child: const Text(
-                                              "Fechar Rodada", textAlign: TextAlign.center,
+                                              "Fechar turno", textAlign: TextAlign.center,
                                               style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500)
                                           ),
                                           onPressed: () async {
-                                            await showGeneralDialog(
-                                                context: context,
-                                                barrierDismissible: false,
-                                                barrierLabel: MaterialLocalizations.of(context)
-                                                    .modalBarrierDismissLabel,
-                                                barrierColor: Colors.black45,
-                                                transitionDuration: const Duration(milliseconds: 200),
-                                                pageBuilder: (BuildContext context, Animation animation,
-                                                    Animation secondAnimation){
-                                                  //return CloseAccountDialog();
-                                                });
+                                            gameProvider.eventComposer(type: EventType.closeTurn);
                                           },
                                         )
                                       ],
@@ -266,7 +243,7 @@ class GameScreenState extends State<GameScreen> {
                                   imgPath: "icons/buy.png",
                                   title: "Comprar", 
                                   onPressed: (){
-                                    _dialogCaller(context, const CustomKeyboard(title: "Insira o valor da propriedade", eventType: LogMsgType.BUY, playerToPayId: ""));
+                                    //_dialogCaller(context, const CustomKeyboard(title: "Insira o valor da propriedade", eventType: ????, playerToPayId: ""));
                                   }
                                 ),
 
@@ -274,7 +251,7 @@ class GameScreenState extends State<GameScreen> {
                                   imgPath: "icons/bills.png",  
                                   title: "Ver Fatura", 
                                   onPressed: (){
-                                    _dialogCaller(context, const AccountDescription());
+                                    //_dialogCaller(context, const AccountDescription());
                                   }
                                 ),
 
@@ -290,7 +267,7 @@ class GameScreenState extends State<GameScreen> {
                                   imgPath: "icons/graph.png",  
                                   title: "Balanço",
                                   onPressed: (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
+                                    //Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
                                   }
                                 ),
 
@@ -300,9 +277,9 @@ class GameScreenState extends State<GameScreen> {
                                   onPressed: (){
                                   _dialogCaller(
                                       context, const CustomKeyboard(
-                                      title: "Insira o valor total dos hotéis",
-                                      eventType: LogMsgType.BUILD_HOTEL,
-                                      playerToPayId: ""));
+                                        title: "Insira o valor total dos hotéis",
+                                        eventType: EventType.build
+                                      ));
                                 }),
 
                                 GameIconButtonBuilder(
@@ -311,14 +288,15 @@ class GameScreenState extends State<GameScreen> {
                                   onPressed:
                                   (){
                                     _dialogCaller(
-                                    context, const CustomKeyboard(title: "Insira o valor da casas", eventType: LogMsgType.BUILD_HOUSE, playerToPayId: ""));
+                                    context, const CustomKeyboard(title: "Insira o valor da casas", eventType: EventType.build));
                                   }
                                 ),
 
                                 GameIconButtonBuilder(
                                     imgPath: "icons/more.png",
                                     title: "Mais", 
-                                    onPressed: (){_dialogCaller(context, const MoreOptionsDialog());
+                                    onPressed: (){
+                                     // _dialogCaller(context, const MoreOptionsDialog());
                                 }),
                               ],
                             ),
@@ -338,14 +316,14 @@ class GameScreenState extends State<GameScreen> {
                                       return Container(
                                           decoration: BoxDecoration(
                                               borderRadius: BorderRadius.circular(20.0),
-                                              color: r[index].contains("Você") ? Colors.green : Colors.white
+                                              color: r[index].contains("Sua empresa") ? Colors.green : Colors.white
                                           ),
                                           padding: const EdgeInsets.all(5.0),
                                           margin: const EdgeInsets.only(top: 5.0),
                                           child:  Text(r[index],
                                             style: TextStyle(
                                               fontSize: 15.0,
-                                              color: r[index].contains("Você") ? Colors.white : Theme.of(context).primaryColor,
+                                              color: r[index].contains("Sua empresa") ? Colors.white : Theme.of(context).primaryColor,
                                             ),
                                           ));
                                     }),

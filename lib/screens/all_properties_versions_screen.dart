@@ -1,6 +1,7 @@
 import 'package:account_monopoly/domain/enums/property_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/new_property_screen.dart';
+import 'package:account_monopoly/screens/properties_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/domain/model/property.dart'; // Import assumido para 'Property'
 
-class MyPropertiesVesionsScreen extends StatelessWidget {
+class AllPropertiesVesionsScreen extends StatelessWidget {
 
   List<Map<String, dynamic>> _getPropertieSummary(UserProvider userprovider) {
     var propertiesResume = <Map<String, dynamic>>[];
@@ -29,7 +30,7 @@ class MyPropertiesVesionsScreen extends StatelessWidget {
 
 
   final _scafoldKey = GlobalKey<ScaffoldState>();
-  MyPropertiesVesionsScreen({super.key});
+  AllPropertiesVesionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +39,7 @@ class MyPropertiesVesionsScreen extends StatelessWidget {
         key: _scafoldKey,
         appBar: AppBar(
           backgroundColor: Theme.of(context).primaryColor,
-          title: const Text("Propriedades cadastradas", style: TextStyle(
+          title: const Text("Versões cadastradas", style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
               letterSpacing: 2)),
@@ -155,12 +156,7 @@ class MyPropertiesVesionsScreen extends StatelessWidget {
                         backgroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        // Ação para carregar a versão
-                        Fluttertoast.showToast(
-                           msg: "Carregando ${summary["version"]}...",
-                           backgroundColor: Colors.blueAccent,
-                        );
-                        // Exemplo: userProvider.loadProperties(summary["version"]);
+                        Navigator.of(context).push(MaterialPageRoute(builder: (context) => PropertiesScreen(versionId: summary["version"])));
                       },
                       child: const Icon(
                         Icons.arrow_forward,
@@ -180,7 +176,7 @@ class MyPropertiesVesionsScreen extends StatelessWidget {
                             title: "Alerta de Exclusão!",
                             textContent: "Essa ação não poderá ser desfeita",
                             onConfirm: () async {
-                              userProvider.deleteProperties(summary["version"]);
+                              userProvider.deletePropertiesCollection(summary["version"]);
                               // A navegação/fechamento do diálogo deve ser aqui,
                               // mas como o `ConfirmActionDialog` geralmente faz isso internamente,
                               // mantemos apenas o toast e a ação do provider.
@@ -192,7 +188,9 @@ class MyPropertiesVesionsScreen extends StatelessWidget {
                                   backgroundColor: Colors.green,
                                   textColor: Colors.white,
                                   fontSize: 16.0
-                              );
+                              ).then((onValue) => {
+                                Navigator.pop(context)
+                              });
                             });
                         });
                       },

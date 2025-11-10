@@ -1,7 +1,7 @@
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
-import 'package:account_monopoly/screens/my_properties_versions_screen.dart';
+import 'package:account_monopoly/screens/all_properties_versions_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -210,7 +210,7 @@ class HomeScreenState extends State<HomeScreen> {
                                         if (!userProvider.isLoggedIn()) {
                                           return _showNonLoggedDialog(context);
                                         }
-                                        Navigator.push(context, MaterialPageRoute(builder: (context) => MyPropertiesVesionsScreen()));
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) => AllPropertiesVesionsScreen()));
                                       },
                                     ))
                               ],

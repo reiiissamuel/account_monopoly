@@ -208,21 +208,40 @@ class UserProvider extends ChangeNotifier{
   }
 
   Future<void> newProperty(String versionId, Property property) async {
+    var propertiesVersion = user!.propertiesVersion!;
     try{
       notifyListeners();
-      throwIf(user?.propertiesVersion?[versionId]?.contains(property) == true, Exception("Já existe uma propriedade com este código neste lote."));
-      user!.propertiesVersion![versionId]!.add(property);
+      if(propertiesVersion.containsKey(versionId)){
+        if(propertiesVersion[versionId]!.contains(property)){
+          final int index = propertiesVersion[versionId]!.indexWhere((p) => p.id == property.id);
+          propertiesVersion[versionId]![index] = property;
+        } else {
+          propertiesVersion[versionId]!.add(property);
+        }  
+      } else {
+        propertiesVersion[versionId] = [property];
+      }
+      updateUser();
+      notify();
     } on Exception {
-      rethrow;
-    } finally{
       notifyListeners();
-    }
+      rethrow;
+    } 
   }
 
-  Future<void> deleteProperties(String versionId) async {
+  Future<void> deletePropertiesCollection(String versionId) async {
     isLoading = true;
     notifyListeners();
     user!.propertiesVersion!.remove(versionId);
+    await userRepository.updateUser(user!);
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> deleteProperty(String versionId, String propertyid) async {
+    isLoading = true;
+    notifyListeners();
+    user!.propertiesVersion![versionId]!.removeWhere((p) => p.id == propertyid);
     await userRepository.updateUser(user!);
     isLoading = false;
     notifyListeners();
