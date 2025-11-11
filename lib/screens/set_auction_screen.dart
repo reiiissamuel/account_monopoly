@@ -1,10 +1,10 @@
-import 'package:account_monopoly/provider/game_provider.dart';
+/* import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/domain/model/auction.dart';
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 
 class SetAuctionScreen extends StatefulWidget {
   const SetAuctionScreen({super.key});
@@ -153,7 +153,7 @@ class SetAuctionScreenState extends State<SetAuctionScreen> {
                                               currentValue: 0,
                                               mortgageId: ''
                                           );
-                                          gameProvider.eventComposer(type: LogMsgType.AUCTION_START, auction: auction);
+                                          gameProvider.eventComposer(type: EventType.AUCTION_START, auction: auction);
                                           Navigator.of(context).pop();
                                         }
                                       },
@@ -175,3 +175,4 @@ class SetAuctionScreenState extends State<SetAuctionScreen> {
             )));
   }
 }
+ */

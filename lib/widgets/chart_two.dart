@@ -1,4 +1,4 @@
-import 'package:account_monopoly/domain/model/balance.dart';
+/* import 'package:account_monopoly/domain/model/balance.dart';
 import 'package:account_monopoly/domain/enums/pie_chart_type.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -69,9 +69,8 @@ class ChartTwo extends StatelessWidget {
           sources[1].value += ba.qtdPurchases;
           sources[2].value += (ba.qtdHome + ba.qtdHotel);
           sources[3].value += ba.qtdEventPay;
-          sources[4].value += ba.previousAccountInstallment;
-          sources[5].value += ba.ir;
-          sources[6].value += ba.otherPaymentsOut;
+          sources[4].value += ba.ir;
+          sources[5].value += ba.otherPaymentsOut;
         }
         break;
       case PieChartType.GENERAL_PROFIT:
@@ -101,9 +100,8 @@ class ChartTwo extends StatelessWidget {
         sources[1].value += gameProvider.gameModelDTO!.player.roundBalance.qtdPurchases;
         sources[2].value += (gameProvider.gameModelDTO!.player.roundBalance.qtdHome + gameProvider.gameModelDTO!.player.roundBalance.qtdHotel);
         sources[3].value += gameProvider.gameModelDTO!.player.roundBalance.qtdEventPay;
-        sources[4].value += gameProvider.gameModelDTO!.player.roundBalance.previousAccountInstallment;
-        sources[5].value += gameProvider.gameModelDTO!.player.roundBalance.ir;
-        sources[6].value += gameProvider.gameModelDTO!.player.roundBalance.otherPaymentsOut;
+        sources[4].value += gameProvider.gameModelDTO!.player.roundBalance.ir;
+        sources[5].value += gameProvider.gameModelDTO!.player.roundBalance.otherPaymentsOut;
         break;
     }
     
@@ -253,3 +251,4 @@ class ChartSource {
         required this.color,
       });
 }
+ */

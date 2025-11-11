@@ -1,19 +1,9 @@
 import 'dart:math';
 
-class StringUtils {
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
-  static String currencyFormat(String ns){
-    String s = ns.replaceAll(".", "");
-
-    //[1.000 10.000 100.000] [1.000.000 10.000.000 100.000.000]
-    if(s.length == 4 || s.length == 5 || s.length == 6) {
-      return "${s.substring(0, s.length - 3)}.${s.substring(s.length - 3 , s.length)}";
-    } else if(s.length == 7 || s.length == 8 || s.length == 9){
-      return "${s.substring(0, s.length - 6)}.${s.substring(s.length - 6, s.length - 3)}.${s.substring(s.length - 3 , s.length)}";
-    }
-    else {
-      return s;}
-  }
+class StringUtils extends TextInputFormatter{
 
   static String generateUUID({required int size}) {
     final random = Random();
@@ -27,16 +17,43 @@ class StringUtils {
     return result;
   }
 
-  static double setTax(String taxLevel){
-    switch(taxLevel){
-      case "Normal":
-        return 5;
-      case "Alto":
-        return 10;
-      case "Jogo-Rapido":
-        return 15;
-      default:
-        return 5;
+  static final NumberFormat _currencyFormat = NumberFormat.currency(
+    locale: 'pt_BR', // Defina o locale desejado (ex: pt_BR para Real)
+    symbol: '\$', // Símbolo da moeda
+    decimalDigits: 2, // Número de casas decimais
+  );
+
+  static String currencyFormat(double input){
+    return _currencyFormat.format(input);
+  }
+
+  static double currencyAsDouble(String input) {
+    final num parsedValue = _currencyFormat.parse(input);
+    return parsedValue.toDouble();
+  }
+  
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.selection.baseOffset == 0) {
+      // Impede a formatação se o campo estiver vazio (edge case)
+      return newValue;
     }
+
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    //dividindo por 100 para pegar os cents
+    double value = double.parse(newValue.text) / 100;
+    String formattedText = currencyFormat(value);
+
+    // Retorna o novo valor do campo, ajustando a posição do cursor para o final
+    return newValue.copyWith(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
   }
 }

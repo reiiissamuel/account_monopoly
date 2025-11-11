@@ -1,18 +1,21 @@
 import 'dart:collection';
 
+import 'package:account_monopoly/domain/enums/game_level.dart';
 import 'package:account_monopoly/domain/model/game_model_dto.dart';
+import 'package:account_monopoly/domain/model/ledger.dart';
+import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
-import 'package:account_monopoly/widgets/default_dropdown_menu.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:account_monopoly/screens/game_screen.dart';
+
 
 class NewGameScreen extends StatefulWidget {
   const NewGameScreen({super.key});
@@ -24,29 +27,62 @@ class NewGameScreen extends StatefulWidget {
 class NewGameScreenState extends State<NewGameScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final _initialBalanceController = TextEditingController();
+  final _initialCreditController = TextEditingController();
+  final _bonusController = TextEditingController();
+  final _sharesController = TextEditingController();
+  String _selectedPropertyVersion = '';
+  List<String> _propertiesVersionsOptions = [];
   int dropdownValue = 3;
-  String dropdownBonusValue = "200.000";
-  String dropdownFaturaTax = "Normal";
-  List <String> faturaTaxOptions = ["Normal","Alto","Jogo-Rapido"];
-  String dropdownLoanTax = "Normal";
-  List <String> loanTaxOptions = ["Normal","Alto","Jogo-Rapido"];
-  List <String> bonusOptions = ["0", "50.000","100.000","200.000","250.000"];
+  GameLevel gameLevel = GameLevel.nomal;
   List <int> spinnerItems = [2,3,4,5,6,7,8,9,10];
-  bool isAuctionSwitchEnabled = false;
-  bool isChanceSwitchEnabled = false;
-  bool isMortgageEnabled = false;
-
+  bool isChanceSwitchEnabled = true;
+  bool isLoanEnabled = true;
 
   final bool _enableConfirmButton = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _initialBalanceController.selection = TextSelection.collapsed(offset: _initialBalanceController.text.length);
-    setState(() {
-      _initialBalanceController.text.isEmpty ? _initialBalanceController.text = "1.500.000" : null;
-    });
+@override
+ void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+   _initialCreditController.text.isEmpty ? _initialCreditController.text = "200.000,00" : null;
+   _bonusController.text.isEmpty ? _bonusController.text = "200.000,00" : null;
+   _sharesController.text.isEmpty ? _sharesController.text = "1000" : null;
+   _initialCreditController.selection = TextSelection.collapsed(offset: _initialCreditController.text.length);
+   _bonusController.selection = TextSelection.collapsed(offset: _bonusController.text.length);
+   _sharesController.selection = TextSelection.collapsed(offset: _sharesController.text.length);
+    final availableVersions = Provider.of<UserProvider>(context, listen: false).user!.propertiesVersion!.keys.toList();
+   _propertiesVersionsOptions = availableVersions;
+    if (_propertiesVersionsOptions.isNotEmpty) {
+      _selectedPropertyVersion = _propertiesVersionsOptions.first;
+    }
+      
+   setState(() {});
+  });
+ }
+
+  InputDecoration _buildInputDecoration(BuildContext context, String labelText, {IconData? icon}) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w500,
+        fontSize: 18.0,
+      ),
+      prefixIcon: icon != null ? Icon(icon, color: Theme.of(context).primaryColor) : null,
+      
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 3.0),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(
+          color: Colors.white, width: 5.0
+        ),
+        borderRadius: BorderRadius.all(Radius.circular(20))
+      ),
+      border: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(20.0))),
+    );
   }
 
   @override
@@ -62,37 +98,49 @@ class NewGameScreenState extends State<NewGameScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 30),
-          //padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
           child: ListView(
             children: <Widget>[
+              // --- Campo: Saldo Inicial (Agora com labelText) ---
               TextField(
                 keyboardType: TextInputType.number,
-                controller: _initialBalanceController,
-                //textAlign: TextAlign.center,
+                controller: _initialCreditController,
                 style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
                     fontSize: 20.0),
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.attach_money),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 3.0),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(
-                          color: Colors.white, width: 5.0
-                      ),
-                      borderRadius: BorderRadius.all(Radius.circular(20))
-                  ),
-                  border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(20.0))),
-                  helperText: "Saldo inicial",
-                  helperStyle: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13.0),
-                ),
+                decoration: _buildInputDecoration(context, "Saldo Inicial", icon: Icons.attach_money),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  StringUtils(), // Aplica a formatação de moeda
+                ]
               ),
+              const SizedBox(height: 25.0),
+              TextField(
+                keyboardType: TextInputType.number,
+                controller: _bonusController,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 20.0),
+                decoration: _buildInputDecoration(context, "Bônus de Rodada", icon: Icons.attach_money),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  StringUtils(), // Aplica a formatação de moeda
+                ]
+              ), 
+              const SizedBox(height: 25.0),
+              TextField(
+                keyboardType: TextInputType.number,
+                controller: _sharesController,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 20.0),
+                decoration: _buildInputDecoration(context, "Quantidade de ações por propriedade", icon: Icons.money),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ]
+              ), 
               const SizedBox(height: 25.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -100,34 +148,57 @@ class NewGameScreenState extends State<NewGameScreen> {
                 children: <Widget>[
                   Expanded(
                     flex: 3,
-                    child: DefaultDropdownMenu<int>(
-                        value: dropdownValue,
-                        hintText: "Limite de Jogadores",
-                        items: spinnerItems,
-                        onChange: (data) => setState(() => dropdownValue = data ?? dropdownValue),)
+                    child: DropdownButtonFormField<int>(
+                      initialValue: dropdownValue,
+                      decoration: _buildInputDecoration(context, "Limite de Jogadores"), 
+                      dropdownColor: Colors.black, // Cor do menu dropdown para visibilidade
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 20.0),
+                      
+                      items: spinnerItems.map<DropdownMenuItem<int>>((int value) {
+                        return DropdownMenuItem<int>(
+                          value: value,
+                          child: Text(value.toString()),
+                        );
+                      }).toList(),
+                      onChanged: (data) => setState(() => dropdownValue = data ?? dropdownValue),
+                    ),
                   ),
                   const Expanded(
                       flex: 1,
                       child: TipIconButton(title: "Limite de Jogadores", tip: TipsResourse.PLAYERS_LIMIT_TIP))
                 ],
               ),
-              const SizedBox(height: 25.0),
+              const SizedBox(height: 25.0),         
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Expanded(
                     flex: 3,
-                    child: DefaultDropdownMenu<String>(
-                    value: dropdownBonusValue,
-                    hintText: "Bônus da Rodada",
-                    items: bonusOptions,
-                    onChange: (data) => setState(() => dropdownBonusValue = data ?? dropdownBonusValue),
-
-                    )),
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _selectedPropertyVersion,
+                      decoration: _buildInputDecoration(context, "Versão do tabuleiro"), 
+                      dropdownColor: Colors.black, // Cor do menu dropdown para visibilidade
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 20.0),
+                      
+                      items: _propertiesVersionsOptions.map<DropdownMenuItem<String>>((String selectedPropertyVersion) {
+                        return DropdownMenuItem<String>(
+                          value: selectedPropertyVersion,
+                          child: Text(selectedPropertyVersion),
+                        );
+                      }).toList(),
+                      onChanged: (data) => setState(() => _selectedPropertyVersion = data ?? _selectedPropertyVersion),
+                    ),
+                  ),
                   const Expanded(
                       flex: 1,
-                      child: TipIconButton(title: "Bônus da Rodada", tip: TipsResourse.ROUND_BONUS_TIP))
+                      child: TipIconButton(title: "Versão do tabuleiro", tip: TipsResourse.VERSION))
                 ],
               ),
               const SizedBox(height: 25.0),
@@ -137,21 +208,35 @@ class NewGameScreenState extends State<NewGameScreen> {
                 children: <Widget>[
                   Expanded(
                     flex: 3,
-                    child: DefaultDropdownMenu<String>(
-                        value: dropdownLoanTax,
-                        hintText: "Nível dos juros",
-                        items: loanTaxOptions,
-                        onChange: (data) => setState(() {
-                          dropdownLoanTax = data ?? dropdownLoanTax;
-                        }))
-                 ),
-                 const Expanded(
-                     flex:1,
-                     child: TipIconButton(title: "Nível dos juros:", tip: TipsResourse.LOAN_TAX_TIP))
+                    child: DropdownButtonFormField<GameLevel>(
+                      initialValue: gameLevel,
+                      decoration: _buildInputDecoration(context, "Nível do Jogo"),
+                      dropdownColor: Colors.black, // Cor do menu dropdown para visibilidade
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 20.0),
+                      
+                      items: GameLevel.values.map((GameLevel type) {
+                          return DropdownMenuItem<GameLevel>(
+                            value: type,
+                            child: Text(
+                              type.description, // Exibe apenas o nome do enum
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          );
+                        }).toList(),
+                      onChanged: (data) => setState(() {
+                        gameLevel = data ?? gameLevel;
+                      })
+                    )
+                  ),
+                  const Expanded(
+                      flex:1,
+                      child: TipIconButton(title: "Nível dos juros:", tip: TipsResourse.LOAN_TAX_TIP))
                 ],
               ),
               const SizedBox(height: 25.0),
-
               Card(
                 color: Theme.of(context).primaryColor,
                 child: Padding(
@@ -160,53 +245,30 @@ class NewGameScreenState extends State<NewGameScreen> {
                     children: <Widget>[
                       ListTile(
                         title: const Text(
-                          'Gerenciar leilões',  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
+                            'Habilitar eventos inesperados de mercado', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
                         ),
                         trailing: Switch(
-                          // thumb color (round icon)
                           activeThumbColor: Theme.of(context).primaryColor,
                           activeTrackColor: Colors.white,
                           inactiveThumbColor: Colors.blueGrey.shade600,
                           inactiveTrackColor: Colors.grey.shade400,
                           splashRadius: 35.0,
-                          // boolean variable value
-                          value: isAuctionSwitchEnabled,
-                          // changes the state of the switch
-                          onChanged: (value) => setState(() => isAuctionSwitchEnabled = value),
-                        ),
-                      ),
-                      ListTile(
-                        title: const Text(
-                            'Gerenciar eventos',  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
-                        ),
-                        trailing: Switch(
-                          // thumb color (round icon)
-                          activeThumbColor: Theme.of(context).primaryColor,
-                          activeTrackColor: Colors.white,
-                          inactiveThumbColor: Colors.blueGrey.shade600,
-                          inactiveTrackColor: Colors.grey.shade400,
-                          splashRadius: 35.0,
-                          // boolean variable value
                           value: isChanceSwitchEnabled,
-                          // changes the state of the switch
                           onChanged: (value) => setState(() => isChanceSwitchEnabled = value),
                         ),
                       ),
                       ListTile(
                         title: const Text(
-                            'Gerenciar Hipotecas',  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
+                            'Habilitar emprestimos', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
                         ),
                         trailing: Switch(
-                          // thumb color (round icon)
                           activeThumbColor: Theme.of(context).primaryColor,
                           activeTrackColor: Colors.white,
                           inactiveThumbColor: Colors.blueGrey.shade600,
                           inactiveTrackColor: Colors.grey.shade400,
                           splashRadius: 35.0,
-                          // boolean variable value
-                          value: isMortgageEnabled,
-                          // changes the state of the switch
-                          onChanged: (value) => setState(() => isMortgageEnabled = value),
+                          value: isLoanEnabled,
+                          onChanged: (value) => setState(() => isLoanEnabled = value),
                         ),
                       )
                     ],
@@ -214,6 +276,8 @@ class NewGameScreenState extends State<NewGameScreen> {
                 ),
               ),
               const SizedBox(height: 25.0),
+              
+              // --- Botão Prosseguir (Mantido) ---
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   fixedSize: const Size(25, 25),
@@ -241,6 +305,7 @@ class NewGameScreenState extends State<NewGameScreen> {
 
   void _showConfirmDialog(BuildContext context){
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -252,8 +317,8 @@ class NewGameScreenState extends State<NewGameScreen> {
           title: const Text("Resumo",
               style: TextStyle(color: Colors.white)),
           content: Text(
-              "Saldo inicial: \$ ${_initialBalanceController.text}\nLimite de Jogadores: $dropdownValue\nBônus da rodada: $dropdownBonusValue\n"
-                  "\n\nDeseja confirmar as configurações?",
+              "Saldo inicial: \$ ${_initialCreditController.text}\nLimite de Jogadores: $dropdownValue\nBônus da rodada: ${_bonusController.text}\n"
+                  "Nível: ${gameLevel.description}\n\nDeseja confirmar as configurações?",
               style: const TextStyle(color: Colors.white)),
           actions: <Widget>[
             // define os botões na base do dialogo
@@ -265,20 +330,34 @@ class NewGameScreenState extends State<NewGameScreen> {
             ),
             TextButton(
               onPressed: !_enableConfirmButton ? null : () async {
-                /* String generatedGameId = StringUtils.generateUUID(size: 8); 
+                String generatedGameId = StringUtils.generateUUID(size: 8); 
+
+                Map<String, Property> properties = userProvider.user!.propertiesVersion![_selectedPropertyVersion] != null ?  Map.fromEntries(
+                    userProvider.user!.propertiesVersion![_selectedPropertyVersion]!.map((property) => MapEntry(property.id, property)),
+                  ) : {};
+                properties.forEach((k, p) {
+                  p.totalShares = int.parse(_sharesController.text);
+                  p.availableShares = p.totalShares;
+                });
+                Ledger ledger =  Ledger(
+                  properties: properties, 
+                  currentInterestRate: gameLevel.initalInterestRate, 
+                  propertyProfitTaxRate: gameLevel.propertyProfitTaxRate, 
+                  incomeTaxRate: gameLevel.incomeTaxRate, 
+                  lateFeeRate: gameLevel.lateFeeRate,
+                  roundBonus: StringUtils.currencyAsDouble(_bonusController.text)
+                );
+                
                 GameModelDTO gameData = GameModelDTO(
+                    ledger: ledger,
                     id: generatedGameId,
                     limitPlayer: dropdownValue,
-                    othersPlayers: HashSet<Player>(),
-                    initalGameCredit:  int.parse(_initialBalanceController.text.replaceAll(".", "")),
-                    roundBonus: int.parse(dropdownBonusValue.replaceAll(".", "")),
-                    interestRate: StringUtils.setTax(dropdownLoanTax),
-                    mortgageEnabled: isMortgageEnabled,
+                    initalGameCredit: StringUtils.currencyAsDouble(_initialCreditController.text),
                     chancesEnabled: isChanceSwitchEnabled,
-
+                    loanEnabled: isLoanEnabled
                 );
                 gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, game: gameData); */
+                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, game: gameData);
               },
               child: const Text("Confirmar", style: TextStyle(fontSize: 17.0, color: Colors.white )),
             ),
@@ -304,6 +383,6 @@ class NewGameScreenState extends State<NewGameScreen> {
   Future<void> _onSuccess() async {
     Navigator.of(context).pop();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
-        //.then((value) => GameModelController.of(context).exitGame());
+      //.then((value) => GameModelController.of(context).exitGame());
   }
 }

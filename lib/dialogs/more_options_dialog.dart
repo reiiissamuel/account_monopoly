@@ -1,8 +1,9 @@
-import 'package:account_monopoly/provider/game_provider.dart';
+/* import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/screens/chances_screen.dart';
 import 'package:account_monopoly/screens/set_auction_screen.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
@@ -35,19 +36,19 @@ class MoreOptionsDialog extends StatelessWidget {
                 img: "icons/ir.png",
                 title: "Imposto de renda",
                 dialog: ConfirmActionDialog(
-                    title: "Pagar imposto de renda",
-                    textContent: "Confirmar Pagamento 200.000?",
+                    title: "Pagar imposto de renda?",
+                    textContent: "Serão deduzidos ${StringUtils.currencyFormat(gameProvider.currentPlayer.incomeTax.toString())} da sua conta.",
                     onConfirm: () {
-                      gameProvider.eventComposer(type: LogMsgType.CURRENT_ACCOUNT_UPDATE_DOWN);
+                      gameProvider.eventComposer(type: EventType.payTax);
                       Navigator.of(context).pop();
                       Navigator.of(context).pop();
                     })),
 
             _optionButton(context: context, img: "icons/rest.png", title: "Restituição",
                 dialog: ConfirmActionDialog(title: "Restituição",
-                    textContent: "Confirmar recebimento 200.000?",
+                    textContent: "Confirmar recebimento?",
                     onConfirm: () {
-                      gameProvider.eventComposer(type: LogMsgType.CURRENT_ACCOUNT_UPDATE_UP);
+                      gameProvider.eventComposer(type: EventType.receiveTax);
                       Navigator.of(context).pop();
                       Navigator.of(context).pop();
                     })),
@@ -55,20 +56,20 @@ class MoreOptionsDialog extends StatelessWidget {
                 dialog: const CustomKeyboard(
                     title: "Digite o valor a receber",
                     playerToPayId: "",
-                    eventType: LogMsgType.RECEIVE_FROM_BANK)),
+                    eventType: EventType.receiveFromBank)),
             _optionButton(context: context, img: "icons/paybank.png", title: "Pagar banco",
                 dialog: const CustomKeyboard(
                     title: "Digite o valor a ser pago",
                     playerToPayId: "",
-                    eventType: LogMsgType.PAY_BANK,
+                    eventType: EventType.payBank,
                 )),
 
             _optionButton(context: context, img: "icons/bit.png", title: "Leiloar Propriedade",
                 screen: const SetAuctionScreen()),
 
             _optionButton(context: context, img: "icons/loan.png", title: "Pegar Empréstimo",
-                onPressed: Provider.of<GameProvider>(context).hasAnyLoanRunning() ? () {} : null,
-                dialog: Provider.of<GameProvider>(context).hasAnyLoanRunning()  ? null : const LoanDialog()
+                onPressed: gameProvider.forbiddenAction ? () {} : null,
+                dialog: gameProvider.forbiddenAction  ? null : const LoanDialog()
             ),
             _optionButton(
                 context: context,
@@ -129,3 +130,4 @@ Widget _optionButton({required BuildContext context, required String img, requir
     )
   );
 }
+ */

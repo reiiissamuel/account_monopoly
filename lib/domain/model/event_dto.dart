@@ -13,7 +13,7 @@ class EventDTO{
   final Player? destinationPlayer;
   final Player sourcePlayer;
   late final GameModelDTO? gameData; ///somente enviado nos eventos do tipo HANDSHAKE para passar as confi do jogo para um novo player
-  double? value;
+  num? value;
   Property? property;
   TradeOffer? tradeOffer;
 
@@ -26,10 +26,10 @@ class EventDTO{
   String getEventLog(Player currentPlayer){
     return type.messageScope
           !.replaceAll('{SOURCE}', sourcePlayer.username == currentPlayer.username ? 'Sua empresa' : currentPlayer.username)
-            .replaceAll('{VALUE}', StringUtils.currencyFormat(value.toString()))
-              .replaceAll('{DEST}', (destinationPlayer != null && destinationPlayer!.username == currentPlayer.username) ? 'Sua empresa' : sourcePlayer.username)
+            .replaceAll('{VALUE}', (value is double) ? StringUtils.currencyFormat(value!.toDouble()) : value.toString())
+              .replaceAll('{DEST}', (destinationPlayer != null && destinationPlayer?.username == currentPlayer.username) ? 'Sua empresa' : sourcePlayer.username)
               .replaceAll('{PROPERTY}', property!.name)
-              .replaceAll('{TRADEOFFER}', "\n\t${tradeOffer!.sharesAmount} ações de ${tradeOffer!.offerId} no valor total de ${tradeOffer!.totalAskingPrice}");
+              .replaceAll('{TRADEOFFER}', "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer?.offerId} no valor total de ${tradeOffer?.totalAskingPrice}");
      
   }
 
@@ -51,7 +51,7 @@ class EventDTO{
         type: map['type'] as EventType,
         destinationPlayer: Player.fromMap(map['destinationPlayer']),
         sourcePlayer: Player.fromMap(map['sourcePlayer']),
-        value: map['value'] as double?,
+        value: map['value'] as num?,
         gameData: GameModelDTO.fromMap( map['gameData']),
         property: map['property'] != null ? Property.fromMap(map['property']) : null
     );}

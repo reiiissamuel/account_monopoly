@@ -3,7 +3,7 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
 
 
@@ -64,7 +64,7 @@ class WinnerDialog extends StatelessWidget {
                       ),
                       child: const Text("Análise do jogo", style: TextStyle(fontSize: 16.0, color: Colors.white)),
                       onPressed:  () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
+                        //Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
                       },
                     ),
 
@@ -78,7 +78,7 @@ class WinnerDialog extends StatelessWidget {
                       ),
                       child: const Text("Sair", style: TextStyle(fontSize: 16.0, color: Colors.white)),
                       onPressed:() {
-                        gameProvider.eventComposer(type: LogMsgType.IWON);
+                        gameProvider.eventComposer(type: EventType.iwon);
                         //Navigator.pushReplacement(context, MaterialPageRoute(builder:(context)=>HomeScreen()));
                       },
                     )

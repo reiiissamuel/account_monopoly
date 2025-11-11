@@ -26,7 +26,7 @@ class LoadUserDialogState extends State<LoadUserDialog> {
 
   @override
   Widget build(BuildContext context) {
-    userProvider = Provider.of<UserProvider>(context);
+    userProvider = Provider.of<UserProvider>(context, listen: false);
     _localUsersNames = userProvider.allUsers.map((user) => user.username).toList();
     _localUsersNames.add(CREATE_USER_LABEL);
     _localUsersNames.add(SELECT_ONEOF_LABEL);

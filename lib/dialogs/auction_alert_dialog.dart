@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/* import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/auction_dialog.dart';
 
 
@@ -19,7 +19,7 @@ class AuctionAlert extends StatelessWidget {
                 color: Colors.black.withOpacity(0.8),
               ),
               child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignAment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Text("Novo Leilão disponível! "
@@ -78,3 +78,4 @@ class AuctionAlert extends StatelessWidget {
         ));
   }
 }
+ */

@@ -1,11 +1,11 @@
-import 'package:account_monopoly/provider/game_provider.dart';
+/* import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/new_mortgage_dialog.dart';
 import 'package:account_monopoly/domain/model/mortgage.dart';
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 
 class MortgageScreen extends StatefulWidget{
@@ -116,7 +116,7 @@ class MortgageScreenState extends State<MortgageScreen> {
                           textContent: "Confirma o pagamento de  ${StringUtils.currencyFormat(mortgage.valueToPay.toString())} R\$ ?" ,
                           onConfirm: (){
 
-                            gameProvider.eventComposer(type: LogMsgType.PAY_BANK, value: mortgage.valueToPay);
+                            gameProvider.eventComposer(type: EventType.PAY_BANK, value: mortgage.valueToPay);
                             gameProvider.gameModelDTO!.player.mortgages.removeWhere((h) => h.id == mortgage.id);
                             Navigator.of(context).pop();
                           });
@@ -135,3 +135,4 @@ class MortgageScreenState extends State<MortgageScreen> {
 
 }
 
+ */

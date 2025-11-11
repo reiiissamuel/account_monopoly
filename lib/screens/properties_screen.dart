@@ -113,21 +113,20 @@ class PropertiesScreen extends StatelessWidget {
               spacing: 5,
               children: [
                 Icon(property.iconSignature.icon),
-                Text(
-              'Nome: ${property.name}',
-              style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            )
+                Text('Nome: ${property.name}',
+                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ) ,
+                )
               ],
             ),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 // Informações adicionais
-                "Valor inicial: ${StringUtils.currencyFormat(property.basePrice.toString())} | "
-                "Aluguel inicial: ${StringUtils.currencyFormat(property.currentRent.toString())}",
+                "Valor inicial: ${StringUtils.currencyFormat(property.basePrice)} | "
+                "Aluguel inicial: ${StringUtils.currencyFormat(property.currentRent)}",
                 style: const TextStyle(color: Colors.white, fontSize: 18.0),
               ),
             ),

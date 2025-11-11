@@ -86,14 +86,15 @@ class Player {
   void upgradePortfolio(String propertyId, int sharesAmount, double totalCost) {
     if(portfolio.containsKey(propertyId)) {
         portfolio[propertyId]!.sharesOwned += sharesAmount;
-      } else {
-        portfolio[propertyId] = ShareHolder(
-          playerId: id,
-          propertyId: propertyId,
-          sharesOwned: sharesAmount,
-          investmentValue: totalCost,
-        );
-      }
+    } 
+    else {
+      portfolio[propertyId] = ShareHolder(
+        playerId: id,
+        propertyId: propertyId,
+        sharesOwned: sharesAmount,
+        investmentValue: totalCost,
+      );
+    }
   }
 
   void downgradePortfolio(String propertyId, int sharesAmount){
@@ -105,12 +106,25 @@ class Player {
       portfolio[propertyId]!.sharesOwned -= sharesAmount;
     }
   }
+  
+  void receiveCredit(double amount, double incomeTaxRate) {
+    if (amount > 0) {
+      currentCredit += amount;
+      incomeTax += amount * incomeTaxRate;
+    }
+  }
+
+  void payDebit(double amount) {
+    if (amount > 0) {
+      currentCredit -= amount;
+    }
+  }
 
   factory Player.fromMap(Map<String, dynamic> map) {
-    double credit = (map["currentCredit"] as num).toDouble();
-    double incomeTax = (map["incomeTax"] as num? ?? 0).toDouble();
-    double received = (map["receivedFrom"] as num? ?? 0).toDouble();
-    double payed = (map["payedTo"] as num? ?? 0).toDouble();
+    double credit = map["currentCredit"] as double;
+    double incomeTax = map["incomeTax"] as double;
+    double received = map["receivedFrom"] as double;
+    double payed = map["payedTo"] as double? ?? 0;
 
     return Player(
       id: map["id"] as String,
@@ -129,19 +143,6 @@ class Player {
       youBankrupt: map['youBankrupt'] as bool? ?? false,
       youWon: map['youWon'] as bool? ?? false,
     );
-  }
-  
-  void receiveCredit(double amount, double incomeTaxRate) {
-    if (amount > 0) {
-      currentCredit += amount;
-      incomeTax += amount * incomeTaxRate;
-    }
-  }
-
-  void payDebit(double amount) {
-    if (amount > 0) {
-      currentCredit -= amount;
-    }
   }
 
   Map<String, dynamic> toMap() {

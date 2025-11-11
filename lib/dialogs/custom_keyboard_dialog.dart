@@ -2,17 +2,17 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 
 class CustomKeyboard extends StatefulWidget {
 
   final String title;
-  final LogMsgType eventType;
-  final String playerToPayId;
+  final EventType eventType;
+  final String? playerToPayId;
 
-  const CustomKeyboard({super.key, required this.title, required this.eventType, required this.playerToPayId});
+  const CustomKeyboard({super.key, required this.title, required this.eventType, this.playerToPayId});
 
   @override
   CustomKeyboardState createState() => CustomKeyboardState();
@@ -23,6 +23,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
 
   @override
   void initState() {
+    super.initState();
     setState(() {
       valueController.text = "0";
     });
@@ -108,22 +109,23 @@ class CustomKeyboardState extends State<CustomKeyboard> {
 
   void _finishOperation(BuildContext context){
     GameProvider gameProvider = Provider.of<GameProvider>(context, listen: false);
-    int value = int.parse(valueController.text.replaceAll(".", ""));
+    double value = double.parse(valueController.text.replaceAll(".", ""));
 
-    if(widget.eventType == LogMsgType.BUY || widget.eventType == LogMsgType.BUILD_HOUSE || widget.eventType == LogMsgType.BUILD_HOTEL) {
-      if(gameProvider.hasEnoughBalance(value)) {
-        showDialog(context: context, builder: (BuildContext context){
-        return ConfirmActionDialog(title: "Alerta de Compra!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
-          gameProvider.eventComposer(type: widget.eventType, value: value);
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-        });
-      });
+    if(widget.eventType == EventType.build) {
+      if(gameProvider.currentPlayer.currentCredit >= value) {
+          showDialog(context: context, builder: (BuildContext context){
+            return ConfirmActionDialog(title: "Alerta de Compra!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
+              gameProvider.eventComposer(type: widget.eventType, value: value);
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            });
+          }
+        );
       } else {
         _paymentFail();
       }
-      }
-    else if(widget.eventType == LogMsgType.RECEIVE_FROM_BANK) {
+    }
+    else if(widget.eventType == EventType.receiveFromBank) {
       showDialog(context: context, builder: (BuildContext context){
         return ConfirmActionDialog(title: "Alerta de Rebebimento!", textContent: "Você Confirma o recebimento de $value?", onConfirm: (){
           gameProvider.eventComposer(type: widget.eventType, value: value);
@@ -132,8 +134,8 @@ class CustomKeyboardState extends State<CustomKeyboard> {
         });
       });
     }
-    else if(widget.eventType == LogMsgType.PAY_BANK){
-          if(gameProvider.hasEnoughBalance(value)) {
+    else if(widget.eventType == EventType.payBank){
+          if(gameProvider.currentPlayer.currentCredit >= value) {
             showDialog(context: context, builder: (BuildContext context){
             return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
               gameProvider.eventComposer(
@@ -148,14 +150,14 @@ class CustomKeyboardState extends State<CustomKeyboard> {
             _paymentFail();
           }
     }
-    else if(widget.eventType == LogMsgType.TRANSFER){
-      if(gameProvider.hasEnoughBalance(value)) {
+    else if(widget.eventType == EventType.transfer){
+      if(gameProvider.currentPlayer.currentCredit >= value) {
         showDialog(context: context, builder: (BuildContext context){
           return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma a transferência de $value?", onConfirm: (){
             gameProvider.eventComposer(
                 type: widget.eventType,
                 value: value,
-                destinationPlayer: gameProvider.gameModelDTO!.othersPlayers.firstWhere((p) => p.id == widget.playerToPayId)
+                destinationPlayer: gameProvider.gameModelDTO!.othersPlayers[widget.playerToPayId]
             );
             Navigator.of(context).pop();
             Navigator.of(context).pop();
@@ -232,7 +234,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
 
     if (value.length <= 11){
       setState(() {
-        valueController.text = StringUtils.currencyFormat((int.parse(value)).toString());
+        valueController.text = StringUtils.currencyFormat((double.parse(value)));
       });
     }
   }

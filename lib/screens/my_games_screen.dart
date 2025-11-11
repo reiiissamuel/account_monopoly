@@ -43,12 +43,25 @@ class MyGamesScreen extends StatelessWidget {
             if(userProvider.isLoading){
               return const Center(child: CircularProgressIndicator());
             } else {
-              return ListView.builder(
+              return userProvider.user!.games.isNotEmpty ? ListView.builder(
                   padding: const EdgeInsets.all(10.0),
                   itemCount: userProvider.user!.games.length,
                   itemBuilder: (context, index) {
                     return _gameTile(context, userProvider.user!.games[index]);
-                  });
+                  }) : const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Text(
+                        "Você não tem jogos ativos no momento. Crie um novo jogo para começar!", 
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white70, // Cor clara para contraste no fundo preto
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w500
+                        ),
+                      ),
+                    ),
+                  );;
             }
           })
     );
@@ -82,7 +95,7 @@ class MyGamesScreen extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                "Saldo atual: ${StringUtils.currencyFormat(game.player.currentCredit.toString())} R\$",
+                "Saldo atual: ${StringUtils.currencyFormat(game.player.currentCredit)} R\$",
                 style: const TextStyle(color: Colors.white, fontSize: 20.0),
               ),
             ),

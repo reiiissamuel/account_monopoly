@@ -50,13 +50,13 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
 
   // Variáveis para armazenar os valores dos campos
   String _name = '';
-  double _basePrice = 0;
+  String _basePrice = '';
   String _versionid = '';
   PropertyType _propertyType = PropertyType.stocks; // Valor inicial
   Color _colorSignature = Colors.grey; // Valor inicial
   Icon _iconSignatureData = const Icon(Bootstrap.building); // Valor inicial
   String _propertyId = '';
-  double _rentPrice = 0;
+  String _rentPrice = '';
 
   // Lista de cores pré-definidas para seleção
   final List<Color> availableColors = [
@@ -101,17 +101,17 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     _versionid = widget.versionId ?? '';
     if(widget.property != null){
       _name = widget.property!.name;
-      _basePrice = widget.property!.basePrice;
+      _basePrice = StringUtils.currencyFormat(widget.property!.basePrice);
       _propertyType = widget.property!.propertyType;
       _colorSignature = widget.property!.colorSignature;
       _iconSignatureData = widget.property!.iconSignature; // Valor inicial
       _propertyId = widget.property!.id;
-      _rentPrice = widget.property!.currentRent;
+      _rentPrice = StringUtils.currencyFormat(widget.property!.currentPrice);
     }
   }
 
   // Helper para criar TextFormFields para texto (String)
-  Widget _buildField({required String label, required ValueChanged<dynamic> onSave, required TextInputFormatter inputType,
+  Widget _buildField({required String label, required ValueChanged<dynamic> onSave, required List<TextInputFormatter> inputsTypes,
    required String alertMsg, bool? enabled, int? maxLength, String? initialValue}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -130,10 +130,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
           hintText: alertMsg,
         ),
         style: const TextStyle(color: Colors.white),
-        inputFormatters: [
-          inputType,
-          FilteringTextInputFormatter.singleLineFormatter
-        ],
+        inputFormatters: inputsTypes,
         validator: (value) {
           if (value == null || value.isEmpty) {
             return alertMsg;
@@ -304,11 +301,11 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
         final newProperty = Property(
           id: _propertyId,
           name: _name,
-          basePrice: _basePrice,
+          basePrice: StringUtils.currencyAsDouble(_basePrice),
           colorSignature: _colorSignature,
           propertyType: _propertyType,
           iconSignature: _iconSignatureData,
-          currentRent: _rentPrice
+          currentRent: StringUtils.currencyAsDouble(_rentPrice)
         );
         
         Provider.of<UserProvider>(context, listen: false).newProperty(_versionid, newProperty);
@@ -345,7 +342,9 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             _buildField(
               label:'Versão do tabuleiro', 
               onSave: (value) => _versionid = value,
-              inputType: FilteringTextInputFormatter.allow(RegExp(r'[\w \s]')),
+              inputsTypes: [
+                FilteringTextInputFormatter.allow(RegExp(r'[\w \s \^\~\´\`Ç]'))
+              ],
               alertMsg: "Nome sem caracteres especiais",
               initialValue: _versionid,
               enabled: widget.versionId == null
@@ -353,14 +352,18 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             _buildField(
               label: 'Nome da Propriedade', 
               onSave: (value) => _name = value,
-              inputType: FilteringTextInputFormatter.allow(RegExp(r'[\w \s ^~´`Ç]')),
+              inputsTypes: [
+                FilteringTextInputFormatter.allow(RegExp(r'[\w \s \^\~\´\`Ç]'))
+              ],
               alertMsg: "Nome sem caracteres especiais",
               initialValue: _name
             ),
             _buildField(
                 label:'Escolha um código de 4 letras', 
                 onSave:(value) => _propertyId = value,
-                inputType: FilteringTextInputFormatter.allow(RegExp(r'[A-Z \s ^~´`Ç]')),
+                inputsTypes: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[A-Z]'))
+                ],
                 alertMsg: 'O código deve ter 4 letras maiúsculas',
                 maxLength: 4,
                 initialValue: _propertyId,
@@ -381,16 +384,22 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             const SizedBox(height: 16),
             _buildField(
               label: 'Preço Base', 
-              onSave: (value) => _basePrice = double.parse(value),
-              inputType:  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+              onSave: (value) => _basePrice = value,
+              inputsTypes:  [
+                FilteringTextInputFormatter.digitsOnly,
+                StringUtils()
+              ],
               alertMsg: "insira um número válido",
               initialValue: _basePrice.toString()
             ),
             const SizedBox(height: 16),
             _buildField(
               label: 'Aluguel inicial', 
-              onSave: (value) => _rentPrice = double.parse(value),
-              inputType:  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+              onSave: (value) => _rentPrice = value, 
+              inputsTypes:  [
+                FilteringTextInputFormatter.digitsOnly,
+                StringUtils()
+              ],
               alertMsg: "insira um número válido",
               initialValue: _rentPrice.toString()
             ),

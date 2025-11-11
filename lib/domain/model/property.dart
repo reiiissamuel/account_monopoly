@@ -29,7 +29,7 @@ class Property {
     required this.colorSignature,
     required this.propertyType,
     required this.iconSignature,
-    this.payoutPercentage = 0,
+    this.payoutPercentage = 0.3,
     this.currentRent = 0, 
     this.totalShares = 0, 
     this.currentPrice = 0.0,

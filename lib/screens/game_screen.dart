@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
+import 'package:account_monopoly/screens/market_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/winner_dialog.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
@@ -18,7 +19,6 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
 import 'package:account_monopoly/screens/beneficiaries_screen.dart';
 import 'package:account_monopoly/screens/home_screen.dart';
-import 'package:account_monopoly/screens/mortgage_screen.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -44,7 +44,7 @@ class GameScreenState extends State<GameScreen> {
     Future.delayed(Duration.zero, () {
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
       if (gameProvider.gameModelDTO!.chancesEnabled) {
-        _getAllEvents();
+        //_getAllEvents();
       }
     });
   }
@@ -172,15 +172,15 @@ class GameScreenState extends State<GameScreen> {
                                       !_balanceVisibility
                                           ?
                                       Text(
-                                        "R\$ * * * * *",
+                                        "\$ * * * * *",
                                         style: TextStyle(fontSize: 25, letterSpacing: 2, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
                                       )
                                       :
                                       Text(
-                                        "R\$ ${StringUtils.currencyFormat(gameProvider.gameModelDTO!.player.currentCredit.toString())}",
+                                        StringUtils.currencyFormat(gameProvider.currentPlayer.currentCredit),
                                         style: TextStyle(
                                             fontSize: 27.0,
-                                            color: _verifyCase(gameProvider.gameModelDTO!.player.currentCredit),
+                                            color: _creditSituationColor(gameProvider.currentPlayer.currentCredit, gameProvider.gameModelDTO!.initalGameCredit),
                                             fontWeight: FontWeight.w500),
                                       ),
                                       IconButton(
@@ -198,6 +198,7 @@ class GameScreenState extends State<GameScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.stretch,
                                       mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                      spacing: 3,
                                       children: [
                                         ElevatedButton(
                                           style: ElevatedButton.styleFrom(
@@ -243,7 +244,7 @@ class GameScreenState extends State<GameScreen> {
                                   imgPath: "icons/buy.png",
                                   title: "Comprar", 
                                   onPressed: (){
-                                    //_dialogCaller(context, const CustomKeyboard(title: "Insira o valor da propriedade", eventType: ????, playerToPayId: ""));
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MarketScreen()));
                                   }
                                 ),
 
@@ -259,7 +260,7 @@ class GameScreenState extends State<GameScreen> {
                                   imgPath: "icons/pay.png",  
                                   title: "Transferir", 
                                   onPressed: (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>const BeneficiariesScreen()));
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const BeneficiariesScreen()));
                                   }
                                 ),
 
@@ -341,15 +342,15 @@ class GameScreenState extends State<GameScreen> {
     });
   }
 
-  Color _verifyCase(num balance){
-    if(balance >= 1500000){
+  Color _creditSituationColor(num value, double initialCredit){
+    if(value >= (initialCredit * .6)){ //60%
       return Colors.green;
-    }else if(balance < 200000){
-      return Colors.red;
-    }else if(balance >= 200000 && balance <=800000){
+    } else if(value >= (initialCredit * .5)){
+      return Colors.yellow;
+    } else if(value >= (initialCredit * .3)){
       return Colors.orange;
     }else{
-      return Colors.yellow;
+      return Colors.red;
     }
   }
 

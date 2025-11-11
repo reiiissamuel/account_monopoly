@@ -100,13 +100,6 @@ class UserProvider extends ChangeNotifier{
     _loadCurrentUser();
   }
 
-  //logar usuario atual ao abrir o app
-  /*@override
-  void addListener(VoidCallback listener) {
-    super.addListener(listener);
-    _loadCurrentUser();
-  }*/
-
   void notify(){
     notifyListeners();
   }

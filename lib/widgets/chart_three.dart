@@ -1,4 +1,4 @@
-import 'package:account_monopoly/provider/game_provider.dart';
+/* import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart'; // Importação do novo pacote de gráficos
 import 'package:provider/provider.dart';
@@ -279,3 +279,4 @@ class ChartSource {
         required this.outGoing,
       });
 }
+ */

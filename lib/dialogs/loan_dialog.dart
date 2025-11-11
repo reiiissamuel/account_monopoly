@@ -1,8 +1,8 @@
-import 'package:account_monopoly/provider/game_provider.dart';
+/* import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/domain/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 
@@ -171,7 +171,7 @@ class LoanDialogState extends State<LoanDialog> {
                           textContent: "Você confirma o empréstimo?" ,
                           onConfirm: (){
                             gameProvider.eventComposer(
-                              type: LogMsgType.LOAN,
+                              type: EventType.LOAN,
                               value: int.parse(_loanValueSelected.replaceAll(".", "")),
                               installments: _turnValueSelected
                             );
@@ -191,10 +191,11 @@ class LoanDialogState extends State<LoanDialog> {
   }
 
   void _updateValue(GameProvider model){
-    int tax = (_turnValueSelected * model.gameModelDTO!.levelTax).floor();
+    int tax = (_turnValueSelected * model.gameModelDTO!.interestRate).floor();
     int valueToPay = int.parse(_loanValueSelected.replaceAll(".", "")) + ((tax * int.parse(_loanValueSelected.replaceAll(".", ""))) / 100).floor();
     setState(() {
       _editingController.text = StringUtils.currencyFormat(valueToPay.toString());
     });
   }
 }
+ */

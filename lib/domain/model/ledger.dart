@@ -37,6 +37,10 @@ class Ledger {
     propertyProfitTaxRate = 0.15,
     tradeOffers = {};
 
+  bool isBlacklisted(String playerId){
+    return badCreditList.containsKey(playerId);
+  }
+
 // FUNÇÔES AUXILIAR: GESTÃO DOS PAGAMENTOS
   void processRentPayment(Player player, String propertyId) {
     final property = properties[propertyId];
@@ -102,7 +106,7 @@ class Ledger {
     tradeOffers[offer.offerId] = offer;
   }
   
-  void buyFromTrade(Player buyer, TradeOffer tradeOffer, Player seller) {
+  void buyFromTrade(Player buyer, TradeOffer tradeOffer, Player? seller) {
     final offer = tradeOffers[tradeOffer.offerId];
 
     final totalCost = offer!.totalAskingPrice;
@@ -110,9 +114,12 @@ class Ledger {
     final propertyId = offer.propertyId;
 
     buyer.payDebit(totalCost);
-    seller.receiveCredit(totalCost, incomeTaxRate);
-    seller.roundBalance.shareSalesIn += totalCost;
     buyer.roundBalance.sharePurchasesOut += totalCost;
+
+    if(seller != null){
+      seller.receiveCredit(totalCost, incomeTaxRate);
+      seller.roundBalance.shareSalesIn += totalCost;
+    }
 
     _transferShares(
       propertyId: propertyId,
@@ -123,10 +130,10 @@ class Ledger {
     );
     
     // 4. FINALIZAÇÃO
-    finishTradeOffer(tradeOffer.offerId, propertyId);
+    finishTradeOffer(tradeOffer.offerId);
   }
 
-  void finishTradeOffer(String offerId, String propertyId){
+  void finishTradeOffer(String offerId){
     tradeOffers.remove(offerId);
   }
  
@@ -191,13 +198,13 @@ class Ledger {
   void checkForMajorOwner(Player player, String propertyId) {
     final shareholderData = player.portfolio[propertyId];
     var property = properties[propertyId];
-      if (property == null) return;
-      
-      if (shareholderData!.sharesOwned > property.totalShares / 2 && property.majorOwnerId != player.id) {
-        property.majorOwnerId = player.id;
-      } else if (property.majorOwnerId == player.id) {
-        property.majorOwnerId = "";
-      }
+    if (property == null) return;
+    
+    if (shareholderData!.sharesOwned > property.totalShares / 2) {
+      property.majorOwnerId = player.id;
+    } else if (property.majorOwnerId == player.id) {
+      property.majorOwnerId = "";
+    }
   }
   
   // FUNÇÔES AUXILIAR: GESTÃO DAS DÍVIDAS
@@ -279,5 +286,58 @@ class Ledger {
     } else {
       print('⚠️ ${player.username} não tem crédito ou permissão suficiente para construir em ${property.name}.');
     }
+  }
+
+// =========================================================================
+  // MÉTODOS DE SERIALIZAÇÃO
+  // =========================================================================
+
+  Map<String, dynamic> toMap() {
+    return {
+      'properties': properties.map((k, v) => MapEntry(k, v.toMap())),
+      'badCreditList': badCreditList.map((k, v) => MapEntry(k, v.toMap())),
+      'bankPortfolio': bankPortfolio.map((k, v) => MapEntry(k, v.toMap())),
+      'bankId': bankId,
+      'roundBonus': roundBonus,
+      'currentInterestRate': currentInterestRate,
+      'propertyProfitTaxRate': propertyProfitTaxRate,
+      'lateFeeRate': lateFeeRate,
+      'incomeTaxRate': incomeTaxRate,
+    };
+  }
+
+  factory Ledger.fromMap(Map<String, dynamic> map) {
+    Map<String, Property> deserializeProperties(Map<String, dynamic> data) {
+      return data.map((k, v) => MapEntry(k, Property.fromMap(v as Map<String, dynamic>)));
+    }
+
+    Map<String, Player> deserializePlayers(Map<String, dynamic> data) {
+      return data.map((k, v) => MapEntry(k, Player.fromMap(v as Map<String, dynamic>)));
+    }
+
+    Map<String, ShareHolder> deserializeShareHolders(Map<String, dynamic> data) {
+      return data.map((k, v) => MapEntry(k, ShareHolder.fromMap(v as Map<String, dynamic>)));
+    }
+
+    // 2. Instanciação usando o construtor principal (para campos required/final)
+    final propertiesMap = (map['properties'] as Map<String, dynamic>? ?? {});
+    
+    final ledger = Ledger(
+      properties: deserializeProperties(propertiesMap),
+      currentInterestRate: map['currentInterestRate'] as double? ?? 0.05,
+      propertyProfitTaxRate: map['propertyProfitTaxRate'] as double? ?? 0.15,
+      roundBonus: map['roundBonus'] as double? ?? 0.0,
+      incomeTaxRate: map['incomeTaxRate'] as double? ?? 0.10,
+      lateFeeRate: map['lateFeeRate'] as double? ?? 0.05,
+    );
+    // População de campos mutáveis (não-finais) após a instanciação
+    
+    // badCreditList (Map mutável)
+    ledger.badCreditList.addAll(deserializePlayers((map['badCreditList'] as Map<String, dynamic>? ?? {})));
+
+    // bankPortfolio (Map final/mutável)
+    ledger.bankPortfolio.addAll(deserializeShareHolders((map['bankPortfolio'] as Map<String, dynamic>? ?? {})));
+
+    return ledger;
   }
 }

@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "Launch Edge",
             "request": "launch",
@@ -30,12 +29,12 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
-        },
+        } ,
         {
-            "name": "account_monopoly (release mode)",
+            "name": "account_monopoly dev",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
-        }
+            "flutterMode": "profile"
+        } 
     ]
 }

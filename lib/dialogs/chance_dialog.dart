@@ -2,7 +2,7 @@
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 
-import 'package:account_monopoly/domain/chance.dart';
+import 'package:account_monopoly/domain/model/chance.dart';
 
 class ChanceDialog extends StatelessWidget {
 
@@ -35,13 +35,13 @@ class ChanceDialog extends StatelessWidget {
             ),
             child: Text(chance.description!, style: const TextStyle(color: Colors.white, letterSpacing: 2.0, fontSize: 16.0), maxLines: 7),
           ),
-          chance.effect! < 0
-              ? Text("Você Pagará: ${StringUtils.currencyFormat(chance.effect.toString().replaceAll("-", ""))}",
+          /*chance.effect! < 0
+               ? Text("Você Pagará: ${StringUtils.currencyFormat(chance.effect.toString().replaceAll("-", ""))}",
                   style: const TextStyle(color: Colors.white, letterSpacing: 2.0)
           )
               : chance.effect! > 0
                   ? Text("Você Receberá: ${StringUtils.currencyFormat(chance.effect.toString())}", style: const TextStyle(color: Colors.white, letterSpacing: 2.0))
-                  : const Text("Sem premiação em dinheiro", style: TextStyle(color: Colors.white, letterSpacing: 2.0))
+                  : const Text("Sem premiação em dinheiro", style: TextStyle(color: Colors.white, letterSpacing: 2.0)) */
         ],
       ),
 
