@@ -1,19 +1,17 @@
 import 'dart:async';
+import 'package:account_monopoly/dialogs/more_options_dialog.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/market_screen.dart';
 import 'package:account_monopoly/screens/my_portfolio_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/winner_dialog.dart';
-import 'package:account_monopoly/screens/game_balance_screen.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/dialogs/account_description.dart';
 import 'package:account_monopoly/dialogs/chance_dialog.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/custom_keyboard_dialog.dart';
-import 'package:account_monopoly/dialogs/more_options_dialog.dart';
 import 'package:account_monopoly/dialogs/table_info_dialog.dart';
 import 'package:account_monopoly/domain/model/chance.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
@@ -212,7 +210,7 @@ class GameScreenState extends State<GameScreen> {
                                             //Navigator.push(context, MaterialPageRoute(builder: (context) => const MortgageScreen()));
                                           },
                                           child: const Text(
-                                            "Hipotécas",
+                                            "Gráficos",
                                             style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500),
                                           ),
                                         ),
@@ -298,7 +296,7 @@ class GameScreenState extends State<GameScreen> {
                                     imgPath: "icons/more.png",
                                     title: "Mais", 
                                     onPressed: (){
-                                     // _dialogCaller(context, const MoreOptionsDialog());
+                                     _dialogCaller(context, const MoreOptionsDialog());
                                 }),
                               ],
                             ),

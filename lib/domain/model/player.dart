@@ -86,6 +86,7 @@ class Player {
   void upgradePortfolio(String propertyId, int sharesAmount, double totalCost) {
     if(portfolio.containsKey(propertyId)) {
         portfolio[propertyId]!.sharesOwned += sharesAmount;
+        portfolio[propertyId]!.investmentValue += totalCost;
     } 
     else {
       portfolio[propertyId] = ShareHolder(

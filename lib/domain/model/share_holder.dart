@@ -16,7 +16,7 @@ class ShareHolder {
   double get averageCostPerShare => investmentValue / sharesOwned;
 
   double getNetProfit(double shareCurrentCost){
-    return (sharesOwned * shareCurrentCost) + dividendsReceived - investmentValue;
+    return ((sharesOwned * shareCurrentCost) + dividendsReceived) - investmentValue;
   }
 
   double getNetProfitPerShare(double shareCurrentCost){

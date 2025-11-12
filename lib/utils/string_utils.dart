@@ -31,6 +31,10 @@ class StringUtils extends TextInputFormatter{
     final num parsedValue = _currencyFormat.parse(input);
     return parsedValue.toDouble();
   }
+
+  static String unformatAsString(String input){
+    return input.replaceAll("\$", "").replaceAll(".", "").replaceAll(",", "");
+  }
   
   @override
   TextEditingValue formatEditUpdate(

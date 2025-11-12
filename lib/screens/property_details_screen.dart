@@ -44,7 +44,10 @@ class PropertyDetailsScreen extends StatelessWidget {
                 
                 const SizedBox(height: 20),
 
-                _buildPayoutChanger(context, gameProvider, property),
+                property.majorOwnerId == gameProvider.currentPlayer.id ?
+                  _buildPayoutChanger(context, gameProvider, property) :
+                  const SizedBox(height: 0),
+
                 const SizedBox(height: 20),
                 // 2. STATUS DO ATIVO
                 _buildSectionTitle("📈 Status de Mercado", property.colorSignature),
@@ -207,7 +210,7 @@ class PropertyDetailsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Agora você pode auterar o payout desta propriedade',
+              'Agora você pode alterar o payout desta propriedade',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
             ),
             const SizedBox(height: 30),
@@ -225,7 +228,8 @@ class PropertyDetailsScreen extends StatelessWidget {
                 onPressed: (){
                   gameProvider.eventComposer(
                     type: EventType.propertyUpdatePayout,
-                    propertyId: property.id
+                    propertyId: property.id,
+                    value: (payout/100)
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Payout atualizado")));

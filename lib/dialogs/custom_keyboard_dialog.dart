@@ -1,5 +1,6 @@
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
@@ -50,6 +51,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
                     style: const TextStyle(
                         fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.white)),
                 TextField(
+                    maxLength: 17,
                     cursorColor: Colors.white,
                     controller: valueController,
                     readOnly: true,
@@ -60,6 +62,10 @@ class CustomKeyboardState extends State<CustomKeyboard> {
                       letterSpacing: 2,
                       color: Colors.white,
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      StringUtils()
+                    ],
                     decoration: const InputDecoration(
                       contentPadding: EdgeInsets.symmetric(vertical: 8.0),
                       fillColor: Colors.black12,
@@ -109,7 +115,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
 
   void _finishOperation(BuildContext context){
     GameProvider gameProvider = Provider.of<GameProvider>(context, listen: false);
-    double value = double.parse(valueController.text.replaceAll(".", ""));
+    double value = StringUtils.currencyAsDouble(valueController.text);
 
     if(widget.eventType == EventType.build) {
       if(gameProvider.currentPlayer.currentCredit >= value) {
@@ -193,50 +199,49 @@ class CustomKeyboardState extends State<CustomKeyboard> {
   }
 
   void buttonFunction(int i){
-
-    String value = valueController.text.replaceAll(".", "");
-
+    String value = StringUtils.unformatAsString(valueController.text);
     switch(i){
       case 3:
-        updateTextField(value.substring(0,value.length -1));
+        if(value.isEmpty) {
+         value = "0";
+         break;
+        }
+        value = value.substring(0,value.length -1);
         break;
       case 7:
-        updateTextField("0");
+        value = "0";
         break;
       case 11:
          Navigator.of(context).pop();
          break;
       case 12:
-        updateTextField("${value}00");
+        value = "${value}00";
         break;
       case 13:
-        updateTextField("${value}0");
+        value = "${value}0";
         break;
       case 14:
-        updateTextField("${value}000");
+        value = "${value}000";
         break;
       default:
-        if(i == 0 || i == 1 || i == 2) {
-          updateTextField(value + (i+1).toString());
-        } else if(i == 8 || i == 9 || i == 10){
-          updateTextField(value + (i-1).toString());
+        if(i >=0 && i<=3){
+          value +=  (i + 1).toString();
+        } else if (i >= 8 && i <11){
+          value += (i - 1).toString();
+        } else {
+          value +=  i.toString();
         }
-        else{
-          updateTextField(value + (i).toString());
-        }
+       
     }
+    //valueController.text = value;
+    updateTextField(value);
   }
   
-  void updateTextField(String value){
-    if(value == "" || int.parse(value) == 0) {
-      value = "0";
-    }
-
-    if (value.length <= 11){
-      setState(() {
-        valueController.text = StringUtils.currencyFormat((double.parse(value)));
-      });
-    }
+  void updateTextField(String newValue){
+    double value = double.parse(newValue) / 100;
+    setState(() {
+      valueController.text = StringUtils.currencyFormat(value);
+    });
   }
 
   void _paymentFail(){

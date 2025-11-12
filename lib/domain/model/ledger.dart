@@ -41,7 +41,7 @@ class Ledger {
     return badCreditList.containsKey(playerId);
   }
 
-  Property updatePropertyPayout(String propertyId, newPayout){
+  Property updatePropertyPayout(String propertyId, double newPayout){
     properties[propertyId]!.payoutPercentage = newPayout;
     return properties[propertyId]!;
   }

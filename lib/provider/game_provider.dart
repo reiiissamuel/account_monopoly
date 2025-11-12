@@ -151,7 +151,7 @@ class GameProvider extends ChangeNotifier {
 
     switch (event.type) {
       case EventType.propertyUpdatePayout:
-        event.property = ledger.updatePropertyPayout(propertyId!, value);
+        event.property = ledger.updatePropertyPayout(propertyId!, value!.toDouble());
         break;
       case EventType.closeTurn:
         ledger.checkTradeOffersDeadline();

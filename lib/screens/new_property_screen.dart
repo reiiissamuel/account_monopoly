@@ -52,7 +52,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
   String _name = '';
   String _basePrice = '';
   String _versionid = '';
-  PropertyType _propertyType = PropertyType.stocks; // Valor inicial
+  PropertyType _propertyType = PropertyType.reit; // Valor inicial
   Color _colorSignature = Colors.grey; // Valor inicial
   Icon _iconSignatureData = const Icon(Bootstrap.building); // Valor inicial
   String _propertyId = '';
@@ -372,7 +372,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             ,
             _buildTypeDropdown(initialValue: _propertyType),
 
-            _propertyType == PropertyType.stocks ? _buildColorSelector() : _buildIconSelector(),
+            _propertyType == PropertyType.reit ? _buildColorSelector() : _buildIconSelector(),
           
             const Divider(color: Colors.white30, height: 40),
             

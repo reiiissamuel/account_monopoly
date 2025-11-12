@@ -128,7 +128,7 @@ class MarketScreen extends StatelessWidget {
               // BOTÃO DE DETALHES (Novo)
               OutlinedButton.icon(
                 icon: const Icon(Icons.info_outline, color: Colors.white),
-                label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
+                label: const Text("Detalhes da propriedade", style: TextStyle(color: Colors.white)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.white70),
                 ),
