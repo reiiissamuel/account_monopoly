@@ -4,6 +4,7 @@ class ShareHolder {
   final String propertyId;
   double investmentValue;
   int sharesOwned;
+  double dividendsReceived = 0;
 
   ShareHolder({
     required this.playerId,
@@ -13,6 +14,18 @@ class ShareHolder {
   });
 
   double get averageCostPerShare => investmentValue / sharesOwned;
+
+  double getNetProfit(double shareCurrentCost){
+    return (sharesOwned * shareCurrentCost) + dividendsReceived - investmentValue;
+  }
+
+  double getNetProfitPerShare(double shareCurrentCost){
+    return getNetProfit(shareCurrentCost) / sharesOwned;
+  }
+
+  double getProfitPercentage(double shareCurrentCost){
+    return ((((sharesOwned * shareCurrentCost) + dividendsReceived) / investmentValue) * 100) - 100;
+  }
 
   factory ShareHolder.fromMap(Map<String, dynamic> map) {
     return ShareHolder(

@@ -28,8 +28,8 @@ class EventDTO{
           !.replaceAll('{SOURCE}', sourcePlayer.username == currentPlayer.username ? 'Sua empresa' : currentPlayer.username)
             .replaceAll('{VALUE}', (value is double) ? StringUtils.currencyFormat(value!.toDouble()) : value.toString())
               .replaceAll('{DEST}', (destinationPlayer != null && destinationPlayer?.username == currentPlayer.username) ? 'Sua empresa' : sourcePlayer.username)
-              .replaceAll('{PROPERTY}', property!.name)
-              .replaceAll('{TRADEOFFER}', "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer?.offerId} no valor total de ${tradeOffer?.totalAskingPrice}");
+              .replaceAll('{PROPERTY}', (property != null ? property!.name : ""))
+              .replaceAll('{TRADEOFFER}', tradeOffer != null ? "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer!.propertyId} no valor total de ${StringUtils.currencyFormat(tradeOffer!.totalAskingPrice)}" : "");
      
   }
 

@@ -148,7 +148,7 @@ class MarketScreen extends StatelessWidget {
                   backgroundColor: offer.sharesAmount > 0 ? Colors.green : Colors.grey,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: offer.sharesAmount > 0
+                onPressed: offer.sharesAmount > 0 && offer.sellerPlayerId != gameProvider.currentPlayer.id
                     ? () => _showBuySharesDialog(context, offer, gameProvider)
                     : null, // Desabilita se não houver ações
               ),
@@ -174,11 +174,6 @@ class MarketScreen extends StatelessWidget {
 
   void _showBuySharesDialog(BuildContext context, TradeOffer offer, GameProvider gameProvider) {
     final TextEditingController quantityController = TextEditingController();
-    
-    // Define o ID do vendedor (Banco ou Jogador específico)
-    final String sellerId = offer.source == OfferSource.fundIPO 
-        ? 'bank' 
-        : offer.sellerPlayerId;
     
     final String transactionType = offer.source == OfferSource.playerMarket ? "do Jogador" : "do Banco/Fundo";
     
@@ -245,7 +240,7 @@ class MarketScreen extends StatelessWidget {
                   } else {
                     gameProvider.eventComposer(
                       type: EventType.buyFromIPO,
-                      property: gameProvider.ledger.properties[offer.propertyId],
+                      propertyId: offer.propertyId,
                       value: quantity
                     );
                   }

@@ -11,6 +11,7 @@ class TradeOffer {
   final double currentMarketPrice;
   final Color colorSignature;
   final String propertyName;
+  int turnsToEnd;
 
   TradeOffer({
     required this.offerId,
@@ -21,7 +22,8 @@ class TradeOffer {
     required this.source, 
     required this.currentMarketPrice, 
     required this.colorSignature, 
-    required this.propertyName, 
+    required this.propertyName,
+    required this.turnsToEnd
   });
 
   // Cálculo de conveniência

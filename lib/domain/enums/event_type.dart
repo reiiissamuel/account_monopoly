@@ -1,11 +1,12 @@
 enum EventType{
+  propertyUpdatePayout(messageScope: "{SOURCE} atualizou o payout de {PROPERTY}"),
   transfer(messageScope: '{SOURCE} transferiu {VALUE} para {DEST}.'),
   payBank(messageScope: '{SOURCE} pagou {VALUE} para o banco.'),
   receiveFromBank(messageScope: '{SOURCE} recebeu {VALUE} do banco.'),
   buyFromIPO(messageScope: '{SOURCE} comprou {VALUE} ações de {PROPERTY}.'),
   buyFromTrade(messageScope: '{SOURCE} comprou a oferta {TRADEOFFER}.'),
   build(messageScope: 'A holding {SOURCE} concluiu construções em {PROPERTY} no valor {VALUE}.'),
-  setTradeOffer(messageScope: 'Nova oferta no mercado: {TRADEOFFER} por {SOURCE}.'),
+  setTradeOffer(messageScope: 'Nova oferta no mercado: {TRADEOFFER} lançada por {SOURCE}.'),
   payRent(messageScope: '{SOURCE} pagou {VALUE} de aluguel em {PROPERTY}.'),
   payTax(messageScope: '{SOURCE} pagou {VALUE} de imposto de renda.'),
   receiveTax(messageScope: '{SOURCE} recebeu {VALUE} de restituição.'),

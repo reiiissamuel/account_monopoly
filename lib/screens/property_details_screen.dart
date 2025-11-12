@@ -1,6 +1,8 @@
 
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/widgets/percent_spinner.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -41,7 +43,9 @@ class PropertyDetailsScreen extends StatelessWidget {
                 _buildHeader(context, property),
                 
                 const SizedBox(height: 20),
-                
+
+                _buildPayoutChanger(context, gameProvider, property),
+                const SizedBox(height: 20),
                 // 2. STATUS DO ATIVO
                 _buildSectionTitle("📈 Status de Mercado", property.colorSignature),
                 _buildStatusSection(context, property, ledger),
@@ -57,6 +61,9 @@ class PropertyDetailsScreen extends StatelessWidget {
                 // 4. HISTÓRICO DE AÇÕES (Placeholder)
                 _buildSectionTitle("📊 Histórico & Volatilidade", property.colorSignature),
                 _buildHistoryPlaceholder(context),
+
+                const SizedBox(height: 20),
+                
               ],
             ),
           ),
@@ -146,7 +153,7 @@ class PropertyDetailsScreen extends StatelessWidget {
 
   // Seção 3: Métricas de Renda
   Widget _buildIncomeSection(BuildContext context, Property property) {
-    final double yieldRate = (property.currentRent / property.sharePrice) * 100; // Rendimento por ação
+    final double yieldRate = (((property.collectedRent * property.payoutPercentage)/property.totalShares) / property.sharePrice) * 100; // Rendimento por ação
     
     return Card(
       color: const Color(0xFF1E1E1E),
@@ -184,6 +191,66 @@ class PropertyDetailsScreen extends StatelessWidget {
             ],
           )
       );
+  }
+
+  Widget _buildPayoutChanger(BuildContext context, GameProvider gameProvider, Property property) {
+    int payout = (property.payoutPercentage * 100).toInt();
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+      decoration: BoxDecoration(
+        color: property.colorSignature.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10.0),
+        border: Border.all(color: property.colorSignature.withValues(alpha: .5)),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Agora você pode auterar o payout desta propriedade',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
+            ),
+            const SizedBox(height: 30),
+            PercentSpinner(
+              label: 'Payout',
+              initialValue: payout,
+              step: 5,
+              onChanged: (newValue) {
+                payout = newValue;
+                gameProvider.notifyChanges(false);
+              },
+            ),
+            const Divider(color: Colors.white12),
+            ElevatedButton.icon(
+                onPressed: (){
+                  gameProvider.eventComposer(
+                    type: EventType.propertyUpdatePayout,
+                    propertyId: property.id
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Payout atualizado")));
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(Icons.save, size: 30, color: Colors.white),
+                label: const Text(
+                  'Salvar',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white, 
+                  backgroundColor: property.colorSignature,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shadowColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 20,
+                ),
+              )
+          ],
+        ),
+      ),
+    );
   }
 
   // Helper para Linhas de Detalhe

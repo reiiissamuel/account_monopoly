@@ -63,6 +63,9 @@ class GameProvider extends ChangeNotifier {
     if(sourceplayer.id == currentPlayer.id) return;
     gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
     switch (event.type) {
+      case EventType.closeTurn:
+        ledger.checkTradeOffersDeadline();
+        break;
       case EventType.transfer:
         if(destinationPlayer!.id == currentPlayer.id){ 
           currentPlayer.roundBalance.transferIn += value!;
@@ -71,7 +74,7 @@ class GameProvider extends ChangeNotifier {
           gameModelDTO!.updateOtherPlayers(destinationPlayer);
         }
         break;
-      case EventType.build && EventType.buyFromIPO:
+      case EventType.build || EventType.buyFromIPO || EventType.propertyUpdatePayout:
         ledger.properties[event.property!.id] = event.property!;
         break;
       case EventType.setTradeOffer:
@@ -125,7 +128,7 @@ class GameProvider extends ChangeNotifier {
           eventComposer(type: EventType.loanForeclosure, value: loan.totalDue);
         }
         else if(loan.type == LoanType.mortgage){
-          eventComposer(type: EventType.mortgageForeclosure, property: ledger.properties[loan.collateralId]);
+          eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId);
         }
       }
     }
@@ -135,7 +138,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> eventComposer({required EventType type, Player? destinationPlayer, Player? sourcePlayer, num? value,
-   Property ?property, double? buildingRentIncrease, bool? buildingPlayerPayment, TradeOffer? tradeOffer, String? loanId}) async {
+   String? propertyId, double? buildingRentIncrease, bool? buildingPlayerPayment, TradeOffer? tradeOffer, String? loanId}) async {
     notifyChanges(true);
 
     EventDTO event = EventDTO(
@@ -143,12 +146,15 @@ class GameProvider extends ChangeNotifier {
         destinationPlayer: destinationPlayer,
         sourcePlayer: sourcePlayer ?? currentPlayer,
         tradeOffer: tradeOffer,
-        property: property,
+       // property: property,
         value: value);
 
     switch (event.type) {
+      case EventType.propertyUpdatePayout:
+        event.property = ledger.updatePropertyPayout(propertyId!, value);
+        break;
       case EventType.closeTurn:
-        
+        ledger.checkTradeOffersDeadline();
         break;
       case EventType.payTax:
         event.value = currentPlayer.incomeTax;
@@ -181,9 +187,11 @@ class GameProvider extends ChangeNotifier {
       case EventType.loanPayment:
         ledger.processLoanPayment(currentPlayer, loanId!, event.value!.toDouble());
         break;
+      case EventType.mortgageForeclosure:
+        event.property = ledger.properties[propertyId];
       case EventType.buyFromIPO:
-        ledger.buyFromIPO(currentPlayer, property!.id, value!.toInt());
-        ledger.checkForMajorOwner(currentPlayer, property.id);
+        event.property = ledger.buyFromIPO(currentPlayer, propertyId!, value!.toInt());
+        ledger.checkForMajorOwner(currentPlayer, propertyId);
         break;
       case EventType.setTradeOffer:
         ledger.setTradeOffer(tradeOffer!);
@@ -198,7 +206,7 @@ class GameProvider extends ChangeNotifier {
         gameModelDTO!.currentRound += 1;
         break;
       case EventType.build:
-        ledger.processBuildingPurchase(currentPlayer, property!, value!.toDouble(), buildingRentIncrease!, buildingPlayerPayment!);
+        event.property = ledger.processBuildingPurchase(currentPlayer, propertyId!, value!.toDouble(), buildingRentIncrease!, buildingPlayerPayment!);
         break;
       case EventType.bankruptcy:
         //
@@ -277,6 +285,7 @@ class GameProvider extends ChangeNotifier {
         currentMarketPrice: property.sharePrice,
         colorSignature: property.colorSignature,
         propertyName: property.name,
+        turnsToEnd: 1
       ));
     }
   }
@@ -300,6 +309,7 @@ class GameProvider extends ChangeNotifier {
         currentMarketPrice: property.sharePrice,
         colorSignature: property.colorSignature.withOpacity(0.7), // Cor ligeiramente diferente
         propertyName: '${property.name} (Recup.)',
+        turnsToEnd: 1
       ));
     }
   }
@@ -315,10 +325,11 @@ class GameProvider extends ChangeNotifier {
       sellerPlayerId: offer.sellerPlayerId,
       sharesAmount: offer.sharesAmount,
       askingPrice: offer.askingPrice,
+      turnsToEnd: offer.turnsToEnd,
       source: OfferSource.playerMarket,
       currentMarketPrice: property!.sharePrice,
       colorSignature: property.colorSignature,
-      propertyName: '${property.name} (Venda P2P)', 
+      propertyName: '${property.name} (Venda P2P)',
     ));
   }
   

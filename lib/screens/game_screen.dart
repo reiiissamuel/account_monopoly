@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/market_screen.dart';
+import 'package:account_monopoly/screens/my_portfolio_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/winner_dialog.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
@@ -249,10 +250,10 @@ class GameScreenState extends State<GameScreen> {
                                 ),
 
                                 GameIconButtonBuilder(
-                                  imgPath: "icons/bills.png",  
-                                  title: "Ver Fatura", 
+                                  imgPath: "icons/wallet.png",  
+                                  title: "Minha carteira", 
                                   onPressed: (){
-                                    //_dialogCaller(context, const AccountDescription());
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPortfolioScreen()));
                                   }
                                 ),
 

@@ -188,9 +188,8 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                                   backgroundColor: Colors.green,
                                   textColor: Colors.white,
                                   fontSize: 16.0
-                              ).then((onValue) => {
-                                Navigator.pop(context)
-                              });
+                              );
+                              Navigator.pop(context);
                             });
                         });
                       },

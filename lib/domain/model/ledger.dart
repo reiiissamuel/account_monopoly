@@ -17,9 +17,9 @@ class Ledger {
   double lateFeeRate = 0.05;
   double incomeTaxRate = 0.10;
   Map<String, Player> badCreditList = {};
-  final Map<String, TradeOffer> tradeOffers;
+  Map<String, TradeOffer> tradeOffers; 
   
-  final Map<String, ShareHolder> bankPortfolio = {}; // ações adiquirdas pelo banco através de execuções hipotecárias
+  Map<String, ShareHolder> bankPortfolio = {}; // ações adiquirdas pelo banco através de execuções hipotecárias
   
   Ledger({
     required this.properties,
@@ -28,8 +28,8 @@ class Ledger {
     required this.roundBonus,
     required this.incomeTaxRate,
     required this.lateFeeRate,
-    this.tradeOffers = const {},
-  });
+    Map<String, TradeOffer> tradeOffers = const {}
+  }) : this.tradeOffers = Map.from(tradeOffers);
 
   Ledger.empty() : 
     properties = {},
@@ -39,6 +39,11 @@ class Ledger {
 
   bool isBlacklisted(String playerId){
     return badCreditList.containsKey(playerId);
+  }
+
+  Property updatePropertyPayout(String propertyId, newPayout){
+    properties[propertyId]!.payoutPercentage = newPayout;
+    return properties[propertyId]!;
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DOS PAGAMENTOS
@@ -86,20 +91,15 @@ class Ledger {
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DAS AÇÔES E NEGOCIAÇÕES
-  void buyFromIPO(Player buyer, String propertyId, int sharesAmount) {
+  Property buyFromIPO(Player buyer, String propertyId, int sharesAmount) {
     final totalCost = properties[propertyId]!.sharePrice * sharesAmount;
-    
-    if (buyer.currentCredit >= totalCost) {
-      buyer.payDebit(totalCost);
-      buyer.roundBalance.sharePurchasesOut += totalCost;
+    buyer.payDebit(totalCost);
+    buyer.roundBalance.sharePurchasesOut += totalCost;
 
-      properties[propertyId]!.availableShares -= sharesAmount;
-      buyer.upgradePortfolio(propertyId, sharesAmount, totalCost);
-
-      print('✅ ${buyer.username} adquiriu $sharesAmount ações de $propertyId por ${totalCost.toStringAsFixed(2)}');
-    } else {
-      print('⚠️ ${buyer.username} não tem crédito suficiente para adquirir ações de $propertyId.');
-    }
+    properties[propertyId]!.availableShares -= sharesAmount;
+    buyer.upgradePortfolio(propertyId, sharesAmount, totalCost);
+    print('✅ ${buyer.username} adquiriu $sharesAmount ações de $propertyId por ${totalCost.toStringAsFixed(2)}');
+    return properties[propertyId]!;
   }
 
   void setTradeOffer(TradeOffer offer) {
@@ -156,6 +156,7 @@ class Ledger {
     
     player.receiveCredit(dividendReceived, incomeTaxRate); 
     player.roundBalance.dividendsIn += dividendReceived;
+    shareholderData.dividendsReceived += dividendReceived;
     print('${player.username} recebeu ${dividendReceived.toStringAsFixed(2)} da ${property.name}');
   }
   
@@ -207,6 +208,11 @@ class Ledger {
     }
   }
   
+  void checkTradeOffersDeadline(){
+    tradeOffers.forEach((key, offer) => offer.turnsToEnd -= 1 );
+    tradeOffers.removeWhere((key, offer) => offer.turnsToEnd < 1);
+  }
+
   // FUNÇÔES AUXILIAR: GESTÃO DAS DÍVIDAS
   List<Loan> managePlayerLoans(Player player) {
     final foreclosuredLoans = List<Loan>.empty();
@@ -273,19 +279,18 @@ class Ledger {
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DE CONSTRUÇÔES
-  void processBuildingPurchase(Player player, Property property, double buildingCost, double buildingRentIncrease, bool playerPayment) {
-    if (player.currentCredit >= buildingCost && property.majorOwnerId == player.id) {
-      if (playerPayment) {
-        player.payDebit(buildingCost);
-        player.roundBalance.buildingPurchasesOut += buildingCost;
-      } else {
-        player.roundBalance.buildingPurchasesOut += buildingCost;
-        property.addBuilding(buildingRentIncrease, buildingCost);
-      }
-      print('🏗️ ${player.username} construiu em ${property.name} por ${buildingCost.toStringAsFixed(2)}');
+  Property processBuildingPurchase(Player player, String propertyId, double buildingCost, double buildingRentIncrease, bool playerPayment) {
+    var property = properties[propertyId];
+    if (playerPayment) {
+      player.payDebit(buildingCost);
+      property!.buildings += 1;
     } else {
-      print('⚠️ ${player.username} não tem crédito ou permissão suficiente para construir em ${property.name}.');
+      property!.addBuilding(buildingRentIncrease, buildingCost);
     }
+    player.roundBalance.buildingPurchasesOut += buildingCost;
+    print('🏗️ ${player.username} construiu em ${property.name} por ${buildingCost.toStringAsFixed(2)}');
+    return property;
+
   }
 
 // =========================================================================
