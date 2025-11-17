@@ -77,9 +77,9 @@ class _PercentSpinnerState extends State<PercentSpinner> {
                 width: 120, // Largura fixa para o texto
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: primaryColor.withOpacity(0.5)),
+                  border: Border.all(color: primaryColor.withValues(alpha:  0.5)),
                 ),
                 child: Text(
                   '$_currentPercentage%',

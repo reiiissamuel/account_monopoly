@@ -44,7 +44,7 @@ class MoreOptionsDialog extends StatelessWidget {
 
             _optionButton(context: context, img: "icons/rest.png", title: "Restituição",
                 dialog: ConfirmActionDialog(title: "Restituição",
-                    textContent: "Confirmar?",
+                    textContent: "O banco irá calcular sua restituição para depositar em sua conta.",
                     onConfirm: () {
                       gameProvider.eventComposer(type: EventType.receiveTax);
                       Navigator.of(context).pop();
@@ -59,6 +59,14 @@ class MoreOptionsDialog extends StatelessWidget {
                     title: "Digite o valor a ser pago",
                     eventType: EventType.payBank,
                 )),
+            _optionButton(context: context, img: "icons/bonus.png", title: "Deseja retirar seu bonus?",
+                dialog: ConfirmActionDialog(title: "Deseja retirar seu bonus?",
+                    textContent: "O valor será depositado em sua conta.",
+                    onConfirm: () {
+                      gameProvider.processRoundEnding();
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+              })),
 
             /*_optionButton(context: context, img: "icons/bit.png", title: "Leiloar Propriedade",
                screen: const SetAuctionScreen()),

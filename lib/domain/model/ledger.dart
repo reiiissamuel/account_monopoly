@@ -6,9 +6,16 @@ import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
+import 'package:account_monopoly/domain/model/shares_holder_summary.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
+import 'package:account_monopoly/utils/configs_constants.dart';
+import 'package:logger/logger.dart';
 
 class Ledger {
+
+  var logger = Logger(printer: PrettyPrinter(methodCount: 0));
+
   final Map<String, Property> properties; 
   final String bankId = "bank";
   double roundBonus = 0.0;
@@ -29,7 +36,7 @@ class Ledger {
     required this.incomeTaxRate,
     required this.lateFeeRate,
     Map<String, TradeOffer> tradeOffers = const {}
-  }) : this.tradeOffers = Map.from(tradeOffers);
+  }) : tradeOffers = Map.from(tradeOffers);
 
   Ledger.empty() : 
     properties = {},
@@ -46,25 +53,51 @@ class Ledger {
     return properties[propertyId]!;
   }
 
+  SharesHolderSummary getSharesHolderSummary(Map<String, ShareHolder> portfolio){
+    double totalPortfolioValue = 0;
+    double totalInvested = 0;
+    double totalDividends = 0;
+    for(ShareHolder shareHolder in portfolio.values){
+      double currentShareCost = properties[shareHolder.propertyId]!.sharePrice;
+      totalPortfolioValue += shareHolder.portfolioValue(currentShareCost);
+      totalInvested += shareHolder.totalInvested;
+      totalDividends += shareHolder.dividendsReceived;
+    }
+
+    return SharesHolderSummary(
+      totalPortfolioValue: totalPortfolioValue,
+      totalInvested: totalInvested,
+      totalDividends: totalDividends
+    );
+
+  }
+
+  double calculateShareHolderValue(ShareHolder item){
+    final shareCurrentCost = properties[item!.propertyId]!.sharePrice;
+    return item.portfolioValue(shareCurrentCost);
+  }
+
 // FUNÇÔES AUXILIAR: GESTÃO DOS PAGAMENTOS
-  void processRentPayment(Player player, String propertyId) {
+  Property processRentPayment(Player player, String propertyId, double rentToPay) {
     final property = properties[propertyId];
-    if (property == null) return;
-    final rentAmount = property.currentRent;
-    player.payDebit(rentAmount);
-    property.collectedRent += rentAmount;
+    player.payDebit(rentToPay);
+    property!.collectedRent += rentToPay;
+    return property;
   }
 
   void processIncomeTaxPayment(Player player) {
     final taxAmount = player.incomeTax;
+    final refund = taxAmount * (Random().nextDouble() * 0.3); // 10% a 30% de reembolso
     player.payDebit(taxAmount);
+    player.taxRefund = refund;
     player.incomeTax = 0.0;
     player.roundBalance.incomeTaxOut += taxAmount;
   }
 
   double processTaxRefund(Player player) {
-    double refund = player.incomeTax * (0.1 + Random().nextInt(21)); // 10% a 30% de reembolso
+    final refund = player.taxRefund;
     player.receiveCredit(refund, 0);
+    player.taxRefund = 0.0;
     player.roundBalance.otherIn += refund;
     return refund;
   }
@@ -92,13 +125,14 @@ class Ledger {
 
 // FUNÇÔES AUXILIAR: GESTÃO DAS AÇÔES E NEGOCIAÇÕES
   Property buyFromIPO(Player buyer, String propertyId, int sharesAmount) {
+    if(isBlacklisted(buyer.id)) throw(Exception(ConfigsConstants.blackListErrorMsg));
     final totalCost = properties[propertyId]!.sharePrice * sharesAmount;
     buyer.payDebit(totalCost);
     buyer.roundBalance.sharePurchasesOut += totalCost;
 
     properties[propertyId]!.availableShares -= sharesAmount;
     buyer.upgradePortfolio(propertyId, sharesAmount, totalCost);
-    print('✅ ${buyer.username} adquiriu $sharesAmount ações de $propertyId por ${totalCost.toStringAsFixed(2)}');
+    logger.i('✅ ${buyer.username} adquiriu $sharesAmount ações de $propertyId por ${totalCost.toStringAsFixed(2)}');
     return properties[propertyId]!;
   }
 
@@ -119,15 +153,16 @@ class Ledger {
     if(seller != null){
       seller.receiveCredit(totalCost, incomeTaxRate);
       seller.roundBalance.shareSalesIn += totalCost;
+      _transferSharesP2P(
+        propertyId: propertyId,
+        sharesAmount: amount,
+        transactionCost: totalCost,
+        fromPlayer: seller,
+        toPlayer: buyer,
+      );
+    } else {
+      _transferSharesBank2P(propertyId: propertyId, sharesAmount: amount, transactionCost: totalCost, toPlayer: buyer);
     }
-
-    _transferShares(
-      propertyId: propertyId,
-      sharesAmount: amount,
-      transactionPrice: totalCost,
-      fromPlayer: seller,
-      toPlayer: buyer,
-    );
     
     // 4. FINALIZAÇÃO
     finishTradeOffer(tradeOffer.offerId);
@@ -137,20 +172,23 @@ class Ledger {
     tradeOffers.remove(offerId);
   }
  
-  void calculateDividendsToPay(Player player) {
-
+  void calculateDividendsToPay(Player player, int referenceRound) {
     player.portfolio.forEach((propertyId, shareholderData) {
       final property = properties[propertyId];
-      if (property != null) {
+      if (referenceRound > property!.lastDividendRound) {
+      
+      print('entrou no if:' + properties[propertyId]!.name);
         _distributePayout(property, player);
         double netRetainedProfit = property.profitToRetain * (1.0 - propertyProfitTaxRate);
         property.applyValuation(netRetainedProfit);
+        property.lastDividendRound = referenceRound;
       }
     });
-    player.financialReport.dividendsReceived.add(player.roundBalance.dividendsIn);
   }
 
   void _distributePayout(Property property, Player player) {
+    
+      print('entrou no if: _distributePayout');
     var shareholderData = player.portfolio[property.id]!;
     double dividendReceived = (property.distributableProfit / property.totalShares) * shareholderData.sharesOwned;
     
@@ -160,16 +198,14 @@ class Ledger {
     print('${player.username} recebeu ${dividendReceived.toStringAsFixed(2)} da ${property.name}');
   }
   
-  void _transferShares({
+  void _transferSharesP2Bank({
     required String propertyId,
     required int sharesAmount,
-    required double transactionPrice,
-    Player? fromPlayer,
-    Player? toPlayer,
+    required double transactionCost,
+    required fromPlayer
   }) {
     final property = properties[propertyId];
     var fromPortfolio = fromPlayer != null ? fromPlayer.portfolio : bankPortfolio;
-    var toPortfolio = toPlayer != null ? toPlayer.portfolio : bankPortfolio;
     
     final fromShareholder = fromPortfolio[propertyId];
 
@@ -178,22 +214,67 @@ class Ledger {
     }
 
     // A. REMOÇÃO do Emissor (FROM)
-    fromShareholder.sharesOwned -= sharesAmount;
-    if (fromShareholder.sharesOwned == 0) {
-      fromPortfolio.remove(propertyId);
+    fromPlayer.downgradePortfolio(propertyId, sharesAmount, transactionCost);
+
+    // B. ADIÇÃO no Receptor (TO)
+    if (bankPortfolio.containsKey(propertyId)) {
+      bankPortfolio[propertyId]!.sharesOwned += sharesAmount;
+    } else {
+      bankPortfolio[propertyId] = ShareHolder(
+        playerId: bankId,
+        propertyId: propertyId,
+        sharesOwned: sharesAmount,
+        investmentValue: transactionCost,
+        saleCapitalGain: 0
+      );
+    }
+  }
+
+  void _transferSharesBank2P({
+    required String propertyId,
+    required int sharesAmount,
+    required double transactionCost,
+    required Player toPlayer
+  }) {
+    final property = properties[propertyId];
+    final bankShareholder = bankPortfolio[propertyId];
+
+    if (bankShareholder == null || bankShareholder.sharesOwned < sharesAmount) {
+      throw Exception("O remetente não tem $sharesAmount ações de ${property!.name} para transferir.");
+    }
+
+    // A. REMOÇÃO do Emissor (FROM)
+    if (sharesAmount >= bankShareholder.sharesOwned) {
+      bankPortfolio.remove(bankShareholder.propertyId);
+    } else {
+      bankShareholder.sharesOwned -= sharesAmount;
     }
 
     // B. ADIÇÃO no Receptor (TO)
-    if (toPortfolio.containsKey(propertyId)) {
-      toPortfolio[propertyId]!.sharesOwned += sharesAmount;
-    } else {
-      toPortfolio[propertyId] = ShareHolder(
-        playerId: toPlayer != null ? toPlayer.id : bankId,
-        propertyId: propertyId,
-        sharesOwned: sharesAmount,
-        investmentValue: transactionPrice, 
-      );
+    toPlayer.upgradePortfolio(propertyId, sharesAmount, transactionCost);
+  }
+
+  void _transferSharesP2P({
+    required String propertyId,
+    required int sharesAmount,
+    required double transactionCost,
+    required fromPlayer,
+    required toPlayer,
+  }) {
+    final property = properties[propertyId];
+    var fromPortfolio = fromPlayer.portfolio;
+    
+    final fromShareholder = fromPortfolio[propertyId];
+
+    if (fromShareholder == null || fromShareholder.sharesOwned < sharesAmount) {
+      throw Exception("O remetente não tem $sharesAmount ações de ${property!.name} para transferir.");
     }
+
+    // A. REMOÇÃO do Emissor (FROM)
+    fromPlayer.downgradePortfolio(propertyId, sharesAmount, transactionCost);
+
+    // B. ADIÇÃO no Receptor (TO)
+    toPlayer.upgradePortfolio(propertyId, sharesAmount, transactionCost);
   }
 
   void checkForMajorOwner(Player player, String propertyId) {
@@ -261,10 +342,10 @@ class Ledger {
     final sharesToConfiscate = player.portfolio[property.id]?.sharesOwned ?? 0;
     
     if (sharesToConfiscate > 0) {
-        _transferShares(
+        _transferSharesP2Bank(
             propertyId: property.id, 
             sharesAmount: sharesToConfiscate,
-            transactionPrice: 0,
+            transactionCost: 0,
             fromPlayer: player,
         );
         foreclosuredLoans.add(loan);
@@ -279,18 +360,24 @@ class Ledger {
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DE CONSTRUÇÔES
-  Property processBuildingPurchase(Player player, String propertyId, double buildingCost, double buildingRentIncrease, bool playerPayment) {
+  Property processBuildingPurchase(Player player, String propertyId, int newBuildings, double buildingRentIncrease, int markupUsagePercentage) {
     var property = properties[propertyId];
-    if (playerPayment) {
-      player.payDebit(buildingCost);
-      property!.buildings += 1;
-    } else {
-      property!.addBuilding(buildingRentIncrease, buildingCost);
-    }
-    player.roundBalance.buildingPurchasesOut += buildingCost;
-    print('🏗️ ${player.username} construiu em ${property.name} por ${buildingCost.toStringAsFixed(2)}');
-    return property;
-
+    var totalCost = newBuildings * property!.currentBuildingCost;
+    var markupUsageCost = totalCost * (markupUsagePercentage/100);
+    var playerCost = totalCost - markupUsageCost;
+    try{
+      if(isBlacklisted(player.id)) throw(Exception(ConfigsConstants.blackListErrorMsg));
+      property.checkIfEnoughMarkup(markupUsageCost);
+      
+      player.payDebit(playerCost);
+      property.addBuilding(buildingRentIncrease, newBuildings, markupUsageCost);
+      player.roundBalance.otherOut += playerCost;
+      logger.i('🏗️ ${player.username} construiu em ${property.name}.');
+      return property;
+    } on MaxBuildingsException {
+      player.receiveCredit(playerCost, 0);
+      rethrow;
+    } 
   }
 
 // =========================================================================

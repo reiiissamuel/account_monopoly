@@ -4,8 +4,10 @@ import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
+import 'package:account_monopoly/domain/model/shares_holder_summary.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
@@ -22,14 +24,6 @@ class MyPortfolioScreen extends StatelessWidget {
         final currentPlayer = gameProvider.currentPlayer;
         final properties = gameProvider.ledger.properties;
         List<MapEntry<String, ShareHolder>> currentPortfolio = currentPlayer.portfolio.entries.where((entry) => entry.value.sharesOwned > 0).toList();
-        
-        // CÁLCULOS DO RESUMO
-        final double totalPortfolioValue = currentPortfolio.map(
-          (entry) => properties[entry.value.propertyId]!.currentPrice).fold(0.0, (sum, currentValue) => sum + currentValue);
-        final double totalInvested = currentPortfolio.map(
-          (entry) => entry.value.investmentValue).fold(0.0, (sum, investmentValue) => sum + investmentValue);
-        final double netProfit = totalPortfolioValue - totalInvested;
-        final Color profitColor = netProfit >= 0 ? Colors.green : Colors.red;
 
         return Scaffold(
           backgroundColor: Colors.black,
@@ -41,7 +35,7 @@ class MyPortfolioScreen extends StatelessWidget {
           body: Column(
             children: [
               // RESUMO SUPERIOR
-              _buildSummaryHeader(context, currentPlayer.currentCredit, totalPortfolioValue, netProfit, profitColor),
+              _buildSummaryHeader(context, gameProvider.ledger.getSharesHolderSummary(currentPlayer.portfolio)),
               
               const SizedBox(height: 10),
               
@@ -66,16 +60,19 @@ class MyPortfolioScreen extends StatelessWidget {
   // --- WIDGETS DE CONSTRUÇÃO ---
 
   // 1. CABEÇALHO DE RESUMO
-  Widget _buildSummaryHeader(BuildContext context, double cash, double totalAssets, double netProfit, Color profitColor) {
+  Widget _buildSummaryHeader(BuildContext context, SharesHolderSummary summary) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       color: const Color(0xFF1E1E1E), // Fundo escuro para o cabeçalho
       child: Column(
         children: [
-          _buildSummaryRow("🏦 Saldo em Conta", StringUtils.currencyFormat(cash), context, Colors.lightBlueAccent),
-          _buildSummaryRow("📈 Valor dos Ativos", StringUtils.currencyFormat(totalAssets), context, Colors.amber),
+          _buildSummaryRow("🏦 Valor investido", StringUtils.currencyFormat(summary.totalInvested), context, Colors.white),
+          _buildSummaryRow("📈 Valor atual dos ativos", StringUtils.currencyFormat(summary.totalPortfolioValue), context, Colors.lightBlueAccent),
           const Divider(color: Colors.white12, height: 20),
-          _buildSummaryRow("✨ Lucro/Prejuízo Líquido", StringUtils.currencyFormat(netProfit), context, profitColor),
+          _buildSummaryRow("➕ Ganho de capital", StringUtils.currencyFormat(summary.totalGainCapital), context, summary.totalGainCapital >= 0? Colors.green : Colors.red),
+          _buildSummaryRow("💰 Proventos", StringUtils.currencyFormat(summary.totalDividends), context, Colors.green),
+          const Divider(color: Colors.white12, height: 20),
+          _buildSummaryRow("✨ Lucro Líquido", StringUtils.currencyFormat(summary.totalNetProfit), context, summary.totalNetProfit >= 0? Colors.green : Colors.red),
         ],
       ),
     );
@@ -87,8 +84,8 @@ class MyPortfolioScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-          Text(value, style: Theme.of(context).textTheme.titleLarge!.copyWith(color: valueColor, fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: valueColor)),
         ],
       ),
     );
@@ -103,7 +100,7 @@ class MyPortfolioScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12.0),
       padding: const EdgeInsets.all(15.0),
       decoration: BoxDecoration(
-        color: property!.colorSignature.withValues(alpha: .8),
+        color: property.colorSignature.withValues(alpha: .8),
         borderRadius: BorderRadius.circular(10.0),
         border: Border.all(color: property.colorSignature.withValues(alpha: .5)),
       ),
@@ -125,7 +122,8 @@ class MyPortfolioScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildInfoColumn("Lucro: ", StringUtils.currencyFormat(item.getNetProfit(property.sharePrice)), pnlColor),
-              _buildInfoColumn("Lucro por ação: ", StringUtils.currencyFormat(item.getNetProfitPerShare(property.sharePrice)), pnlColor),
+              _buildInfoColumn("Proventos recebidos: ", StringUtils.currencyFormat(item.dividendsReceived), pnlColor),
+              //_buildInfoColumn("Lucro por ação: ", StringUtils.currencyFormat(item.getNetProfitPerShare(property.sharePrice)), pnlColor),
               _buildInfoColumn("Variação %", "${item.getProfitPercentage(property.sharePrice).toStringAsFixed(2)}%", pnlColor),
             ],
           ),
@@ -136,6 +134,7 @@ class MyPortfolioScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Colors.white70),
+              _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Colors.white70),
               _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(property.sharePrice), Colors.yellow),
             ],
           ),
@@ -211,36 +210,47 @@ class MyPortfolioScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Vender ${property.name}"),
+          title: Text("Vender ${property.name}",
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            textAlign: TextAlign.center
+          ),
+          backgroundColor: Theme.of(context).primaryColor,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text("Ações disponíveis: ${item.sharesOwned}"),
-              Text("Custo Médio: ${StringUtils.currencyFormat(item.averageCostPerShare)}"),
+              Text("Custo Médio: ${StringUtils.currencyFormat(item.averageCostPerShare)}",
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
+              ),
               const SizedBox(height: 15),
               TextField(
                 controller: quantityController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Quantidade a Vender"),
+                decoration: _getInputDecoration("Quantidade de Ações", "Ex:10"),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly
+                ]
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: priceController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Preço de Venda por Ação"),
-              ),
+                decoration: _getInputDecoration("Preço por ação", "Ex:100,00")),
               const SizedBox(height: 10),
               TextField(
                 controller: turnController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "O oferta durará quantos turnos?"),
+                decoration: _getInputDecoration("Prazo da oferta em turnos", "5"),
               ),
             ],
           ),
           actions: [
-            TextButton(child: const Text("Cancelar"), onPressed: () => Navigator.of(context).pop()),
+            TextButton(
+              child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             ElevatedButton(
-              child: const Text("Criar Oferta"),
+              child: Text("Criar Oferta", style: TextStyle(color: Theme.of(context).primaryColor)),
               onPressed: () {
                 final int? quantity = int.tryParse(quantityController.text);
                 final double? price = double.tryParse(priceController.text);
@@ -270,6 +280,33 @@ class MyPortfolioScreen extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  InputDecoration _getInputDecoration(String labelText, String hintText){
+    return InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        labelStyle: const TextStyle(color: Colors.white54),
+        hoverColor: Colors.white,
+        focusedBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+            borderSide: BorderSide(
+                color: Colors.white, width: 5.0
+            )
+        ),
+        disabledBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+            borderSide: BorderSide(
+                color: Colors.blueGrey, width: 3.0
+            )
+        ),
+        border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+            borderSide: BorderSide(
+                color: Colors.blueGrey, width: 3.0
+            )
+        )
     );
   }
 }

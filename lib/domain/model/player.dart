@@ -2,6 +2,8 @@ import 'package:account_monopoly/domain/model/balance.dart';
 import 'package:account_monopoly/domain/model/financial_report.dart';
 import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
+import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 
 class Player {
@@ -19,6 +21,7 @@ class Player {
   // 3. ATRIBUTOS MUTÁVEIS (Estado que muda constantemente)
   double currentCredit;
   double incomeTax;
+  double taxRefund;
   double receivedFrom;
   double payedTo;
   Balance roundBalance;
@@ -38,6 +41,7 @@ class Player {
     this.receivedFrom = 0.0, 
     this.payedTo = 0.0,
     this.incomeTax = 0.0,
+    this.taxRefund = 0.0,
     this.youBankrupt = false,
     this.youWon = false
   });
@@ -94,18 +98,20 @@ class Player {
         propertyId: propertyId,
         sharesOwned: sharesAmount,
         investmentValue: totalCost,
+        saleCapitalGain: 0
       );
     }
   }
 
-  void downgradePortfolio(String propertyId, int sharesAmount){
+  void downgradePortfolio(String propertyId, int sharesAmount, double opCost){
     if(!portfolio.containsKey(propertyId)) return;
 
     if(sharesAmount >= portfolio[propertyId]!.sharesOwned){
-      portfolio.remove(propertyId);
+      portfolio[propertyId]!.sharesOwned = 0;
     } else {
       portfolio[propertyId]!.sharesOwned -= sharesAmount;
     }
+    portfolio[propertyId]!.saleCapitalGain += opCost;
   }
   
   void receiveCredit(double amount, double incomeTaxRate) {
@@ -116,14 +122,20 @@ class Player {
   }
 
   void payDebit(double amount) {
+    _checkIfEnoughCredit(amount);
     if (amount > 0) {
       currentCredit -= amount;
     }
   }
 
+  void _checkIfEnoughCredit(double value){
+    if (currentCredit < value) throw NotEnoughCreditException(ConfigsConstants.notEnoughCreditErrorMsg);
+  }
+
   factory Player.fromMap(Map<String, dynamic> map) {
     double credit = map["currentCredit"] as double;
     double incomeTax = map["incomeTax"] as double;
+    double taxRefund = map["taxRefund"] as double? ?? 0.0;
     double received = map["receivedFrom"] as double;
     double payed = map["payedTo"] as double? ?? 0;
 
@@ -132,7 +144,8 @@ class Player {
       username: map["username"] as String,
       isHost: map["isHost"] as bool,
       currentCredit: credit,
-      incomeTax: incomeTax, 
+      incomeTax: incomeTax,
+      taxRefund: taxRefund,
       receivedFrom: received,
       payedTo: payed,
       financialReport: FinancialReport.fromMap(map['financialReport']),

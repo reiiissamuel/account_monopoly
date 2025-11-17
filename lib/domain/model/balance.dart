@@ -4,7 +4,7 @@ class Balance {
   double shareSalesIn = 0.0;
   double eventIn = 0.0;
   double eventOut = 0.0;
-  double buildingPurchasesOut = 0.0;
+  //double buildingPurchasesOut = 0.0;
   double bonusIn = 0.0;
   double incomeTaxOut = 0.0;
   double refundIn = 0.0;
@@ -22,7 +22,7 @@ class Balance {
     this.shareSalesIn = 0.0,
     this.eventIn = 0.0,
     this.eventOut = 0.0,
-    this.buildingPurchasesOut = 0.0,
+    //this.buildingPurchasesOut = 0.0,
     this.bonusIn = 0.0,
     this.incomeTaxOut = 0.0,
     this.refundIn = 0.0,
@@ -49,7 +49,7 @@ class Balance {
   // GETTER: Saídas
   double get roundOutcomes => 
       sharePurchasesOut +
-      buildingPurchasesOut +
+      //buildingPurchasesOut +
       incomeTaxOut +
       otherOut + 
       transferOut +
@@ -68,7 +68,6 @@ class Balance {
       shareSalesIn: shareSalesIn,
       eventIn: eventIn,
       eventOut: eventOut,
-      buildingPurchasesOut: buildingPurchasesOut,
       bonusIn: bonusIn,
       incomeTaxOut: incomeTaxOut,
       refundIn: refundIn,
@@ -80,7 +79,7 @@ class Balance {
     );
     
     // Zera o Balanço do Jogador
-    sharePurchasesOut = shareSalesIn = eventIn = eventOut = buildingPurchasesOut = 0.0;
+    sharePurchasesOut = shareSalesIn = eventIn = eventOut = 0.0;
     bonusIn = incomeTaxOut = refundIn = dividendsIn = 0.0;
     transferIn = transferOut = otherIn = otherOut = 0.0;
     
@@ -94,7 +93,6 @@ class Balance {
       'shareSalesIn': shareSalesIn,
       'eventIn': eventIn,
       'eventOut': eventOut,
-      'buildingPurchasesOut': buildingPurchasesOut,
       'bonusIn': bonusIn,
       'incomeTaxOut': incomeTaxOut,
       'refundIn': refundIn,
@@ -113,7 +111,6 @@ class Balance {
       shareSalesIn: map['shareSalesIn'] as double? ?? 0.0,
       eventIn: map['eventIn'] as double? ?? 0.0,
       eventOut: map['eventOut'] as double? ?? 0.0,
-      buildingPurchasesOut: map['buildingPurchasesOut'] as double? ?? 0.0,
       bonusIn: map['bonusIn'] as double? ?? 0.0,
       incomeTaxOut: map['incomeTaxOut'] as double? ?? 0.0,
       refundIn: map['refundIn'] as double? ?? 0.0,

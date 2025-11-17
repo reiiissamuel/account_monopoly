@@ -5,26 +5,44 @@ class ShareHolder {
   double investmentValue;
   int sharesOwned;
   double dividendsReceived = 0;
+  double saleCapitalGain = 0;
 
   ShareHolder({
     required this.playerId,
     required this.propertyId,
     required this.sharesOwned,
     required this.investmentValue,
+    required this.saleCapitalGain
   });
 
-  double get averageCostPerShare => investmentValue / sharesOwned;
+  double get averageCostPerShare => (investmentValue - saleCapitalGain) / sharesOwned;
 
+  double get totalInvested => averageCostPerShare * sharesOwned;
+
+   //calcula lucro liquido
   double getNetProfit(double shareCurrentCost){
-    return ((sharesOwned * shareCurrentCost) + dividendsReceived) - investmentValue;
+    return (portfolioValue(shareCurrentCost) + dividendsReceived) - totalInvested;
   }
 
+   //cacula lucro liquido por acao
   double getNetProfitPerShare(double shareCurrentCost){
+    if(sharesOwned == 0) return 0;
     return getNetProfit(shareCurrentCost) / sharesOwned;
   }
 
+  //cacula porcentagem de lucro sobre custo
   double getProfitPercentage(double shareCurrentCost){
-    return ((((sharesOwned * shareCurrentCost) + dividendsReceived) / investmentValue) * 100) - 100;
+    return (((portfolioValue(shareCurrentCost) + dividendsReceived) / totalInvested) * 100) - 100;
+  }
+
+  //calculo de ganho de capital desconsiderando dividendos
+  double getCapitalGain(double shareCurrentCost){
+    return portfolioValue(shareCurrentCost) / totalInvested;
+  }
+
+  //calcula valor atual total dos ativos
+  double portfolioValue(double shareCurrentCost){
+    return  (sharesOwned * shareCurrentCost);
   }
 
   factory ShareHolder.fromMap(Map<String, dynamic> map) {
@@ -33,6 +51,7 @@ class ShareHolder {
       propertyId: map['propertyId'] as String,
       sharesOwned: map['sharesOwned'] as int,
       investmentValue: map['investmentValue'] as double,
+      saleCapitalGain: map['saleCapitalGain'] as double
     );
   }
 
@@ -42,6 +61,7 @@ class ShareHolder {
       'propertyId': propertyId,
       'sharesOwned': sharesOwned,
       'investmentValue': investmentValue,
+      'saleCapitalGain': saleCapitalGain
     };
   } 
 }

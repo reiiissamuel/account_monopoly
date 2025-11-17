@@ -130,11 +130,27 @@ class UserProvider extends ChangeNotifier{
   }
 
   Future<void> updateUser() async {
-    isLoading = true;
-    notifyListeners();
-    await userRepository.updateUser(user!);
-    isLoading = false;
-    notifyListeners();
+    try{
+      isLoading = true;
+      notifyListeners();
+      await userRepository.updateUser(user!);
+      isLoading = false;
+      notifyListeners();
+    } on Exception {
+      isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> deleteUser(int userId) async {
+    try{
+      await userRepository.deleteUser(userId);
+      
+    } on Exception {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> getAllLocalUsers() async {

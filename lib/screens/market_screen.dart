@@ -1,20 +1,16 @@
-// screens/offer_market_screen.dart
-
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
-
-// -----------------------------------------------------------------
-// NOTA: A lógica do diálogo de compra foi integrada ao _offerTile
-// para facilitar a referência, mas você pode mantê-la separada.
-// -----------------------------------------------------------------
 
 class MarketScreen extends StatelessWidget {
   const MarketScreen({super.key});
@@ -27,7 +23,6 @@ class MarketScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Assume que este método retorna a lista consolidada das 3 fontes (IPO, Banco, P2P)
         final List<TradeOffer> availableStocks = gameProvider.getAllMarketListings();
 
         return Scaffold(
@@ -35,26 +30,33 @@ class MarketScreen extends StatelessWidget {
             backgroundColor: Theme.of(context).primaryColor,
             title: const Text("Mercado de Ações", style: TextStyle(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.bold)),
             centerTitle: true,
+            actions: const [
+              TipIconButton(title: "Compra de ativos", tip: TipsResourse.MARKET_SCREEN)
+            ],
           ),
           backgroundColor: Colors.black,
-          body: availableStocks.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.show_chart, size: 60.0, color: Colors.indigo),
-                      const SizedBox(height: 10),
-                      Text("Nenhuma ação disponível para negociação no momento.", 
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white70)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(10.0),
-                  itemCount: availableStocks.length,
-                  itemBuilder: (context, index) {
-                    return _offerTile(context, availableStocks[index], gameProvider);
-                  }),
+          body: Builder(
+            builder: (scaffoldContext) {
+              return availableStocks.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.show_chart, size: 60.0, color: Colors.indigo),
+                          const SizedBox(height: 10),
+                          Text("Nenhuma ação disponível para negociação no momento.", 
+                              style: Theme.of(scaffoldContext).textTheme.titleLarge?.copyWith(color: Colors.white70)),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(10.0),
+                      itemCount: availableStocks.length,
+                      itemBuilder: (context, index) {
+                        return _offerTile(scaffoldContext, availableStocks[index], gameProvider);
+                      });
+            },
+          ),
         );
       },
     );
@@ -69,8 +71,8 @@ class MarketScreen extends StatelessWidget {
     
     // Cor do texto de origem (para destaque)
     final Color sourceColor = switch (offer.source) {
-      OfferSource.fundIPO => Colors.lightBlueAccent,
-      OfferSource.bankForeclosed => Colors.yellow,
+      OfferSource.fundIPO => Colors.black,
+      OfferSource.bankForeclosed => Colors.blueGrey,
       OfferSource.playerMarket => Colors.pinkAccent,
     };
 
@@ -87,7 +89,7 @@ class MarketScreen extends StatelessWidget {
         children: <Widget>[
           // Título do FII
           Row(
-              spacing: 5,
+              spacing: 5, 
               children: [
                 Icon(gameProvider.ledger.properties[offer.propertyId]!.iconSignature.icon),
                 Text('Nome: ${offer.propertyId}',
@@ -113,19 +115,19 @@ class MarketScreen extends StatelessWidget {
               _buildInfoColumn(context, "Preço por Ação", currentPrice, Colors.black),
               _buildInfoColumn(
                 context,
-                 "Você possui:", gameProvider.currentPlayer.portfolio.containsKey(offer.propertyId) ?
-                 gameProvider.currentPlayer.portfolio[offer.propertyId]!.sharesOwned.toString() : "0", Colors.black),
+                  "Você possui:", gameProvider.currentPlayer.portfolio.containsKey(offer.propertyId) ?
+                  gameProvider.currentPlayer.portfolio[offer.propertyId]!.sharesOwned.toString() : "0", Colors.black),
               _buildInfoColumn(context, "Disponível", available, Colors.white),
             ],
           ),
 
-          // NOVO: Linha de Ação (Botão Comprar)
+          // Linha de Ação (Botão Comprar)
           const SizedBox(height: 15),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            spacing: 5,
+            spacing: 5, 
             children: [
-              // BOTÃO DE DETALHES (Novo)
+              // BOTÃO DE DETALHES
               OutlinedButton.icon(
                 icon: const Icon(Icons.info_outline, color: Colors.white),
                 label: const Text("Detalhes da propriedade", style: TextStyle(color: Colors.white)),
@@ -143,7 +145,7 @@ class MarketScreen extends StatelessWidget {
               ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.shopping_cart),
-                label: Text(offer.sharesAmount > 0 ? "COMPRAR AÇÃO" : "ESGOTADO"),
+                label: Text(offer.sharesAmount > 0 ? "COMPRAR" : "ESGOTADO"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: offer.sharesAmount > 0 ? Colors.green : Colors.grey,
                   foregroundColor: Colors.white,
@@ -179,15 +181,20 @@ class MarketScreen extends StatelessWidget {
     
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) { 
         return AlertDialog(
-          title: Text("Comprar Ações de ${offer.propertyName}"),
-          content: offer.source == OfferSource.playerMarket          
+          title: Text("Comprar Ações de ${offer.propertyName}",
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Theme.of(context).primaryColor,
+          content: offer.source == OfferSource.playerMarket           
           ? Text(
-            "Confirmar compra do lote de ${offer.propertyName} posto a venda por ${gameProvider.currentPlayer.username};",
+            "Confirmar compra do lote de ${offer.propertyName} posto à venda pelo jogador ${offer.sellerPlayerId};",
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 15
+              fontSize: 15,
+              fontWeight: FontWeight.bold
             ),
           )
           : Column(
@@ -203,7 +210,26 @@ class MarketScreen extends StatelessWidget {
                 decoration: const InputDecoration(
                   labelText: "Quantidade de Ações",
                   hintText: "Ex: 10",
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: Colors.white54),
+                  hoverColor: Colors.white,
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    borderSide: BorderSide(
+                      color: Colors.white, width: 5.0
+                    )
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    borderSide: BorderSide(
+                      color: Colors.blueGrey, width: 3.0
+                    )
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    borderSide: BorderSide(
+                      color: Colors.blueGrey, width: 3.0
+                    )
+                  )
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly
@@ -213,28 +239,26 @@ class MarketScreen extends StatelessWidget {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text("Cancelar"),
-              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(
-              child: const Text("Comprar"),
+              child: Text("Comprar", style: TextStyle(color: Theme.of(context).primaryColor)),
               onPressed: () {
-                final int? quantity = int.tryParse(quantityController.text);
-                if (gameProvider.forbiddenAction) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("O banco não autorizou esta operação devido o fato de você estar no cadastro de devedores")),
-                  );
-                } 
+                try{
+                  final int? quantityInput = int.tryParse(quantityController.text);
+                  
+                  if(quantityInput == null || quantityInput <= 0) {
+                    throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
+                  }
+                  
+                  final int quantity = (quantityInput > offer.sharesAmount) ? offer.sharesAmount : quantityInput;
                 
-                if (quantity != null && quantity > 0 && quantity <= offer.sharesAmount) {
-                  if (gameProvider.currentPlayer.currentCredit < quantity! * offer.askingPrice) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Você não possui saldo suficiente")),
-                    );
-                  } else if(offer.source != OfferSource.fundIPO){
+                  if(offer.source != OfferSource.fundIPO){
                     gameProvider.eventComposer(
                       type: EventType.buyFromTrade,
                       tradeOffer: offer,
+                      value: quantity, 
                       destinationPlayer: offer.source == OfferSource.playerMarket ? gameProvider.otherPlayers[offer.sellerPlayerId] : null
                     );
                   } else {
@@ -244,12 +268,22 @@ class MarketScreen extends StatelessWidget {
                       value: quantity
                     );
                   }
-                  Navigator.of(context).pop();
-                } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Quantidade inválida ou indisponível.")),
-                  );
+                  // Sucesso: Agendamos a SnackBar no Scaffold da tela principal (context é o correto).
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Compra realizada."), backgroundColor: Colors.green));
+
+
+                } on DomainException catch(e){
+                  
+                  // Erro: Exibimos a mensagem de erro no Scaffold.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+                } catch(e) {
+                  // Erro inesperado: Exibimos a mensagem de erro no Scaffold.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Erro inesperado: ${e.toString()}"), backgroundColor: Colors.red));
                 }
+                Navigator.pop(context);
               },
             ),
           ],

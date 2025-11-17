@@ -1,5 +1,4 @@
 
-import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 
 import 'package:account_monopoly/domain/model/chance.dart';

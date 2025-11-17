@@ -44,7 +44,8 @@ class HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
                           child: GestureDetector(
                               child: const Icon(Icons.question_mark_rounded, color: Colors.white),
-                              onTap: () => {}))
+                              onTap: () => {
+                              }))
                     ]
                 ),
                 floatingActionButton: Padding(

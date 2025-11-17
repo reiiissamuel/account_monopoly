@@ -2,6 +2,8 @@ import 'package:account_monopoly/domain/enums/property_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/new_property_screen.dart';
 import 'package:account_monopoly/screens/properties_screen.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -45,11 +47,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
               letterSpacing: 2)),
           centerTitle: true,
           actions: [
-            Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-                child: GestureDetector(
-                    child: const Icon(Icons.question_mark_rounded, color: Colors.white),
-                    onTap: () => {}))
+            const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
           ],
         ),
         backgroundColor: Colors.black,

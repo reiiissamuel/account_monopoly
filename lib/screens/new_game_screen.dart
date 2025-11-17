@@ -330,15 +330,20 @@ class NewGameScreenState extends State<NewGameScreen> {
             ),
             TextButton(
               onPressed: !_enableConfirmButton ? null : () async {
-                String generatedGameId = StringUtils.generateUUID(size: 8); 
-
-                Map<String, Property> properties = userProvider.user!.propertiesVersion![_selectedPropertyVersion] != null ?  Map.fromEntries(
-                    userProvider.user!.propertiesVersion![_selectedPropertyVersion]!.map((property) => MapEntry(property.id, property)),
-                  ) : {};
-                properties.forEach((k, p) {
-                  p.totalShares = int.parse(_sharesController.text);
-                  p.availableShares = p.totalShares;
-                });
+                String generatedGameId = StringUtils.generateUUID(size: 8);
+                Map<String, Property> properties = {};
+                if (userProvider.user!.propertiesVersion![_selectedPropertyVersion] != null) {
+                  for (var originalProperty in userProvider.user!.propertiesVersion![_selectedPropertyVersion]!) {
+                    final newShares = int.parse(_sharesController.text);
+                    final clonedProperty = originalProperty.copyWith(
+                      totalShares: newShares,
+                      availableShares: newShares,
+                    );
+                  
+                    properties[clonedProperty.id] = clonedProperty;
+                  }
+                }
+              
                 Ledger ledger =  Ledger(
                   properties: properties, 
                   currentInterestRate: gameLevel.initalInterestRate, 

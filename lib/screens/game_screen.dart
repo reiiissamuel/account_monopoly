@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:account_monopoly/dialogs/loan_dialog.dart';
 import 'package:account_monopoly/dialogs/more_options_dialog.dart';
+import 'package:account_monopoly/dialogs/pay_rent_dialog.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/market_screen.dart';
@@ -71,7 +73,7 @@ class GameScreenState extends State<GameScreen> {
                 backgroundColor: Theme.of(context).primaryColor,
                 automaticallyImplyLeading: false,
                 title: const Text(
-                  "My Mobile Bank",
+                  "Painel central",
                   style: TextStyle(
                       letterSpacing: 2,
                       color: Colors.white,
@@ -249,7 +251,8 @@ class GameScreenState extends State<GameScreen> {
 
                                 GameIconButtonBuilder(
                                   imgPath: "icons/wallet.png",  
-                                  title: "Minha carteira", 
+                                  title: "Minha carteira",
+                                  textFontSize: 13,
                                   onPressed: (){
                                     Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPortfolioScreen()));
                                   }
@@ -264,32 +267,18 @@ class GameScreenState extends State<GameScreen> {
                                 ),
 
                                 GameIconButtonBuilder(
-                                  imgPath: "icons/graph.png",  
-                                  title: "Balanço",
-                                  onPressed: (){
-                                    //Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
-                                  }
+                                  imgPath: "icons/rent.png", 
+                                  textFontSize: 13, 
+                                  title: "Aluguel",
+                                  onPressed: () => _dialogCaller(
+                                    context, PayRentDialog(properties: gameProvider.ledger.properties.values.toList(), provider: gameProvider,)
+                                  )
                                 ),
 
                                 GameIconButtonBuilder(
-                                  imgPath: "icons/buildhotel.png",
-                                  title: "+Hotel",
-                                  onPressed: (){
-                                  _dialogCaller(
-                                      context, const CustomKeyboard(
-                                        title: "Insira o valor total dos hotéis",
-                                        eventType: EventType.build
-                                      ));
-                                }),
-
-                                GameIconButtonBuilder(
-                                  imgPath: "icons/buildhome.png",  
-                                  title: "+Casa",
-                                  onPressed:
-                                  (){
-                                    _dialogCaller(
-                                    context, const CustomKeyboard(title: "Insira o valor da casas", eventType: EventType.build));
-                                  }
+                                  imgPath: "icons/loan.png",
+                                  title: "Empréstimo",
+                                  onPressed: () => _dialogCaller(context, const LoanDialog())
                                 ),
 
                                 GameIconButtonBuilder(

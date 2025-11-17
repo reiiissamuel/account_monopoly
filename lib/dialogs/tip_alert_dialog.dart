@@ -28,7 +28,7 @@ class TipDialog extends StatelessWidget {
       actions: <Widget>[
         // define os botões na base do dialogo
         ElevatedButton(
-          child: const Text("OK",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0)),
+          child: Text("👍OK",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
           onPressed: () {
             Navigator.of(context).pop();
           },

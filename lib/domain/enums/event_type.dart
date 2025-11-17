@@ -17,7 +17,7 @@ enum EventType{
   closeTurn(messageScope: "{SOURCE} finalizou seu turno de negociações."),
   roundBonus(messageScope: "{SOURCE} recebeu novos investimentos totalizando {VALUE}."),
   bankBlacklisted(messageScope: "{SOURCE} entrou para a lista de devedores do banco."),
-  closeRound(messageScope: "No último ciclo, a evolução de capital de {SOURCE} foi {VALUE}."),
+  closeRound(messageScope: "{SOURCE} recebeu {VALUE} em dividendos referente a rodada {ROUND}."),
   bankruptcy(messageScope: '{SOURCE} declarou falência'),
   iwon(messageScope: '{SOURCE} venceu o jogo.'),
   lostConnection(messageScope: '{SOURCE} está desconectado.'),

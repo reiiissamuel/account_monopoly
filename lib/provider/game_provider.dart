@@ -5,7 +5,7 @@ import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
 import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
-import 'package:account_monopoly/domain/model/property.dart';
+import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
@@ -33,7 +33,6 @@ class GameProvider extends ChangeNotifier {
 
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
-  bool get forbiddenAction => ledger.isBlacklisted(currentPlayer.id);
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
 
   void notifyChanges(bool isLoading) {
@@ -82,7 +81,7 @@ class GameProvider extends ChangeNotifier {
         break;
       case EventType.buyFromTrade:
         if(destinationPlayer!.id == currentPlayer.id){
-          currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount);
+          currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount, event.tradeOffer!.totalAskingPrice);
         } else {
           gameModelDTO!.updateOtherPlayers(destinationPlayer);
         }
@@ -93,7 +92,11 @@ class GameProvider extends ChangeNotifier {
           playerId: sourceplayer.id,
           propertyId: event.property!.id,
           sharesOwned: value!.toInt(),
-          investmentValue: 0);
+          investmentValue: 0,
+          saleCapitalGain: 0);
+        break;
+      case EventType.closeRound:
+        ledger.calculateDividendsToPay(currentPlayer, event.referenceRound);
         break;
       case EventType.bankruptcy:
         if (event.sourcePlayer.isHost) {
@@ -137,100 +140,111 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> eventComposer({required EventType type, Player? destinationPlayer, Player? sourcePlayer, num? value,
-   String? propertyId, double? buildingRentIncrease, bool? buildingPlayerPayment, TradeOffer? tradeOffer, String? loanId}) async {
-    notifyChanges(true);
+  void eventComposer({required EventType type, Player? destinationPlayer, Player? sourcePlayer, num? value, int? markupUsage,
+   String? propertyId, int? newBuildings, TradeOffer? tradeOffer, Loan? loan}) {
+    try{
+      notifyChanges(true);
 
-    EventDTO event = EventDTO(
-        type: type,
-        destinationPlayer: destinationPlayer,
-        sourcePlayer: sourcePlayer ?? currentPlayer,
-        tradeOffer: tradeOffer,
-       // property: property,
-        value: value);
+      EventDTO event = EventDTO(
+          referenceRound: gameModelDTO!.currentRound,
+          type: type,
+          destinationPlayer: destinationPlayer,
+          sourcePlayer: sourcePlayer ?? currentPlayer,
+          tradeOffer: tradeOffer,
+        // property: property,
+          value: value);
 
-    switch (event.type) {
-      case EventType.propertyUpdatePayout:
-        event.property = ledger.updatePropertyPayout(propertyId!, value!.toDouble());
-        break;
-      case EventType.closeTurn:
-        ledger.checkTradeOffersDeadline();
-        break;
-      case EventType.payTax:
-        event.value = currentPlayer.incomeTax;
-        ledger.processIncomeTaxPayment(currentPlayer);
-        break;
-      case EventType.receiveTax:
-        event.value = ledger.processTaxRefund(currentPlayer);
-        break;
-      case EventType.roundBonus:
-        ledger.processRoundBonus(currentPlayer);
-        break;
-      case EventType.payBank:
-        currentPlayer.payDebit(value!.toDouble());
-        currentPlayer.roundBalance.otherOut += value;
-        break;
-      case EventType.receiveFromBank:
-        currentPlayer.receiveCredit(value!.toDouble(), ledger.incomeTaxRate);
-        currentPlayer.roundBalance.otherIn += value;
-        break;
-      case EventType.transfer:
-        currentPlayer.payDebit(value!.toDouble());
-        currentPlayer.roundBalance.transferOut += value;
-        destinationPlayer!.receiveCredit(value.toDouble(), ledger.incomeTaxRate);
-        destinationPlayer.roundBalance.transferIn += value;
-        break;
-      case EventType.loan:
-        currentPlayer.receiveCredit(value!.toDouble(), 0);
-        gameModelDTO!.player.roundBalance.otherIn += value;
-        break;
-      case EventType.loanPayment:
-        ledger.processLoanPayment(currentPlayer, loanId!, event.value!.toDouble());
-        break;
-      case EventType.mortgageForeclosure:
-        event.property = ledger.properties[propertyId];
-      case EventType.buyFromIPO:
-        event.property = ledger.buyFromIPO(currentPlayer, propertyId!, value!.toInt());
-        ledger.checkForMajorOwner(currentPlayer, propertyId);
-        break;
-      case EventType.setTradeOffer:
-        ledger.setTradeOffer(tradeOffer!);
-        break;
-      case EventType.buyFromTrade:
-        ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);
-        ledger.checkForMajorOwner(currentPlayer, tradeOffer.propertyId);
-      case EventType.closeRound:
-        gameModelDTO!.ledger.calculateDividendsToPay(currentPlayer);
-        event.value = currentPlayer.roundBalance.dividendsIn;
-        currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
-        gameModelDTO!.currentRound += 1;
-        break;
-      case EventType.build:
-        event.property = ledger.processBuildingPurchase(currentPlayer, propertyId!, value!.toDouble(), buildingRentIncrease!, buildingPlayerPayment!);
-        break;
-      case EventType.bankruptcy:
-        //
-        break;
-      case EventType.iwon:
-        gameModelDTO!.winner = currentPlayer;
-        break;
-      case EventType.serverHandShake:
-        currentPlayer.isHost = true;
-         //int i = gameModelDTO!.othersPlayers.indexWhere((p) => p.id == gameModelDTO!.player.id);
-        //i >= 0 ? gameModelDTO!.othersPlayers[i] = gameModelDTO!.player : gameModelDTO!.othersPlayers.add(gameModelDTO!.player);
-        event.gameData = gameModelDTO!.toInitialTemplate();
-        break;
-      case EventType.lostConnection:
-        //gameModelDTO!.othersPlayers.remove(currentPlayer.id);
-        //todo salvar jogo e sair;
-        break;
-      default:
-        break;
+      switch (event.type) {
+        case EventType.propertyUpdatePayout:
+          event.property = ledger.updatePropertyPayout(propertyId!, value!.toDouble());
+          break;
+        case EventType.closeTurn:
+          ledger.checkTradeOffersDeadline();
+          break;
+        case EventType.payRent:
+          event.property = ledger.processRentPayment(currentPlayer, propertyId!, value!.toDouble());
+          break;
+        case EventType.payTax:
+          event.value = currentPlayer.incomeTax;
+          ledger.processIncomeTaxPayment(currentPlayer);
+          break;
+        case EventType.receiveTax:
+          event.value = ledger.processTaxRefund(currentPlayer);
+          break;
+        case EventType.roundBonus:
+          ledger.processRoundBonus(currentPlayer);
+          break;
+        case EventType.payBank:
+          currentPlayer.payDebit(value!.toDouble());
+          currentPlayer.roundBalance.otherOut += value;
+          break;
+        case EventType.receiveFromBank:
+          currentPlayer.receiveCredit(value!.toDouble(), ledger.incomeTaxRate);
+          currentPlayer.roundBalance.otherIn += value;
+          break;
+        case EventType.transfer:
+          currentPlayer.payDebit(value!.toDouble());
+          currentPlayer.roundBalance.transferOut += value;
+          destinationPlayer!.receiveCredit(value.toDouble(), ledger.incomeTaxRate);
+          destinationPlayer.roundBalance.transferIn += value;
+          break;
+        case EventType.loan:
+          currentPlayer.receiveCredit(value!.toDouble(), 0);
+          gameModelDTO!.player.roundBalance.otherIn += value;
+          break;
+        case EventType.loanPayment:
+          ledger.processLoanPayment(currentPlayer, loan!.id, event.value!.toDouble());
+          break;
+        case EventType.mortgageForeclosure:
+          event.property = ledger.properties[propertyId];
+          break;
+        case EventType.buyFromIPO:
+          event.property = ledger.buyFromIPO(currentPlayer, propertyId!, value!.toInt());
+          ledger.checkForMajorOwner(currentPlayer, propertyId);
+          break;
+        case EventType.setTradeOffer:
+          ledger.setTradeOffer(tradeOffer!);
+          break;
+        case EventType.buyFromTrade:
+          ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);
+          ledger.checkForMajorOwner(currentPlayer, tradeOffer.propertyId);
+          break;
+        case EventType.closeRound:
+          ledger.calculateDividendsToPay(currentPlayer, gameModelDTO!.currentRound);
+          event.value = currentPlayer.roundBalance.dividendsIn;
+          currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
+          gameModelDTO!.currentRound += 1;
+          break;
+        case EventType.build:
+          event.property = ledger.processBuildingPurchase(currentPlayer, propertyId!, newBuildings!, value!.toDouble(), markupUsage!);
+          break;
+        case EventType.bankruptcy:
+          //
+          break;
+        case EventType.iwon:
+          gameModelDTO!.winner = currentPlayer;
+          break;
+        case EventType.serverHandShake:
+          currentPlayer.isHost = true;
+          //int i = gameModelDTO!.othersPlayers.indexWhere((p) => p.id == gameModelDTO!.player.id);
+          //i >= 0 ? gameModelDTO!.othersPlayers[i] = gameModelDTO!.player : gameModelDTO!.othersPlayers.add(gameModelDTO!.player);
+          event.gameData = gameModelDTO!.toInitialTemplate();
+          break;
+        case EventType.lostConnection:
+          //gameModelDTO!.othersPlayers.remove(currentPlayer.id);
+          //todo salvar jogo e sair;
+          break;
+        default:
+          break;
+      }
+      _sendEvent(event);
+      gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
+      _updateUserModel();
+      notifyChanges(false);
+    } on Exception{
+      notifyChanges(false);
+      rethrow;
     }
-    _sendEvent(event);
-    gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
-    await _updateUserModel();
-    notifyChanges(false);
   }
 
   void _sendEvent(EventDTO event) {

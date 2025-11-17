@@ -13,12 +13,13 @@ class EventDTO{
   final Player? destinationPlayer;
   final Player sourcePlayer;
   late final GameModelDTO? gameData; ///somente enviado nos eventos do tipo HANDSHAKE para passar as confi do jogo para um novo player
+  int referenceRound;
   num? value;
   Property? property;
   TradeOffer? tradeOffer;
 
 
-  EventDTO({String ?eventId, this.gameData, required this.type, this.destinationPlayer, required this.sourcePlayer,
+  EventDTO({String ?eventId, this.gameData, required this.type, this.destinationPlayer, required this.sourcePlayer, this.referenceRound = 0,
     this.value, this.property, this.tradeOffer}){
     this.eventId = eventId ?? "${StringUtils.generateUUID(size: 8)}-${sourcePlayer.username}";
   }
@@ -29,8 +30,8 @@ class EventDTO{
             .replaceAll('{VALUE}', (value is double) ? StringUtils.currencyFormat(value!.toDouble()) : value.toString())
               .replaceAll('{DEST}', (destinationPlayer != null && destinationPlayer?.username == currentPlayer.username) ? 'Sua empresa' : sourcePlayer.username)
               .replaceAll('{PROPERTY}', (property != null ? property!.name : ""))
-              .replaceAll('{TRADEOFFER}', tradeOffer != null ? "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer!.propertyId} no valor total de ${StringUtils.currencyFormat(tradeOffer!.totalAskingPrice)}" : "");
-     
+              .replaceAll('{TRADEOFFER}', tradeOffer != null ? "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer!.propertyId} no valor total de ${StringUtils.currencyFormat(tradeOffer!.totalAskingPrice)}" : "")
+              .replaceAll('{ROUND}', referenceRound.toString());
   }
 
   Map<String, dynamic> toMap() {
@@ -41,7 +42,8 @@ class EventDTO{
       "sourcePlayer": sourcePlayer.toMap(),
       "value": value,
       "gameData": gameData?.toMap(),
-      "property": property?.toMap()
+      "property": property?.toMap(),
+      'referenceRound': referenceRound
     };
   }
 
@@ -53,6 +55,7 @@ class EventDTO{
         sourcePlayer: Player.fromMap(map['sourcePlayer']),
         value: map['value'] as num?,
         gameData: GameModelDTO.fromMap( map['gameData']),
-        property: map['property'] != null ? Property.fromMap(map['property']) : null
+        property: map['property'] != null ? Property.fromMap(map['property']) : null,
+        referenceRound: map['referenceRound'] ?? 0
     );}
 }

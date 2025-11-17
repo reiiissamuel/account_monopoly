@@ -2,6 +2,8 @@ import 'package:account_monopoly/domain/enums/property_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -18,9 +20,12 @@ class NewPropertyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(versionId == null ? 'Cadastrar Nova Propriedade' : 'Atualizar Propriedade'),
+        title: Text(versionId == null ? 'Cadastrar Nova Propriedade' : 'Atualizar Propriedade', style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
+        ]
       ),
       backgroundColor: Colors.black,
       body: PropertyRegistrationForm(
@@ -57,6 +62,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
   Icon _iconSignatureData = const Icon(Bootstrap.building); // Valor inicial
   String _propertyId = '';
   String _rentPrice = '';
+  String _buildingCost = '';
 
   // Lista de cores pré-definidas para seleção
   final List<Color> availableColors = [
@@ -107,6 +113,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
       _iconSignatureData = widget.property!.iconSignature; // Valor inicial
       _propertyId = widget.property!.id;
       _rentPrice = StringUtils.currencyFormat(widget.property!.currentPrice);
+      _buildingCost = StringUtils.currencyFormat(widget.property!.currentBuildingCost);
     }
   }
 
@@ -297,7 +304,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
       if (_formKey.currentState!.validate()) {
         _formKey.currentState!.save();
 
-        // Crie o objeto Property (Assumindo que a classe Property está acessível)
+        // Crie o objeto Property
         final newProperty = Property(
           id: _propertyId,
           name: _name,
@@ -305,7 +312,8 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
           colorSignature: _colorSignature,
           propertyType: _propertyType,
           iconSignature: _iconSignatureData,
-          currentRent: StringUtils.currencyAsDouble(_rentPrice)
+          currentRent: StringUtils.currencyAsDouble(_rentPrice),
+          currentBuildingCost: _propertyType == PropertyType.reit ? StringUtils.currencyAsDouble(_rentPrice) : 0
         );
         
         Provider.of<UserProvider>(context, listen: false).newProperty(_versionid, newProperty);
@@ -403,6 +411,17 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
               alertMsg: "insira um número válido",
               initialValue: _rentPrice.toString()
             ),
+            _propertyType == PropertyType.reit ? 
+              _buildField(
+                label: 'Custo de construção', 
+                onSave: (value) => _rentPrice = value, 
+                inputsTypes:  [
+                  FilteringTextInputFormatter.digitsOnly,
+                  StringUtils()
+                ],
+                alertMsg: "insira um número válido",
+                initialValue: _rentPrice.toString()
+              ) : const SizedBox(height: 0),
             
             const SizedBox(height: 30),
             
