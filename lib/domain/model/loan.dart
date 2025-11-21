@@ -5,6 +5,7 @@ class Loan {
   final LoanType type;
   final double principalBorrowed; 
   final String? collateralId;
+  final int? collateralAmountShares;
   double totalDue; 
   double principalPaid = 0.0;
   int roundsToPayOff;
@@ -14,6 +15,7 @@ class Loan {
     required this.type,
     required this.totalDue,
     required this.principalBorrowed,
+    this.collateralAmountShares,
     this.collateralId,
     required this.roundsToPayOff,
   });
@@ -45,7 +47,8 @@ class Loan {
       'principalBorrowed': principalBorrowed,
       'collateralId': collateralId,
       'principalPaid': principalPaid,
-      'roundsToPayOff': roundsToPayOff
+      'roundsToPayOff': roundsToPayOff,
+      'collateralAmountShares': collateralAmountShares
     };
   }
 
@@ -56,7 +59,7 @@ class Loan {
       totalDue: map['totalDue'] as double,
       principalBorrowed: map['principalBorrowed'] as double,
       collateralId: map['collateralId'] as String?,
-      roundsToPayOff: map['roundsToPayOff'] as int,
+      roundsToPayOff: map['roundsToPayOff'] as int, collateralAmountShares: map['collateralAmountShares'] as int
     )..principalPaid = map['principalPaid'] as double;
   }
 

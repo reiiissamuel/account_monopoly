@@ -6,6 +6,7 @@ import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:account_monopoly/domain/model/shares_holder_summary.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -252,17 +253,19 @@ class MyPortfolioScreen extends StatelessWidget {
             ElevatedButton(
               child: Text("Criar Oferta", style: TextStyle(color: Theme.of(context).primaryColor)),
               onPressed: () {
-                final int? quantity = int.tryParse(quantityController.text);
-                final double? price = double.tryParse(priceController.text);
-                final int? turns = int.tryParse(turnController.text);
-                
-                if (quantity != null && price != null && quantity > 0 && quantity <= item.sharesOwned) {
+                try {
+                  final int? quantity = int.tryParse(quantityController.text);
+                  final double? price = double.tryParse(priceController.text);
+                  final int? turns = int.tryParse(turnController.text);
+                  if (quantity == null || price == null || quantity > 0) {
+                    throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
+                  }
                   final offer = TradeOffer(
                     offerId: StringUtils.generateUUID(size: 5),
                     propertyId: property.id,
                     sellerPlayerId: gameProvider.currentPlayer.id,
-                    sharesAmount: quantity, 
-                    askingPrice: price, 
+                    sharesAmount: quantity!,
+                    askingPrice: price!,
                     turnsToEnd: turns ?? 0,
                     source: OfferSource.playerMarket, 
                     currentMarketPrice: property.currentPrice, 
@@ -270,11 +273,12 @@ class MyPortfolioScreen extends StatelessWidget {
                     propertyName: property.name);
                   gameProvider.eventComposer(type: EventType.setTradeOffer, tradeOffer: offer);
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Oferta criada com sucesso")));
+                      const SnackBar(content: Text("Oferta criada com sucesso"), backgroundColor: Colors.green));
                   Navigator.of(context).pop();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Dados inválidos.")));
+                } on DomainException catch(e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), backgroundColor: Colors.red));
                 }
+                Navigator.pop(context);
               },
             ),
           ],

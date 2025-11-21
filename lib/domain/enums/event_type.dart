@@ -12,7 +12,7 @@ enum EventType{
   receiveTax(messageScope: '{SOURCE} recebeu {VALUE} de restituição.'),
   loan(messageScope: '{SOURCE} pegou um empréstimo no valor de {VALUE}.'),
   loanPayment(messageScope: '{SOURCE} pagou {VALUE} referente a um emprestimo com o banco.'),
-  mortgageForeclosure(messageScope: 'O banco executou a hipoteca de {VALUE} ações de {PROPERTY} pertencentes a {SOURCE}.'),
+  mortgageForeclosure(messageScope: 'O banco executou a hipoteca das ações de {PROPERTY} pertencentes a {SOURCE}.'),
   loanForeclosure(messageScope: 'O banco executou uma dívida de {VALUE} da {SOURCE}.'),
   closeTurn(messageScope: "{SOURCE} finalizou seu turno de negociações."),
   roundBonus(messageScope: "{SOURCE} recebeu novos investimentos totalizando {VALUE}."),

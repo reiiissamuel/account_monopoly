@@ -77,7 +77,7 @@ class GameProvider extends ChangeNotifier {
         ledger.properties[event.property!.id] = event.property!;
         break;
       case EventType.setTradeOffer:
-        ledger.setTradeOffer(event.tradeOffer!);
+        ledger.tradeOffers[event.tradeOffer!.offerId] = event.tradeOffer!;
         break;
       case EventType.buyFromTrade:
         if(destinationPlayer!.id == currentPlayer.id){
@@ -96,7 +96,7 @@ class GameProvider extends ChangeNotifier {
           saleCapitalGain: 0);
         break;
       case EventType.closeRound:
-        ledger.calculateDividendsToPay(currentPlayer, event.referenceRound);
+        ledger.updatePropertiesValuation(currentPlayer, event.referenceRound);
         break;
       case EventType.bankruptcy:
         if (event.sourcePlayer.isHost) {
@@ -124,7 +124,7 @@ class GameProvider extends ChangeNotifier {
     eventComposer(type: EventType.roundBonus, value: ledger.roundBonus);
     eventComposer(type: EventType.closeRound);
 
-    final foreclosusureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
+    List<Loan> foreclosusureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
     if(foreclosusureLoans.isNotEmpty){
       for(var loan in foreclosusureLoans){
         if(loan.type == LoanType.bankLoan){
@@ -189,11 +189,10 @@ class GameProvider extends ChangeNotifier {
           destinationPlayer.roundBalance.transferIn += value;
           break;
         case EventType.loan:
-          currentPlayer.receiveCredit(value!.toDouble(), 0);
-          gameModelDTO!.player.roundBalance.otherIn += value;
+          ledger.processLoanAcquisition(currentPlayer, loan!);
           break;
         case EventType.loanPayment:
-          ledger.processLoanPayment(currentPlayer, loan!.id, event.value!.toDouble());
+          ledger.processLoanPayment(currentPlayer, loan!.id, value!.toDouble());
           break;
         case EventType.mortgageForeclosure:
           event.property = ledger.properties[propertyId];
@@ -203,14 +202,14 @@ class GameProvider extends ChangeNotifier {
           ledger.checkForMajorOwner(currentPlayer, propertyId);
           break;
         case EventType.setTradeOffer:
-          ledger.setTradeOffer(tradeOffer!);
+          ledger.setTradeOffer(currentPlayer, tradeOffer!);
           break;
         case EventType.buyFromTrade:
           ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);
           ledger.checkForMajorOwner(currentPlayer, tradeOffer.propertyId);
           break;
         case EventType.closeRound:
-          ledger.calculateDividendsToPay(currentPlayer, gameModelDTO!.currentRound);
+          ledger.updatePropertiesValuation(currentPlayer, gameModelDTO!.currentRound);
           event.value = currentPlayer.roundBalance.dividendsIn;
           currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
           gameModelDTO!.currentRound += 1;
@@ -251,36 +250,6 @@ class GameProvider extends ChangeNotifier {
     peerConnectionController!.send(event);
   }
 
-  void createNewGame({required GameModelDTO game, required Function onFail, required Function onSuccess}) async {
-    isLoading = true;
-    notifyListeners();
-    String usermodelname = userModelController.user!.username;
-    int usermodelId = userModelController.user!.id!;
-    String generatedGameId = StringUtils.generateUUID(size: 8);
-
-    gameModelDTO = game;
-    gameModelDTO!.player = Player.newGamePlayer(
-      currentCredit: gameModelDTO!.initalGameCredit,
-      userModelId: usermodelId,
-      gameId: generatedGameId,
-      username: usermodelname,
-      isHost: true
-    );
-
-    try{
-      _createPeerConnectionController(peerId: gameModelDTO!.player.id);
-      peerConnectionController!.openConnectionsAsHost();
-      userModelController.user!.games.add(gameModelDTO!);
-      await _updateUserModel();
-    } catch (e) {
-      onFail("Algo deu errado!");
-    } finally{
-      onSuccess();
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
   List<TradeOffer> getAllMarketListings() {
   final List<TradeOffer> listings = [];
 
@@ -314,14 +283,14 @@ class GameProvider extends ChangeNotifier {
     
     if (bankShare.sharesOwned > 0) {
       listings.add(TradeOffer(
-        offerId: 'bank_asset_${propertyId}',
+        offerId: propertyId,
         propertyId: propertyId,
         sellerPlayerId: ledger.bankId,
         sharesAmount: bankShare.sharesOwned,
-        askingPrice: property.sharePrice,
+        askingPrice: property.sharePrice - (property.sharePrice * 0.1),
         source: OfferSource.bankForeclosed,
         currentMarketPrice: property.sharePrice,
-        colorSignature: property.colorSignature.withOpacity(0.7), // Cor ligeiramente diferente
+        colorSignature: property.colorSignature.withValues(alpha: 0.7), // Cor ligeiramente diferente
         propertyName: '${property.name} (Recup.)',
         turnsToEnd: 1
       ));
@@ -349,6 +318,36 @@ class GameProvider extends ChangeNotifier {
   
   return listings;
 }
+
+  void createNewGame({required GameModelDTO game, required Function onFail, required Function onSuccess}) async {
+    isLoading = true;
+    notifyListeners();
+    String usermodelname = userModelController.user!.username;
+    int usermodelId = userModelController.user!.id!;
+    String generatedGameId = StringUtils.generateUUID(size: 8);
+
+    gameModelDTO = game;
+    gameModelDTO!.player = Player.newGamePlayer(
+        currentCredit: gameModelDTO!.initalGameCredit,
+        userModelId: usermodelId,
+        gameId: generatedGameId,
+        username: usermodelname,
+        isHost: true
+    );
+
+    try{
+      _createPeerConnectionController(peerId: gameModelDTO!.player.id);
+      peerConnectionController!.openConnectionsAsHost();
+      userModelController.user!.games.add(gameModelDTO!);
+      await _updateUserModel();
+    } catch (e) {
+      onFail("Algo deu errado!");
+    } finally{
+      onSuccess();
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> getGameById({required GameModelDTO gameModelDTO,  required Function onFail, required Function onSuccess}) async {
     isLoading = true;

@@ -5,6 +5,7 @@ import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/widgets/chart_property_report.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
 import 'package:account_monopoly/widgets/percent_spinner.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
@@ -96,7 +97,7 @@ double _markupUsage = 0;
         // 4. HISTÓRICO DE AÇÕES (Placeholder)
 
         _buildSectionTitle("📊 Histórico & Volatilidade", property.colorSignature),
-        _buildHistoryPlaceholder(context),
+        _buildHistoryPlaceholder(context, property),
 
         const SizedBox(height: 20),
 
@@ -156,7 +157,7 @@ double _markupUsage = 0;
      ),
      const Spacer(),
      // Seção para variação do dia (Ex: +1.5%)
-     // _buildPriceChangeIndicator(property), 
+     // _buildPriceChangeIndicator(property),
     ],
    ),
   );
@@ -211,25 +212,29 @@ double _markupUsage = 0;
  }
 
  // Seção 4: Placeholder de Histórico
- Widget _buildHistoryPlaceholder(BuildContext context) {
-   return Container(
-     height: 150,
-     alignment: Alignment.center,
-     decoration: BoxDecoration(
-      color: const Color(0xFF1E1E1E),
-      borderRadius: BorderRadius.circular(10),
-     ),
-     child: const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.trending_up, size: 30, color: Colors.white30),
-        SizedBox(height: 5),
-        Text("Gráfico de Volatilidade e Histórico de Preços", style: TextStyle(color: Colors.white54)),
-        Text("(Em breve)", style: TextStyle(color: Colors.white30, fontSize: 12)),
-      ],
-     )
-   );
- }
+Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
+  return Container(
+      height: 400,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(height: 3),
+          const Icon(Icons.trending_up, size: 20, color: Colors.white30),
+          const SizedBox(height: 5),
+          const Text("Gráfico de Volatilidade e Histórico de Preços", style: TextStyle(color: Colors.white54)),
+          const SizedBox(height: 4),
+          Expanded(
+            child: ChartPropertyReport(property: property),
+          ),
+        ],
+      )
+  );
+}
 
  Widget _buildPayoutChanger(BuildContext context, GameProvider gameProvider, Property property) {
   var configEnabled = (property.majorOwnerId == gameProvider.currentPlayer.id);  

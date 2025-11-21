@@ -2,8 +2,11 @@
 
 import 'dart:async'; // Mantido caso haja uso futuro de Future.delayed
 
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
+import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
@@ -20,10 +23,10 @@ class LoanDialog extends StatefulWidget {
 class LoanDialogState extends State<LoanDialog> {
 
   final String bonusLabel = "Bonus da rodada";
-  int _turnValueSelected = 3;
+  int _roundValueSelected = 3;
   final List<int> _turnValueList = [2, 3, 4, 5];
 
-  final TextEditingController _editingController = TextEditingController(); // Valor total a pagar (Display)
+  final TextEditingController _totalDueController = TextEditingController(); // Valor total a pagar (Display)
   LoanType _selectedLoanType = LoanType.mortgage;
 
 
@@ -34,9 +37,9 @@ class LoanDialogState extends State<LoanDialog> {
 
   // --- CONSTANTES DE NEGÓCIO ---
 
-  static const double ASSET_LIQUIDATION_FACTOR = 0.80; // 80% do valor do ativo
-  static const double ASSET_INTEREST_PER_TURN = 0.05;  // 5% de juros por turno
-  static const int BONUS_FIXED_TURNS = 3;              // 3 turnos fixos para bônus
+  static const double ASSET_LIQUIDATION_FACTOR = 0.80; // porcentagem do ativo hipotecado para emprestimo
+  static const double ASSET_INTEREST_PER_TURN = 0.05;  // 5% de juros por roundo
+  static const int BONUS_FIXED_TURNS = 3;              // 3 roundos fixos para bônus
   static const double BONUS_FIXED_INTEREST = 0.15;      // 15% de juros fixos para bônus
 
   // --- GETTERS DE VALOR CALCULADO ---
@@ -55,17 +58,13 @@ class LoanDialogState extends State<LoanDialog> {
 
   double get _selectetShareHolderValue => gameProvider.ledger.calculateShareHolderValue(_selectedPropertyCollateral);
 
-  // Taxa de Juros aplicável (usada no cálculo e exibição)
-  double get _currentInterestRate => _selectedLoanType == 'BONUS'
-      ? BONUS_FIXED_INTEREST
-      : ASSET_INTEREST_PER_TURN;
 
   @override
   void initState() {
     super.initState();
+    gameProvider = Provider.of<GameProvider>(context, listen: false);
+    _selectedPropertyCollateral = gameProvider.currentPlayer.portfolio.values.first;
     Future.delayed(Duration.zero, (){
-      gameProvider = Provider.of<GameProvider>(context, listen: false);
-      _selectedPropertyCollateral = gameProvider.currentPlayer.portfolio.values.first;
       _updateValue();
     });
   }
@@ -123,7 +122,7 @@ class LoanDialogState extends State<LoanDialog> {
               // 4. INFORMAÇÕES DO EMPRÉSTIMO (Juros e Detalhes da Garantia)
               _buildRateInfoCard(context),
 
-              if (_selectedPropertyCollateral != null) ...[
+              if (_selectedPropertyCollateral != null && _selectedPropertyCollateral != null) ...[
                 const SizedBox(height: 10),
                 _buildCollateralInfoCard(context, _selectedPropertyCollateral!),
               ],
@@ -177,7 +176,7 @@ class LoanDialogState extends State<LoanDialog> {
               onChanged: (LoanType? newType) {
                 setState(() {
                   _selectedLoanType = newType!;
-                  _turnValueSelected = 3; // Reseta as parcelas para o padrão
+                  _roundValueSelected = 3; // Reseta as parcelas para o padrão
                   _updateValue();
                 });
               },
@@ -221,7 +220,7 @@ class LoanDialogState extends State<LoanDialog> {
                 setState(() {
                   _selectedPropertyCollateral = newValue!;
                   // Atualiza a propriedade selecionada para fácil acesso
-                  _turnValueSelected = 3; // Reseta as parcelas para o padrão
+                  _roundValueSelected = 3; // Reseta as parcelas para o padrão
                   _updateValue();
                 });
               },
@@ -273,14 +272,14 @@ class LoanDialogState extends State<LoanDialog> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               dropdownColor: const Color(0xFF1E1E1E),
-              value: _turnValueSelected,
+              value: _roundValueSelected,
               icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
               iconSize: 24,
               elevation: 16,
               style: const TextStyle(color: Colors.white, fontSize: 18),
               onChanged: (int? data) {
                 setState(() {
-                  _turnValueSelected = data ?? _turnValueSelected;
+                  _roundValueSelected = data ?? _roundValueSelected;
                   _updateValue();
                 });
               },
@@ -305,8 +304,8 @@ class LoanDialogState extends State<LoanDialog> {
 
     final Color indicatorColor = _selectedLoanType == 'BONUS' ? Colors.lightBlueAccent : Colors.yellow;
     final String rateText = _selectedLoanType == 'BONUS'
-        ? "15% total (Fixo em ${BONUS_FIXED_TURNS} turnos)"
-        : "${(ASSET_INTEREST_PER_TURN * 100).toInt()}% por turno";
+        ? "15% total (Fixo em ${BONUS_FIXED_TURNS} roundos)"
+        : "${(ASSET_INTEREST_PER_TURN * 100).toInt()}% por roundo";
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -376,7 +375,7 @@ class LoanDialogState extends State<LoanDialog> {
           border: Border.all(color: Colors.white24)),
       child: TextField(
           cursorColor: Colors.white,
-          controller: _editingController,
+          controller: _totalDueController,
           readOnly: true,
           maxLines: 1,
           textAlign: TextAlign.center,
@@ -437,63 +436,64 @@ class LoanDialogState extends State<LoanDialog> {
 
     if (loanAmount > 0) {
       if (_selectedLoanType == LoanType.bankLoan) {
-        // BÔNUS: Taxa e turnos fixos
+        // BÔNUS: Taxa e roundos fixos
         final double totalInterest = loanAmount * BONUS_FIXED_INTEREST;
         totalToPay = loanAmount + totalInterest;
       } else if (_selectedPropertyCollateral != null) {
-        // ATIVO: Taxa por turno * número de turnos
-        final double totalInterestRate = ASSET_INTEREST_PER_TURN * _turnValueSelected;
+        // ATIVO: Taxa por roundo * número de roundos
+        final double totalInterestRate = ASSET_INTEREST_PER_TURN * _roundValueSelected;
         final double interestValue = loanAmount * totalInterestRate;
         totalToPay = loanAmount + interestValue;
       }
     }
 
     setState(() {
-      _editingController.text = StringUtils.currencyFormat(totalToPay);
+      _totalDueController.text = StringUtils.currencyFormat(totalToPay);
     });
   }
 
   void _confirmLoan(BuildContext context, GameProvider gameProvider) {
-    if (_selectedLoanType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Selecione uma garantia para o empréstimo."), backgroundColor: Colors.red));
-      return;
-    }
-
-    final double loanAmount = _loanAmountAvailable;
-    final String totalToPayDisplay = _editingController.text;
 
     // Define os parâmetros finais com base na garantia
-    final bool isBonusCollateral = _selectedLoanType == 'BONUS';
-    final int turns = isBonusCollateral ? BONUS_FIXED_TURNS : _turnValueSelected;
-    final double interestRate = isBonusCollateral ? BONUS_FIXED_INTEREST : ASSET_INTEREST_PER_TURN * turns;
+    final bool isBonusCollateral = _selectedLoanType == LoanType.mortgage;
+    final int rounds = isBonusCollateral ? BONUS_FIXED_TURNS : _roundValueSelected;
+    final double interestRate = isBonusCollateral ? BONUS_FIXED_INTEREST : ASSET_INTEREST_PER_TURN * rounds;
 
     // 2. Confirmação Final
     showDialog(context: context, builder: (BuildContext context) {
       return ConfirmActionDialog(
           title: "Confirmação de Empréstimo",
           textContent:
-          "Valor Emprestado: ${StringUtils.currencyFormat(loanAmount)}\n"
-              "Parcelas: $turns turnos\n"
+          "Valor Emprestado: ${StringUtils.currencyFormat(_loanAmountAvailable)}\n"
+              "prazo: $rounds rodadas\n"
               "Juros Totais: ${(interestRate * 100).toStringAsFixed(1)}%\n"
-              "Total a Pagar: $totalToPayDisplay\n"
+              "Total a Pagar: ${_totalDueController.text}\n"
               "Garantia: ${isBonusCollateral ? 'Bônus de Turno' : _selectedPropertyCollateral!.propertyId}\n\n"
               "Você confirma o empréstimo?",
           onConfirm: () {
-           /* Navigator.of(context).pop();
+            try{
+              // 3. Executa a Ação de Empréstimo no GameProvider
+              gameProvider.eventComposer(
+                  type: EventType.loan,
+                  value: _loanAmountAvailable,
+                  loan: Loan(
+                      id: StringUtils.generateUUID(size: 5),
+                      type: _selectedLoanType,
+                      totalDue: StringUtils.currencyAsDouble(_totalDueController.text),
+                      principalBorrowed: _loanAmountAvailable,
+                      roundsToPayOff: _roundValueSelected,
+                      collateralId: _selectedLoanType == LoanType.mortgage ? _selectedPropertyCollateral.propertyId : null,
+                      collateralAmountShares: _selectedLoanType == LoanType.mortgage ? _selectedPropertyCollateral.sharesOwned : null
+                  )
+              );
 
-            // 3. Executa a Ação de Empréstimo no GameProvider
-            gameProvider.handleLoanRequest(
-              amount: loanAmount,
-              turns: turns,
-              collateralId: _selectedPropertyCollateral?.propertyId,
-              interestRate: interestRate, // Envia a taxa TOTAL para facilitar o Ledger
-              collateralShares: _selectedPropertyCollateral?.sharesOwned ?? 0,
-              collateralValue: _selectedPropertyCollateral?.currentValue ?? loanAmount,
-              isBonusCollateral: isBonusCollateral,
-            );
-
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Empréstimo contratado com sucesso!"), backgroundColor: Colors.green));
+            } on DomainException catch(e){
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+            }
             Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Empréstimo contratado com sucesso!"), backgroundColor: Colors.green));*/
           });
     });
   }

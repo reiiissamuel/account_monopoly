@@ -15,13 +15,11 @@ class ShareHolder {
     required this.saleCapitalGain
   });
 
-  double get averageCostPerShare => (investmentValue - saleCapitalGain) / sharesOwned;
-
-  double get totalInvested => averageCostPerShare * sharesOwned;
+  double get averageCostPerShare => sharesOwned == 0 ? 0.0 : (investmentValue - saleCapitalGain) / sharesOwned;
 
    //calcula lucro liquido
   double getNetProfit(double shareCurrentCost){
-    return (portfolioValue(shareCurrentCost) + dividendsReceived) - totalInvested;
+    return (portfolioValue(shareCurrentCost) + dividendsReceived) - investmentValue;
   }
 
    //cacula lucro liquido por acao
@@ -32,12 +30,12 @@ class ShareHolder {
 
   //cacula porcentagem de lucro sobre custo
   double getProfitPercentage(double shareCurrentCost){
-    return (((portfolioValue(shareCurrentCost) + dividendsReceived) / totalInvested) * 100) - 100;
+    return (((portfolioValue(shareCurrentCost) + dividendsReceived) / investmentValue) * 100) - 100;
   }
 
   //calculo de ganho de capital desconsiderando dividendos
   double getCapitalGain(double shareCurrentCost){
-    return portfolioValue(shareCurrentCost) / totalInvested;
+    return portfolioValue(shareCurrentCost) / investmentValue;
   }
 
   //calcula valor atual total dos ativos

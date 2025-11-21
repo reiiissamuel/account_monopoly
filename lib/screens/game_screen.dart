@@ -4,8 +4,10 @@ import 'package:account_monopoly/dialogs/more_options_dialog.dart';
 import 'package:account_monopoly/dialogs/pay_rent_dialog.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
+import 'package:account_monopoly/screens/game_balance_screen.dart';
 import 'package:account_monopoly/screens/market_screen.dart';
 import 'package:account_monopoly/screens/my_portfolio_screen.dart';
+import 'package:account_monopoly/screens/player_summary_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/winner_dialog.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -209,7 +211,7 @@ class GameScreenState extends State<GameScreen> {
                                             backgroundColor: Theme.of(context).primaryColor
                                           ),
                                           onPressed: (){
-                                            //Navigator.push(context, MaterialPageRoute(builder: (context) => const MortgageScreen()));
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
                                           },
                                           child: const Text(
                                             "Gráficos",
@@ -276,10 +278,25 @@ class GameScreenState extends State<GameScreen> {
                                 ),
 
                                 GameIconButtonBuilder(
-                                  imgPath: "icons/loan.png",
-                                  title: "Empréstimo",
-                                  onPressed: () => _dialogCaller(context, const LoanDialog())
+                                    imgPath: "icons/client.png",
+                                    textFontSize: 13,
+                                    title: "Jogador",
+                                    onPressed: () {
+                                      Navigator.push(context, MaterialPageRoute(
+                                          builder: (context) =>
+                                              const PlayerSummaryScreen()));
+                                    }
                                 ),
+
+                                if(gameProvider.currentPlayer.portfolio.values.isNotEmpty) ...[
+                                  GameIconButtonBuilder(
+                                      imgPath: "icons/loan.png",
+                                      title: "Empréstimo",
+                                      onPressed: () =>
+                                          _dialogCaller(
+                                              context, const LoanDialog())
+                                  ),
+                                ],
 
                                 GameIconButtonBuilder(
                                     imgPath: "icons/more.png",

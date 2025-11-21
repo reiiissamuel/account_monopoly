@@ -1,4 +1,4 @@
-/* import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart'; // Importação do novo pacote de gráficos
 import 'package:provider/provider.dart';
@@ -23,13 +23,13 @@ class ChartThree extends StatelessWidget {
 
     // Note: Use 'gameModelDTO!.balance.accounts.reversed' se você quiser a ordem da rodada mais recente para a mais antiga
     // Se 'ac.round' for sequencial, a ordem do For é suficiente.
-    for (var ba in gameProvider.gameModelDTO!.player.financialReport.balances) {
-      if (processedRounds.add(ba.round)) {
+    for (var ba in gameProvider.currentPlayer.financialReport.historicalBalances.entries) {
+      if (processedRounds.add(ba.key)) { //key is the round
         sources.add(
           ChartSource(
-            round: ba.round,
-            inComming: gameProvider.gameModelDTO!.player.financialReport.getRoundIncomming(ba.round).toInt(),
-            outGoing: gameProvider.gameModelDTO!.player.financialReport.getRoundOutGoing(ba.round).toInt(),
+            round: ba.key,
+            inComming: gameProvider.currentPlayer.financialReport.getBalanceByRound(ba.key)!.roundIncomes,
+            outGoing: gameProvider.currentPlayer.financialReport.getBalanceByRound(ba.key)!.roundOutcomes,
           )
         );
       }
@@ -220,13 +220,13 @@ class ChartThree extends StatelessWidget {
                       verticalInterval: 1,
                       getDrawingHorizontalLine: (value) {
                         return FlLine(
-                          color: Colors.grey.withOpacity(0.3),
+                          color: Colors.grey.withValues(alpha: 0.3),
                           strokeWidth: 1,
                         );
                       },
                       getDrawingVerticalLine: (value) {
                         return FlLine(
-                          color: Colors.grey.withOpacity(0.3),
+                          color: Colors.grey.withValues(alpha: 0.3),
                           strokeWidth: 1,
                         );
                       },
@@ -247,7 +247,7 @@ class ChartThree extends StatelessWidget {
                             );
                             return LineTooltipItem(
                               // Formata o valor do ponto tocado para moeda
-                              StringUtils.currencyFormat(touchedSpot.y.toString()),
+                              StringUtils.currencyFormat(touchedSpot.y),
                               textStyle,
                             );
                           }).toList();
@@ -270,8 +270,8 @@ class ChartThree extends StatelessWidget {
 
 class ChartSource {
   int round;
-  int inComming;
-  int outGoing;
+  double inComming;
+  double outGoing;
 
   ChartSource(
       {required this.round,
@@ -279,4 +279,3 @@ class ChartSource {
         required this.outGoing,
       });
 }
- */

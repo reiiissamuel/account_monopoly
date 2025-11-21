@@ -60,7 +60,7 @@ class Ledger {
     for(ShareHolder shareHolder in portfolio.values){
       double currentShareCost = properties[shareHolder.propertyId]!.sharePrice;
       totalPortfolioValue += shareHolder.portfolioValue(currentShareCost);
-      totalInvested += shareHolder.totalInvested;
+      totalInvested += shareHolder.investmentValue;
       totalDividends += shareHolder.dividendsReceived;
     }
 
@@ -102,20 +102,34 @@ class Ledger {
     return refund;
   }
 
+  void processLoanAcquisition(Player player, Loan loan) {
+
+    if(loan.type == LoanType.bankLoan){
+      bool hasBonnusLoan = player.loans.any(((l) => l.type == LoanType.bankLoan && !l.isPaidOff));
+      if(hasBonnusLoan) throw MaxBonnusLoansException(ConfigsConstants.maxBonnusLoansErrorMsg);
+    } else {
+      bool existingCollateralid = player.loans.any(((l) => l.collateralId == loan.collateralId));
+      if(existingCollateralid) throw MortgagedPropertyException(ConfigsConstants.mortgagedPropertyErrorMsg);
+    }
+
+    player.receiveCredit(loan.principalBorrowed, 0);
+    player.loans.add(loan);
+    player!.roundBalance.otherIn += loan.principalBorrowed;
+  }
+
   void processLoanPayment(Player player, String loandId, double paymentAmount) {
     var loan = player.loans.firstWhere((l) => l.id == loandId);
-    if (player.currentCredit >= paymentAmount && paymentAmount <= loan.totalDue) {
-      player.payDebit(paymentAmount);
-      player.roundBalance.otherOut += paymentAmount;
-      loan.principalPaid += paymentAmount;
 
-      if(loan.isPaidOff) {
-        badCreditList.remove(player.id);
-      }
-      print('✅ ${player.username} pagou o empréstimo ${loan.id} integralmente.');
-    } else {
-      print('⚠️ ${player.username} não tem crédito suficiente para pagar o empréstimo ${loan.id}.');
+    final payment = paymentAmount > loan.remainingDebt ? loan.remainingDebt : paymentAmount;
+    player.payDebit(paymentAmount);
+    player.roundBalance.otherOut += payment;
+    loan.principalPaid += payment;
+
+    if(loan.isPaidOff) {
+      badCreditList.remove(player.id);
     }
+    print('✅ ${player.username} pagou o empréstimo ${loan.id} integralmente.');
+
   }
 
   void processRoundBonus(Player player) {
@@ -136,16 +150,21 @@ class Ledger {
     return properties[propertyId]!;
   }
 
-  void setTradeOffer(TradeOffer offer) {
-    tradeOffers[offer.offerId] = offer;
+  void setTradeOffer(Player player, TradeOffer offer) {
+    final isAbleToTrade = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount);
+    if (isAbleToTrade) {
+      tradeOffers[offer.offerId] = offer;
+    } else {
+      throw NotEnoughSharesToTradeException(ConfigsConstants.notEnoughSharesToTradeErrorMsg);
+    }
   }
   
   void buyFromTrade(Player buyer, TradeOffer tradeOffer, Player? seller) {
-    final offer = tradeOffers[tradeOffer.offerId];
+    //var offer = tradeOffers[tradeOffer.offerId];
 
-    final totalCost = offer!.totalAskingPrice;
-    final amount = offer.sharesAmount;
-    final propertyId = offer.propertyId;
+    final totalCost = tradeOffer.totalAskingPrice;
+    final amount = tradeOffer.sharesAmount;
+    final propertyId = tradeOffer.propertyId;
 
     buyer.payDebit(totalCost);
     buyer.roundBalance.sharePurchasesOut += totalCost;
@@ -171,31 +190,26 @@ class Ledger {
   void finishTradeOffer(String offerId){
     tradeOffers.remove(offerId);
   }
- 
-  void calculateDividendsToPay(Player player, int referenceRound) {
-    player.portfolio.forEach((propertyId, shareholderData) {
-      final property = properties[propertyId];
-      if (referenceRound > property!.lastDividendRound) {
-      
-      print('entrou no if:' + properties[propertyId]!.name);
-        _distributePayout(property, player);
+
+  void updatePropertiesValuation(Player player, int referenceRound){
+    properties.forEach((id, property) {
+      if (referenceRound > property!.lastUpdateRound){
         double netRetainedProfit = property.profitToRetain * (1.0 - propertyProfitTaxRate);
-        property.applyValuation(netRetainedProfit);
-        property.lastDividendRound = referenceRound;
+        _distributePayout(player, property);
+        property.applyValuation(netRetainedProfit, referenceRound);
       }
     });
   }
-
-  void _distributePayout(Property property, Player player) {
-    
-      print('entrou no if: _distributePayout');
-    var shareholderData = player.portfolio[property.id]!;
-    double dividendReceived = (property.distributableProfit / property.totalShares) * shareholderData.sharesOwned;
-    
-    player.receiveCredit(dividendReceived, incomeTaxRate); 
-    player.roundBalance.dividendsIn += dividendReceived;
-    shareholderData.dividendsReceived += dividendReceived;
-    print('${player.username} recebeu ${dividendReceived.toStringAsFixed(2)} da ${property.name}');
+ 
+  void _distributePayout(Player player, Property property) {
+    ShareHolder? item = player.portfolio[property.id];
+    if(item != null){
+      double dividendReceived = property.currentDividendsPerShare * item.sharesOwned;
+      player.receiveCredit(dividendReceived, incomeTaxRate);
+      player.roundBalance.dividendsIn += dividendReceived;
+      item.dividendsReceived += dividendReceived;
+      logger.i('${player.username} recebeu ${dividendReceived.toStringAsFixed(2)} da ${property.name}');
+    }
   }
   
   void _transferSharesP2Bank({
@@ -296,13 +310,13 @@ class Ledger {
 
   // FUNÇÔES AUXILIAR: GESTÃO DAS DÍVIDAS
   List<Loan> managePlayerLoans(Player player) {
-    final foreclosuredLoans = List<Loan>.empty();
+    List<Loan> foreclosuredLoans = List<Loan>.empty(growable: true);
     if (player.loans.isEmpty) return foreclosuredLoans;
 
     for (var loan in player.loans) {
       if (loan.isPaidOff) continue;
       loan.reduceTerm(); 
-      if (loan.roundsToPayOff <= -1) {
+      if (loan.roundsToPayOff <= 0) {
         _handleLoan(player, loan, foreclosuredLoans);
       }
       _handleLoanLate(player, loan, foreclosuredLoans);
@@ -314,6 +328,7 @@ class Ledger {
   void _handleLoan(Player player, Loan loan, List<Loan> foreclosuredLoans) {
     if (loan.type == LoanType.mortgage && loan.collateralId != null) {
       _executeMortgage(player, loan, foreclosuredLoans);
+      loan.totalDue = 0;
     } else if (loan.type == LoanType.bankLoan) {
       _applyLateFee(player, loan);
     }
@@ -339,17 +354,18 @@ class Ledger {
   void _executeMortgage(Player player, Loan loan,  List<Loan> foreclosuredLoans) {
     var property = properties[loan.collateralId!];
     if (property == null) return;
-    final sharesToConfiscate = player.portfolio[property.id]?.sharesOwned ?? 0;
+    final sharesToConfiscate = loan.collateralAmountShares;
     
-    if (sharesToConfiscate > 0) {
+    if (sharesToConfiscate! > 0) {
         _transferSharesP2Bank(
             propertyId: property.id, 
             sharesAmount: sharesToConfiscate,
             transactionCost: 0,
             fromPlayer: player,
         );
+        player.roundBalance.otherOut += sharesToConfiscate * property.sharePrice;
         foreclosuredLoans.add(loan);
-        print('🚫 ${player.username} perdeu ${property.name} por execução de hipoteca.');
+        logger.i('🚫 ${player.username} perdeu ${property.name} por execução de hipoteca.');
     }
   }
 
@@ -366,12 +382,12 @@ class Ledger {
     var markupUsageCost = totalCost * (markupUsagePercentage/100);
     var playerCost = totalCost - markupUsageCost;
     try{
-      if(isBlacklisted(player.id)) throw(Exception(ConfigsConstants.blackListErrorMsg));
+      if(isBlacklisted(player.id)) throw(BlackListedException(ConfigsConstants.blackListErrorMsg));
       property.checkIfEnoughMarkup(markupUsageCost);
       
       player.payDebit(playerCost);
       property.addBuilding(buildingRentIncrease, newBuildings, markupUsageCost);
-      player.roundBalance.otherOut += playerCost;
+      player.roundBalance.buildingPurchasesOut += playerCost;
       logger.i('🏗️ ${player.username} construiu em ${property.name}.');
       return property;
     } on MaxBuildingsException {

@@ -13,7 +13,7 @@ class Property {
   final Color colorSignature;
   final Icon iconSignature;
 
-  int lastDividendRound;
+  int lastUpdateRound;
   double currentPrice;
   double currentRent;
   double currentBuildingCost;
@@ -23,8 +23,9 @@ class Property {
   int availableShares;
   double collectedRent;
   int buildings;
-  List<double> historicalPrices;
+  List<double> historicalSharesPrices;
   List<double> historicalRents;
+  List<double> historicalDividends;
 
   Property({
     required this.id, 
@@ -39,48 +40,56 @@ class Property {
     this.totalShares = 0, 
     this.currentPrice = 0.0,
     this.availableShares = 0,
-    List<double>? historicalPrices,
+    List<double>? historicalSharesPrices,
     List<double>? historicalRents,
+    List<double>? historicalDividends,
     this.collectedRent = 0,
     this.buildings = 0,
     this.majorOwnerId = "",
-    this.lastDividendRound = 0
-  }) : historicalPrices = <double>[], historicalRents =  <double>[] {
+    this.lastUpdateRound = 0
+  }) : historicalSharesPrices = <double>[], historicalRents =  <double>[], historicalDividends = <double>[] {
     if (currentPrice == 0.0) {
       currentPrice = basePrice;
     }
   }
 
-
   double get sharePrice => currentPrice / totalShares;
 
   double get distributableProfit => collectedRent * payoutPercentage;
 
-  double get profitToRetain => collectedRent * (1.0 - payoutPercentage);
+  double get profitToRetain => collectedRent - distributableProfit;
+
+  double get currentDividendsPerShare => distributableProfit / totalShares;
 
   void updateAvailableShares(int changeInShares) {
     availableShares += changeInShares;
   }
 
-  void applyValuation(double netRetainedProfit) {
-      currentPrice += netRetainedProfit; 
-      _updateRent(netRetainedProfit);
+  void applyValuation(double netRetainedProfit, int referenceRound) {
+    _updateHistoriacalData();
+    currentPrice += netRetainedProfit;
+    _updateRent(netRetainedProfit);
       
-      collectedRent = 0; 
-      historicalPrices.add(currentPrice);
+    collectedRent = 0;
+    lastUpdateRound = referenceRound;
   }
 
   void _updateRent(double netRetainedProfit) {
-    netRetainedProfit += netRetainedProfit > 1 ? 0 : 1;
-    historicalRents.add(currentRent);
     double valuationPercentage = netRetainedProfit / currentPrice ;
     currentRent *= (1.0 + valuationPercentage);
+  }
+
+  void _updateHistoriacalData(){
+    historicalSharesPrices.add(sharePrice);
+    historicalRents.add(currentRent);
+    historicalDividends.add(currentDividendsPerShare);
+
   }
 
   void addBuilding(double buildingRentIncrease, int amountBuildings, double markupUsage) {
     if (amountBuildings + buildings > ConfigsConstants.maxBuildings) throw MaxBuildingsException(ConfigsConstants.maxBuildingsErrorMsg);
     buildings += amountBuildings;
-    currentRent += buildingRentIncrease;
+    currentRent = buildingRentIncrease > currentRent ? buildingRentIncrease : currentRent;
     currentPrice -= markupUsage;
   }
 
@@ -110,10 +119,11 @@ Map<String, dynamic> toMap() {
       'propertyType': propertyType.toString(),
       'collectedRent': collectedRent,
       'buildings': buildings,
-      'historicalPrices': historicalPrices,
+      'historicalSharesPrices': historicalSharesPrices,
       'historicalRents': historicalRents,
+      'historicalDividends': historicalDividends,
       'currentBuildingCost': currentBuildingCost,
-      'lastDividendRound': lastDividendRound,
+      'lastDividendRound': lastUpdateRound,
       
       // ✅ SERIALIZAÇÃO DO ÍCONE: Converte o IconData para Map.
       'iconSignature': iconData.toMap(), 
@@ -139,9 +149,9 @@ Map<String, dynamic> toMap() {
         currentPrice: map['currentPrice'] is int ? (map['currentPrice'] as int).toDouble() : map['currentPrice'] as double,
 
         colorSignature: Color(map['colorSignature'] as int),
-        iconSignature: restoredIcon, 
-        
-        lastDividendRound: map['lastDividendRound'] != null ? map['lastDividendRound'] as int : 0,
+        iconSignature: restoredIcon,
+
+        lastUpdateRound: map['lastUpdateRound'] != null ? map['lastUpdateRound'] as int : 0,
         totalShares: map['totalShares'] as int,
         availableShares: map['availableShares'] as int,
         currentRent: map['currentRent'] is int ? (map['currentRent'] as int).toDouble() : map['currentRent'] as double,
@@ -149,9 +159,14 @@ Map<String, dynamic> toMap() {
         collectedRent: map['collectedRent'] is int ? (map['collectedRent'] as int).toDouble() : map['collectedRent'] as double,
         buildings: map['buildings'] as int,
         currentBuildingCost: map['currentBuildingCost'] as double,
- 
-        historicalPrices: List<double>.from(map['historicalPrices'] as List<dynamic>).map((e) => e is int ? e.toDouble() : e).toList(),
+
         historicalRents: List<double>.from(map['historicalRents'] as List<dynamic>).map((e) => e is int ? e.toDouble() : e).toList(),
+        historicalDividends: map['historicalDividends'] != null
+            ? List<double>.from(map['historicalDividends'] as List<dynamic>).map((e) => e is int ? e.toDouble() : e).toList()
+            : <double>[],
+        historicalSharesPrices: map['historicalSharesPrices'] != null
+            ? List<double>.from(map['historicalSharesPrices'] as List<dynamic>).map((e) => e is int ? e.toDouble() : e).toList()
+            : <double>[],
 
         propertyType: PropertyType.values.firstWhere((e) => e.toString() == map['propertyType']),
     );

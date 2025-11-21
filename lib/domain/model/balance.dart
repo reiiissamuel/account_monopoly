@@ -4,7 +4,7 @@ class Balance {
   double shareSalesIn = 0.0;
   double eventIn = 0.0;
   double eventOut = 0.0;
-  //double buildingPurchasesOut = 0.0;
+  double buildingPurchasesOut = 0.0;
   double bonusIn = 0.0;
   double incomeTaxOut = 0.0;
   double refundIn = 0.0;
@@ -22,7 +22,7 @@ class Balance {
     this.shareSalesIn = 0.0,
     this.eventIn = 0.0,
     this.eventOut = 0.0,
-    //this.buildingPurchasesOut = 0.0,
+    this.buildingPurchasesOut = 0.0,
     this.bonusIn = 0.0,
     this.incomeTaxOut = 0.0,
     this.refundIn = 0.0,
@@ -49,7 +49,7 @@ class Balance {
   // GETTER: Saídas
   double get roundOutcomes => 
       sharePurchasesOut +
-      //buildingPurchasesOut +
+      buildingPurchasesOut +
       incomeTaxOut +
       otherOut + 
       transferOut +
@@ -76,12 +76,13 @@ class Balance {
       transferOut: transferOut,
       otherIn: otherIn,
       otherOut: otherOut,
+      buildingPurchasesOut: buildingPurchasesOut
     );
     
     // Zera o Balanço do Jogador
     sharePurchasesOut = shareSalesIn = eventIn = eventOut = 0.0;
     bonusIn = incomeTaxOut = refundIn = dividendsIn = 0.0;
-    transferIn = transferOut = otherIn = otherOut = 0.0;
+    transferIn = transferOut = otherIn = otherOut = buildingPurchasesOut = 0.0;
     
     return historicalRecord;
   }
@@ -101,6 +102,7 @@ class Balance {
       'transferOut': transferOut,
       'otherIn': otherIn,
       'otherOut': otherOut,
+      'buildingPurchasesOut': buildingPurchasesOut
     };
   }
 
@@ -119,6 +121,7 @@ class Balance {
       transferOut: map['transferOut'] as double? ?? 0.0,
       otherIn: map['otherIn'] as double? ?? 0.0,
       otherOut: map['otherOut'] as double? ?? 0.0,
+      buildingPurchasesOut: map['buildingPurchasesOut'] as double? ?? 0.0
     );
   }
 }

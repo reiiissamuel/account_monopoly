@@ -66,7 +66,8 @@ class MarketScreen extends StatelessWidget {
   // WIDGET DO CARD DE AÇÃO
   // -----------------------------------------------------------------
   Widget _offerTile(BuildContext context, TradeOffer offer, GameProvider gameProvider) {
-    final String currentPrice = StringUtils.currencyFormat(offer.currentMarketPrice);
+    final String currentMarketPrice = StringUtils.currencyFormat(offer.currentMarketPrice);
+    final String askingPrice = StringUtils.currencyFormat(offer.askingPrice);
     final String available = offer.sharesAmount.toString();
     
     // Cor do texto de origem (para destaque)
@@ -112,7 +113,8 @@ class MarketScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn(context, "Preço por Ação", currentPrice, Colors.black),
+              _buildInfoColumn(context, "Preço de mercado", currentMarketPrice, Colors.black),
+              _buildInfoColumn(context, "Preço pedido", askingPrice, Colors.black),
               _buildInfoColumn(
                 context,
                   "Você possui:", gameProvider.currentPlayer.portfolio.containsKey(offer.propertyId) ?
@@ -188,9 +190,9 @@ class MarketScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           backgroundColor: Theme.of(context).primaryColor,
-          content: offer.source == OfferSource.playerMarket           
+          content: offer.source != OfferSource.fundIPO
           ? Text(
-            "Confirmar compra do lote de ${offer.propertyName} posto à venda pelo jogador ${offer.sellerPlayerId};",
+            "Confirmar compra do lote de ${offer.propertyName} posto à venda por ${offer.sellerPlayerId} no valor de total de ${StringUtils.currencyFormat(offer.totalAskingPrice)};",
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,
@@ -204,37 +206,39 @@ class MarketScreen extends StatelessWidget {
               Text("Preço por ação $transactionType: ${StringUtils.currencyFormat(offer.currentMarketPrice)}"),
               Text("Disponível: ${offer.sharesAmount} ações"),
               const SizedBox(height: 15),
-              TextField(
-                controller: quantityController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Quantidade de Ações",
-                  hintText: "Ex: 10",
-                  labelStyle: TextStyle(color: Colors.white54),
-                  hoverColor: Colors.white,
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                    borderSide: BorderSide(
-                      color: Colors.white, width: 5.0
-                    )
-                  ),
-                  disabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                    borderSide: BorderSide(
-                      color: Colors.blueGrey, width: 3.0
-                    )
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                    borderSide: BorderSide(
-                      color: Colors.blueGrey, width: 3.0
-                    )
-                  )
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly
-                ]
-              ),
+              if(offer.source == OfferSource.fundIPO) ...[
+                TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                        labelText: "Quantidade de Ações",
+                        hintText: "Ex: 10",
+                        labelStyle: TextStyle(color: Colors.white54),
+                        hoverColor: Colors.white,
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                            borderSide: BorderSide(
+                                color: Colors.white, width: 5.0
+                            )
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                            borderSide: BorderSide(
+                                color: Colors.blueGrey, width: 3.0
+                            )
+                        ),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                            borderSide: BorderSide(
+                                color: Colors.blueGrey, width: 3.0
+                            )
+                        )
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly
+                    ]
+                )
+              ],
             ],
           ),
           actions: <Widget>[
@@ -243,25 +247,22 @@ class MarketScreen extends StatelessWidget {
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(
-              child: Text("Comprar", style: TextStyle(color: Theme.of(context).primaryColor)),
+              child: Text(offer.source == OfferSource.fundIPO ? "Comprar" : "Compra Lote",
+                  style: TextStyle(color: Theme.of(context).primaryColor)
+              ),
               onPressed: () {
                 try{
-                  final int? quantityInput = int.tryParse(quantityController.text);
-                  
-                  if(quantityInput == null || quantityInput <= 0) {
-                    throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
-                  }
-                  
-                  final int quantity = (quantityInput > offer.sharesAmount) ? offer.sharesAmount : quantityInput;
-                
                   if(offer.source != OfferSource.fundIPO){
                     gameProvider.eventComposer(
                       type: EventType.buyFromTrade,
                       tradeOffer: offer,
-                      value: quantity, 
+                      value: offer.sharesAmount,
                       destinationPlayer: offer.source == OfferSource.playerMarket ? gameProvider.otherPlayers[offer.sellerPlayerId] : null
                     );
                   } else {
+                    final int? quantityInput = int.tryParse(quantityController.text);
+                    if(quantityInput == null || quantityInput <= 0) throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
+                    final quantity = (quantityInput > offer.sharesAmount) ? offer.sharesAmount : quantityInput;
                     gameProvider.eventComposer(
                       type: EventType.buyFromIPO,
                       propertyId: offer.propertyId,
@@ -271,15 +272,11 @@ class MarketScreen extends StatelessWidget {
                   // Sucesso: Agendamos a SnackBar no Scaffold da tela principal (context é o correto).
                   ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Compra realizada."), backgroundColor: Colors.green));
-
-
                 } on DomainException catch(e){
-                  
-                  // Erro: Exibimos a mensagem de erro no Scaffold.
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(e.message), backgroundColor: Colors.red));
                 } catch(e) {
-                  // Erro inesperado: Exibimos a mensagem de erro no Scaffold.
+                  gameProvider.notifyChanges(false);
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("Erro inesperado: ${e.toString()}"), backgroundColor: Colors.red));
                 }

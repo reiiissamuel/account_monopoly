@@ -22,3 +22,19 @@ class MissValueException extends DomainException {
 class NotEnoughMarkUPException extends DomainException {
   NotEnoughMarkUPException(super.message);
 }
+
+class MaxBonnusLoansException extends DomainException {
+  MaxBonnusLoansException(super.message);
+}
+
+class MortgagedPropertyException extends DomainException {
+  MortgagedPropertyException(super.message);
+}
+
+class NotEnoughSharesToTradeException extends DomainException {
+  NotEnoughSharesToTradeException(super.message);
+}
+
+class BlackListedException extends DomainException {
+  BlackListedException(super.message);
+}
