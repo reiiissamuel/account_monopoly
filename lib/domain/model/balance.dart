@@ -107,21 +107,22 @@ class Balance {
   }
 
   factory Balance.fromMap(Map<String, dynamic> map) {
-    // Note: Usando map['key'] as double? ?? 0.0 para desserialização segura
+    // Note: Usando (map['key'] as num?)?.toDouble() ?? 0.0 para desserialização segura
     return Balance(
-      sharePurchasesOut: map['sharePurchasesOut'] as double? ?? 0.0,
-      shareSalesIn: map['shareSalesIn'] as double? ?? 0.0,
-      eventIn: map['eventIn'] as double? ?? 0.0,
-      eventOut: map['eventOut'] as double? ?? 0.0,
-      bonusIn: map['bonusIn'] as double? ?? 0.0,
-      incomeTaxOut: map['incomeTaxOut'] as double? ?? 0.0,
-      refundIn: map['refundIn'] as double? ?? 0.0,
-      dividendsIn: map['dividendsIn'] as double? ?? 0.0,
-      transferIn: map['transferIn'] as double? ?? 0.0,
-      transferOut: map['transferOut'] as double? ?? 0.0,
-      otherIn: map['otherIn'] as double? ?? 0.0,
-      otherOut: map['otherOut'] as double? ?? 0.0,
-      buildingPurchasesOut: map['buildingPurchasesOut'] as double? ?? 0.0
+      // Lê como num?, chama toDouble() se não for nulo, caso contrário usa 0.0
+      sharePurchasesOut: (map['sharePurchasesOut'] as num?)?.toDouble() ?? 0.0,
+      shareSalesIn: (map['shareSalesIn'] as num?)?.toDouble() ?? 0.0,
+      eventIn: (map['eventIn'] as num?)?.toDouble() ?? 0.0,
+      eventOut: (map['eventOut'] as num?)?.toDouble() ?? 0.0,
+      bonusIn: (map['bonusIn'] as num?)?.toDouble() ?? 0.0,
+      incomeTaxOut: (map['incomeTaxOut'] as num?)?.toDouble() ?? 0.0,
+      refundIn: (map['refundIn'] as num?)?.toDouble() ?? 0.0,
+      dividendsIn: (map['dividendsIn'] as num?)?.toDouble() ?? 0.0,
+      transferIn: (map['transferIn'] as num?)?.toDouble() ?? 0.0,
+      transferOut: (map['transferOut'] as num?)?.toDouble() ?? 0.0,
+      otherIn: (map['otherIn'] as num?)?.toDouble() ?? 0.0,
+      otherOut: (map['otherOut'] as num?)?.toDouble() ?? 0.0,
+      buildingPurchasesOut: (map['buildingPurchasesOut'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

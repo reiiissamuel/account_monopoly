@@ -1,5 +1,7 @@
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/service/google_login.dart';
+import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
@@ -92,6 +94,11 @@ class NewUserDialogState extends State<NewUserDialog> {
                   ),
                   validator: (text) {
                     if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return VALIDATION_USERNAME_ERROR_MSG;
+                    try{
+                      userProvider.checkUserExists(text);
+                    } on UserExistsException catch(e){
+                      return e.message;
+                    }
                     return null;
                   },
                 ),
@@ -104,17 +111,14 @@ class NewUserDialogState extends State<NewUserDialog> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20.0)
                           )),
-                      onPressed:  () {
+                      onPressed:  () async {
                         if (_formKey.currentState!.validate()) {
-                          setState(() {
-                          userProvider.signUp(
-                            name: _nameController.text,
-                            username: _usernameController.text,
-                            context: context,
-                            onSuccess: _onSuccess,
-                            onFail: _onFail
+                          Navigator.pop(context);
+                          await userProvider.signUp(
+                              name: _nameController.text,
+                              username: _usernameController.text
                           );
-                        });
+                          userProvider.signIn(userModelDTO: userProvider.allUsers.firstWhere((u) => u.username == _nameController.text));
                         }
                       },
                       child: const Text("Prosseguir",
@@ -142,34 +146,6 @@ class NewUserDialogState extends State<NewUserDialog> {
               ],
             ),
           ))
-    );
-  }
-
-  void _onSuccess(String msg, BuildContext context) {
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-    Future.delayed(const Duration(seconds: 2)).then((_){
-      Navigator.of(context).pop();
-    });
-  }
-
-  void _onFail(String msg, BuildContext context) {
-    Navigator.of(context).pop();
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
     );
   }
 }

@@ -1,5 +1,9 @@
+import 'dart:developer';
+
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
+import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/screens/all_properties_versions_screen.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +23,8 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
 
-  List<String> localUsers = [];
-
   @override
   Widget build(BuildContext context) {
-    if(Provider.of<UserProvider>(context).isLoading) {
-      return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
-    }
     return Consumer<UserProvider>(
         builder: (context, userProvider, child){
           if(userProvider.isLoading){
@@ -68,11 +67,7 @@ class HomeScreenState extends State<HomeScreen> {
                             return const NewUserDialog();
                           });
                         } else {
-                          userProvider.getAllLocalUsers();
-                          showDialog(context: context, builder: (BuildContext context){
-                            return const LoadUserDialog();
-                          }
-                          );
+                          _showNonLoggedDialog(context);
                         }
                       }
                   ),
@@ -227,7 +222,10 @@ class HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return const LoadUserDialog();
       },
-    );
+    ).catchError((e){
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+    });
   }
 
   void _showEnterCodeDialog(BuildContext context) {
@@ -275,8 +273,20 @@ class HomeScreenState extends State<HomeScreen> {
               TextButton(
                 child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0, color: Colors.white)),
                 onPressed: () {
-
-                  Provider.of<GameProvider>(context, listen: false).enterNewGameByIdRequest(destinationPeerId: controller.text, context: context, onFail: _onFail, onSuccess: _onSuccess);
+                  try{
+                    var gameProvider = Provider.of<GameProvider>(context, listen: false);
+                    gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
+                    gameProvider.enterNewGameByIdRequest(destinationPeerId: controller.text);
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
+                  } on GameAlreadyInPlayerListException catch(g){
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(g.toString()), backgroundColor: Colors.red));
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
+                  } on Exception catch(e){
+                    log(e.toString());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                  }
                 },
               ),
             ],
@@ -344,23 +354,6 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           );
         });
-  }
-
-  void _onFail(String msg){
-    Navigator.of(context).pop();
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-  }
-
-  void _onSuccess(){
-    //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModel.of(context).exitGame());
   }
 
 }

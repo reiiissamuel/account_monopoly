@@ -13,7 +13,7 @@ class BeneficiariesScreen extends StatelessWidget {
 
   
   List<Player> _getOthersPlayersList(GameProvider gameProvider) {
-    return gameProvider.gameModelDTO?.othersPlayers.values.toList() ?? [];
+    return gameProvider.gameModelDTO?.othersPlayers.values.where((p) => p.id != gameProvider.currentPlayer.id).toList() ?? [];
   }
 
   @override

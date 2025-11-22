@@ -20,7 +20,7 @@ class GameModelDTO{
 
  GameModelDTO.empty() : othersPlayers = {} ;
  GameModelDTO({Player ?player, required this.ledger, required this.id, required this.initalGameCredit,
-  required this.limitPlayer, required this.loanEnabled, required this.chancesEnabled, this.othersPlayers = const{}});
+  required this.limitPlayer, required this.loanEnabled, required this.chancesEnabled}) : othersPlayers = {};
  GameModelDTO.initAllFields({required this.player, required this.ledger, required this.id, required this.initalGameCredit, required this.limitPlayer,
   required this.othersPlayers, /*required this.logs, this.chances,*/
   required this.loanEnabled, required this.chancesEnabled, this.winner});
@@ -32,14 +32,13 @@ class GameModelDTO{
    ledger: ledger,
    player: player,
    limitPlayer: limitPlayer,
-   othersPlayers: othersPlayers,
    loanEnabled: loanEnabled,
    chancesEnabled: chancesEnabled
   );
  }
 
  void updateOtherPlayers(Player player){
-  othersPlayers[player.id] == player;
+  othersPlayers[player.id] = player;
  }
 
  Map<String, dynamic> toMap() {

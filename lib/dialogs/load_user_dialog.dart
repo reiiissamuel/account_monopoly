@@ -16,7 +16,7 @@ class LoadUserDialog extends StatefulWidget {
 class LoadUserDialogState extends State<LoadUserDialog> {
   List<String> _localUsersNames = [];
   String? _dropdownValue = "";
-  UserRepository userRepository =  GetIt.I.get();
+  //UserRepository userRepository =  GetIt.I.get();
 
   late UserProvider userProvider;
 
@@ -64,12 +64,12 @@ class LoadUserDialogState extends State<LoadUserDialog> {
                         builder: (BuildContext context) {
                           return const NewUserDialog();
                         },
-                      ).whenComplete(() => Navigator.pop(context));// Mova o Navigator.pop para cá
+                      );
                     } else if (_dropdownValue != SELECT_ONEOF_LABEL) {
                       userProvider.signIn(
                         userModelDTO: userProvider.allUsers.firstWhere((u) => u.username == _dropdownValue),
                       );
-                      Navigator.of(context).pop(); // Mova o Navigator.pop para cá
+                      Navigator.of(context).pop();
                     }
                   }
                   );

@@ -48,8 +48,8 @@ class ShareHolder {
       playerId: map['playerId'] as String,
       propertyId: map['propertyId'] as String,
       sharesOwned: map['sharesOwned'] as int,
-      investmentValue: map['investmentValue'] as double,
-      saleCapitalGain: map['saleCapitalGain'] as double
+      investmentValue: (map['investmentValue'] as num).toDouble(),
+      saleCapitalGain: (map['saleCapitalGain'] as num).toDouble()
     );
   }
 

@@ -15,14 +15,14 @@ enum EventType{
   mortgageForeclosure(messageScope: 'O banco executou a hipoteca das ações de {PROPERTY} pertencentes a {SOURCE}.'),
   loanForeclosure(messageScope: 'O banco executou uma dívida de {VALUE} da {SOURCE}.'),
   closeTurn(messageScope: "{SOURCE} finalizou seu turno de negociações."),
-  roundBonus(messageScope: "{SOURCE} recebeu novos investimentos totalizando {VALUE}."),
+  roundBonus(messageScope: "{SOURCE} recebeu novos investimentos totalizados em {VALUE}."),
   bankBlacklisted(messageScope: "{SOURCE} entrou para a lista de devedores do banco."),
-  closeRound(messageScope: "{SOURCE} recebeu {VALUE} em dividendos referente a rodada {ROUND}."),
+  closeRound(messageScope: "Sua empresa recebeu {VALUE} em dividendos referente a rodada {ROUND}."),
   bankruptcy(messageScope: '{SOURCE} declarou falência'),
   iwon(messageScope: '{SOURCE} venceu o jogo.'),
   lostConnection(messageScope: '{SOURCE} está desconectado.'),
   joinTable(messageScope: '{SOURCE} juntou-se ao jogo.'),
-  serverHandShake(messageScope: ""),
+  serverHandShake(messageScope: "recebendo nova conexão"),
   CHANCE_USED(messageScope: "{SOURCE}  usou um benefício.");
 
   final String? messageScope;

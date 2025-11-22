@@ -12,7 +12,7 @@ class EventDTO{
   final EventType type;
   final Player? destinationPlayer;
   final Player sourcePlayer;
-  late final GameModelDTO? gameData; ///somente enviado nos eventos do tipo HANDSHAKE para passar as confi do jogo para um novo player
+  GameModelDTO? gameData; ///somente enviado nos eventos do tipo HANDSHAKE para passar as confi do jogo para um novo player
   int referenceRound;
   num? value;
   Property? property;
@@ -25,19 +25,20 @@ class EventDTO{
   }
 
   String getEventLog(Player currentPlayer){
-    return type.messageScope
-          !.replaceAll('{SOURCE}', sourcePlayer.username == currentPlayer.username ? 'Sua empresa' : currentPlayer.username)
+    String message = type.messageScope
+          !.replaceAll('{SOURCE}', sourcePlayer.username == currentPlayer.username ? 'Sua empresa' : sourcePlayer.username)
             .replaceAll('{VALUE}', (value is double) ? StringUtils.currencyFormat(value!.toDouble()) : value.toString())
               .replaceAll('{DEST}', (destinationPlayer != null && destinationPlayer?.username == currentPlayer.username) ? 'Sua empresa' : sourcePlayer.username)
               .replaceAll('{PROPERTY}', (property != null ? property!.name : ""))
               .replaceAll('{TRADEOFFER}', tradeOffer != null ? "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer!.propertyId} no valor total de ${StringUtils.currencyFormat(tradeOffer!.totalAskingPrice)}" : "")
               .replaceAll('{ROUND}', referenceRound.toString());
+    return message;
   }
 
   Map<String, dynamic> toMap() {
     return {
       "eventId": eventId,
-      "EventType": type,
+      "EventType": type.name,
       "destinationPlayer": destinationPlayer?.toMap(),
       "sourcePlayer": sourcePlayer.toMap(),
       "value": value,
@@ -48,13 +49,14 @@ class EventDTO{
   }
 
   factory EventDTO.fromMap(Map<String, dynamic> map) {
+    EventType parsedType = EventType.values.firstWhere((e) => e.name == map['EventType']);
     return EventDTO(
         eventId: map['eventId'] as String,
-        type: map['type'] as EventType,
-        destinationPlayer: Player.fromMap(map['destinationPlayer']),
+        type: parsedType,
+        destinationPlayer: map['destinationPlayer'] != null ? Player.fromMap(map['destinationPlayer']) : null,
         sourcePlayer: Player.fromMap(map['sourcePlayer']),
         value: map['value'] as num?,
-        gameData: GameModelDTO.fromMap( map['gameData']),
+        gameData: map['gameData'] != null ? GameModelDTO.fromMap( map['gameData']) : null,
         property: map['property'] != null ? Property.fromMap(map['property']) : null,
         referenceRound: map['referenceRound'] ?? 0
     );}

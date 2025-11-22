@@ -38,3 +38,6 @@ class NotEnoughSharesToTradeException extends DomainException {
 class BlackListedException extends DomainException {
   BlackListedException(super.message);
 }
+class UserExistsException extends DomainException {
+  UserExistsException(super.message);
+}

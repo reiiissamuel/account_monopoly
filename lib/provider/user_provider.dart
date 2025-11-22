@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/domain/model/property.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/repository/user_repository.dart';
+import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -26,7 +28,7 @@ class UserModelDTO{
       
       'games': games.map((game) => game.toMap()).toList(),
       
-      'propertiesVersion': propertiesVersion!.map(
+      'propertiesVersion': propertiesVersion?.map(
         (key, propertyList) => MapEntry(
           key,
           // Mapeia cada Property dentro da lista para Map<String, dynamic>
@@ -88,15 +90,13 @@ factory UserModelDTO.fromMap(int id, Map<String, dynamic> map) {
   }
 }
 class UserProvider extends ChangeNotifier{
-  static final String NEW_USER_SUCCESS_MSG = "Cadastro concluído: ";
-  static final String NEW_USER_ERROR_MSG = "Falha ao cadastrar usuário!";
   List<UserModelDTO> allUsers = [];
   UserModelDTO? user;
   UserRepository userRepository =  GetIt.I.get();
   //static UserModelController of(BuildContext context) => ScopedModel.of<UserModelController>(context);
   bool isLoading = false;
 
-  UserProvider(){
+  UserProvider() {
     _loadCurrentUser();
   }
 
@@ -105,28 +105,32 @@ class UserProvider extends ChangeNotifier{
   }
 
   Future<void> signUp(
-      {required name, required username, required BuildContext context, required Function onSuccess, required Function onFail}
+      {required String name, required String username}
       ) async {
-    isLoading = true;
-    notifyListeners();
+    try{
+      isLoading = true;
+      notifyListeners();
 
-    UserModelDTO userModelDTO = UserModelDTO(
-        name: name,
-        username: username,
-        lastLogged: DateTime.now(),
-        games: []
-    );
+      UserModelDTO userModelDTO = UserModelDTO(
+          name: name,
+          username: username,
+          lastLogged: DateTime.now(),
+          games: []
+      );
 
-    userRepository.insertUser(userModelDTO).then((value) async {
+      await userRepository.insertUser(userModelDTO);
       user = userModelDTO;
-      onSuccess(NEW_USER_SUCCESS_MSG + value.toString(), context);
       isLoading = false;
       notifyListeners();
-    }).catchError((e){
-      onFail(NEW_USER_ERROR_MSG, context);
+    } on Exception catch(e){
       isLoading = false;
       notifyListeners();
-    });
+      throw Exception("${ConfigsConstants.newUserErrorMsg} ${e.toString()}");
+    }
+  }
+
+  void checkUserExists(String username){
+    if(allUsers.where((u) => u.username == username).isNotEmpty) throw UserExistsException(ConfigsConstants.userExistsErrorMsg);
   }
 
   Future<void> updateUser() async {
@@ -197,12 +201,8 @@ class UserProvider extends ChangeNotifier{
   Future<void> _loadCurrentUser() async {
     isLoading = true;
     notifyListeners();
-    if(user == null) {
-      user = await userRepository.getUserWithLatestLastLogged();
-      if(user == null) {
-        getAllLocalUsers();
-      }
-    }
+    getAllLocalUsers();
+    user ??= await userRepository.getUserWithLatestLastLogged();
     isLoading = false;
     notifyListeners();
   }

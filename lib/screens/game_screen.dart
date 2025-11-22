@@ -46,22 +46,19 @@ class GameScreenState extends State<GameScreen> {
 
     Future.delayed(Duration.zero, () {
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
-      if (gameProvider.gameModelDTO!.chancesEnabled) {
+      /*if (gameProvider.gameModelDTO!.chancesEnabled) {
         //_getAllEvents();
-      }
+      }*/
     });
   }
 
   @override
   Widget build(BuildContext context) {
     userProvider = Provider.of<UserProvider>(context);
-    /*if(userProvider.user == null) {
-      return const Center(child: CircularProgressIndicator());
-    }*/
     return PopScope(
         canPop: false,
         child: Consumer<GameProvider>(builder: (context, gameProvider, child) {
-          if (gameProvider.isLoading || userProvider.isLoading) {
+          if (gameProvider.isLoading || userProvider.isLoading || gameProvider.gameModelDTO == null) {
             return Center(
                 child: CircularProgressIndicator(
               color: Theme.of(context).primaryColor,
@@ -74,9 +71,9 @@ class GameScreenState extends State<GameScreen> {
               appBar: AppBar(
                 backgroundColor: Theme.of(context).primaryColor,
                 automaticallyImplyLeading: false,
-                title: const Text(
-                  "Painel central",
-                  style: TextStyle(
+                title: Text(
+                  "Painel ${gameProvider!.currentPlayer.username}",
+                  style: const TextStyle(
                       letterSpacing: 2,
                       color: Colors.white,
                       fontWeight: FontWeight.bold),
@@ -119,225 +116,224 @@ class GameScreenState extends State<GameScreen> {
                   )
                 ],
               ),
+              floatingActionButton: gameProvider.gameModelDTO!.chancesEnabled ? Padding(
+                padding: const EdgeInsets.only(bottom: 195.0),
+                child: FloatingActionButton(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  shape:const CircleBorder(
+                      side: BorderSide(color: Colors.black)
+                  ),
+                  onPressed: (){
+                    _dialogCaller(context, ConfirmActionDialog(title: "???", textContent: "Deseja pegar uma carta evento?", onConfirm:(){
+                      Navigator.of(context).pop();
+                      showDialog(context: context, builder: (BuildContext context){
+                        if(_chances[eventDeckCount].isbenefit) {
+                          gameProvider.gameModelDTO!.chances.add(_chances[eventDeckCount]);
+                        }
 
-                      floatingActionButton: gameProvider.gameModelDTO!.chancesEnabled ? Padding(
-                        padding: const EdgeInsets.only(bottom: 195.0),
-                        child: FloatingActionButton(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          shape:const CircleBorder(
-                              side: BorderSide(color: Colors.black)
-                          ),
-                          onPressed: (){
-                            _dialogCaller(context, ConfirmActionDialog(title: "???", textContent: "Deseja pegar uma carta evento?", onConfirm:(){
-                              Navigator.of(context).pop();
-                              showDialog(context: context, builder: (BuildContext context){
-                                if(_chances[eventDeckCount].isbenefit) {
-                                  gameProvider.gameModelDTO!.chances.add(_chances[eventDeckCount]);
-                                }
+                        if(_chances[eventDeckCount].effect! > 0) {
+                          //gameProvider.gameModelDTO!.player.roundBalance.qtdEventGain += _chances[eventDeckCount].effect!;
+                        } else if(_chances[eventDeckCount].effect! < 0){
+                          //gameProvider.gameModelDTO!.player.roundBalance.qtdEventPay += (-_chances[eventDeckCount].effect!);
+                        }
+                        return ChanceDialog(_chances[eventDeckCount++]);
+                      });
+                    }));
 
-                                if(_chances[eventDeckCount].effect! > 0) {
-                                  //gameProvider.gameModelDTO!.player.roundBalance.qtdEventGain += _chances[eventDeckCount].effect!;
-                                } else if(_chances[eventDeckCount].effect! < 0){
-                                  //gameProvider.gameModelDTO!.player.roundBalance.qtdEventPay += (-_chances[eventDeckCount].effect!);
-                                }
-                                return ChanceDialog(_chances[eventDeckCount++]);
-                              });
-                            }));
+                    if(eventDeckCount == _chances.length) {
+                      eventDeckCount -= eventDeckCount;
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: SizedBox(
+                      height: 50.0,
+                      width: 50.0,
+                      child: Image.asset("icons/events.png",
+                          fit: BoxFit.contain),
+                    ),
+                  ),
+                ),
+              ) : null,
 
-                            if(eventDeckCount == _chances.length) {
-                              eventDeckCount -= eventDeckCount;
-                            }
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(5.0),
-                            child: SizedBox(
-                              height: 50.0,
-                              width: 50.0,
-                              child: Image.asset("icons/events.png",
-                                  fit: BoxFit.contain),
-                            ),
-                          ),
+             backgroundColor: Colors.black,
+              body: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              !_balanceVisibility
+                                  ?
+                              Text(
+                                "\$ * * * * *",
+                                style: TextStyle(fontSize: 25, letterSpacing: 2, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                              )
+                              :
+                              Text(
+                                StringUtils.currencyFormat(gameProvider.currentPlayer.currentCredit),
+                                style: TextStyle(
+                                    fontSize: 27.0,
+                                    color: _creditSituationColor(gameProvider.currentPlayer.currentCredit, gameProvider.gameModelDTO!.initalGameCredit),
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              IconButton(
+                                  icon: Icon(_balanceVisibility ? Icons.visibility_off : Icons.visibility, size: 25, color: Theme.of(context).primaryColor),
+                                  onPressed: (){
+                                setState(() {
+                                  _balanceVisibility = !_balanceVisibility;
+                                });
+                              })
+                            ],
+                          )
                         ),
-                      ) : null,
-
-                     backgroundColor: Colors.black,
-                      body: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-                        child: Column(
-                          children: [
-                            Row(
+                        Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              spacing: 3,
                               children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: [
-                                      !_balanceVisibility
-                                          ?
-                                      Text(
-                                        "\$ * * * * *",
-                                        style: TextStyle(fontSize: 25, letterSpacing: 2, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-                                      )
-                                      :
-                                      Text(
-                                        StringUtils.currencyFormat(gameProvider.currentPlayer.currentCredit),
-                                        style: TextStyle(
-                                            fontSize: 27.0,
-                                            color: _creditSituationColor(gameProvider.currentPlayer.currentCredit, gameProvider.gameModelDTO!.initalGameCredit),
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                      IconButton(
-                                          icon: Icon(_balanceVisibility ? Icons.visibility_off : Icons.visibility, size: 25, color: Theme.of(context).primaryColor),
-                                          onPressed: (){
-                                        setState(() {
-                                          _balanceVisibility = !_balanceVisibility;
-                                        });
-                                      })
-                                    ],
-                                  )
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20.0)
+                                    ),
+                                    backgroundColor: Theme.of(context).primaryColor
+                                  ),
+                                  onPressed: (){
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
+                                  },
+                                  child: const Text(
+                                    "Gráficos",
+                                    style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500),
+                                  ),
                                 ),
-                                Expanded(
-                                    flex: 2,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                      spacing: 3,
-                                      children: [
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(20.0)
-                                            ),
-                                            backgroundColor: Theme.of(context).primaryColor
-                                          ),
-                                          onPressed: (){
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
-                                          },
-                                          child: const Text(
-                                            "Gráficos",
-                                            style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500),
-                                          ),
-                                        ),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(20.0)
-                                            ),
-                                            backgroundColor: Theme.of(context).primaryColor
-                                          ),
-                                          child: const Text(
-                                              "Fechar turno", textAlign: TextAlign.center,
-                                              style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500)
-                                          ),
-                                          onPressed: () async {
-                                            gameProvider.eventComposer(type: EventType.closeTurn);
-                                          },
-                                        )
-                                      ],
-                                    )
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20.0)
+                                    ),
+                                    backgroundColor: Theme.of(context).primaryColor
+                                  ),
+                                  child: const Text(
+                                      "Fechar turno", textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500)
+                                  ),
+                                  onPressed: () async {
+                                    gameProvider.eventComposer(type: EventType.closeTurn);
+                                  },
                                 )
                               ],
-                            ),
-
-                            Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              alignment: WrapAlignment.spaceBetween,
-                              children: [
-                                GameIconButtonBuilder(
-                                  imgPath: "icons/buy.png",
-                                  title: "Comprar", 
-                                  onPressed: (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MarketScreen()));
-                                  }
-                                ),
-
-                                GameIconButtonBuilder(
-                                  imgPath: "icons/wallet.png",  
-                                  title: "Minha carteira",
-                                  textFontSize: 13,
-                                  onPressed: (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPortfolioScreen()));
-                                  }
-                                ),
-
-                                GameIconButtonBuilder(
-                                  imgPath: "icons/pay.png",  
-                                  title: "Transferir", 
-                                  onPressed: (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const BeneficiariesScreen()));
-                                  }
-                                ),
-
-                                GameIconButtonBuilder(
-                                  imgPath: "icons/rent.png", 
-                                  textFontSize: 13, 
-                                  title: "Aluguel",
-                                  onPressed: () => _dialogCaller(
-                                    context, PayRentDialog(properties: gameProvider.ledger.properties.values.toList(), provider: gameProvider,)
-                                  )
-                                ),
-
-                                GameIconButtonBuilder(
-                                    imgPath: "icons/client.png",
-                                    textFontSize: 13,
-                                    title: "Jogador",
-                                    onPressed: () {
-                                      Navigator.push(context, MaterialPageRoute(
-                                          builder: (context) =>
-                                              const PlayerSummaryScreen()));
-                                    }
-                                ),
-
-                                if(gameProvider.currentPlayer.portfolio.values.isNotEmpty) ...[
-                                  GameIconButtonBuilder(
-                                      imgPath: "icons/loan.png",
-                                      title: "Empréstimo",
-                                      onPressed: () =>
-                                          _dialogCaller(
-                                              context, const LoanDialog())
-                                  ),
-                                ],
-
-                                GameIconButtonBuilder(
-                                    imgPath: "icons/more.png",
-                                    title: "Mais", 
-                                    onPressed: (){
-                                     _dialogCaller(context, const MoreOptionsDialog());
-                                }),
-                              ],
-                            ),
-
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20.0),
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                padding: const EdgeInsets.all(8.0),
-                                child: /*_streamBuilder,*/ListView.builder(
-                                    reverse: true,
-                                    itemCount: gameProvider.gameModelDTO!.logs.length,
-                                    itemBuilder: (context, index) {
-                                      List r = gameProvider.gameModelDTO!.logs.reversed.toList();
-                                      return Container(
-                                          decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(20.0),
-                                              color: r[index].contains("Sua empresa") ? Colors.green : Colors.white
-                                          ),
-                                          padding: const EdgeInsets.all(5.0),
-                                          margin: const EdgeInsets.only(top: 5.0),
-                                          child:  Text(r[index],
-                                            style: TextStyle(
-                                              fontSize: 15.0,
-                                              color: r[index].contains("Sua empresa") ? Colors.white : Theme.of(context).primaryColor,
-                                            ),
-                                          ));
-                                    }),
-                              ),
                             )
-                          ],
+                        )
+                      ],
+                    ),
+
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      alignment: WrapAlignment.spaceBetween,
+                      children: [
+                        GameIconButtonBuilder(
+                          imgPath: "icons/buy.png",
+                          title: "Comprar",
+                          onPressed: (){
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MarketScreen()));
+                          }
                         ),
-                      ));
+
+                        GameIconButtonBuilder(
+                          imgPath: "icons/wallet.png",
+                          title: "Minha carteira",
+                          textFontSize: 13,
+                          onPressed: (){
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPortfolioScreen()));
+                          }
+                        ),
+
+                        GameIconButtonBuilder(
+                          imgPath: "icons/pay.png",
+                          title: "Transferir",
+                          onPressed: (){
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const BeneficiariesScreen()));
+                          }
+                        ),
+
+                        GameIconButtonBuilder(
+                          imgPath: "icons/rent.png",
+                          textFontSize: 13,
+                          title: "Aluguel",
+                          onPressed: () => _dialogCaller(
+                            context, PayRentDialog(properties: gameProvider.ledger.properties.values.toList(), provider: gameProvider,)
+                          )
+                        ),
+
+                        GameIconButtonBuilder(
+                            imgPath: "icons/client.png",
+                            textFontSize: 13,
+                            title: "Jogador",
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(
+                                  builder: (context) =>
+                                      const PlayerSummaryScreen()));
+                            }
+                        ),
+
+                        if(gameProvider.currentPlayer.portfolio.values.isNotEmpty) ...[
+                          GameIconButtonBuilder(
+                              imgPath: "icons/loan.png",
+                              title: "Empréstimo",
+                              onPressed: () =>
+                                  _dialogCaller(
+                                      context, const LoanDialog())
+                          ),
+                        ],
+
+                        GameIconButtonBuilder(
+                            imgPath: "icons/more.png",
+                            title: "Mais",
+                            onPressed: (){
+                             _dialogCaller(context, const MoreOptionsDialog());
+                        }),
+                      ],
+                    ),
+
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20.0),
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        padding: const EdgeInsets.all(8.0),
+                        child: /*_streamBuilder,*/ListView.builder(
+                            reverse: true,
+                            itemCount: gameProvider.gameModelDTO!.logs.length,
+                            itemBuilder: (context, index) {
+                              List r = gameProvider.gameModelDTO!.logs.reversed.toList();
+                              return Container(
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20.0),
+                                      color: r[index].contains("Sua empresa") ? Colors.green : Colors.black
+                                  ),
+                                  padding: const EdgeInsets.all(5.0),
+                                  margin: const EdgeInsets.only(top: 5.0),
+                                  child:  Text(r[index],
+                                    style: TextStyle(
+                                      fontSize: 15.0,
+                                      color: r[index].contains("Sua empresa") ? Colors.white : Colors.white,
+                                    ),
+                                  ));
+                            }),
+                      ),
+                    )
+                  ],
+                ),
+              ));
         }));
   }
 
