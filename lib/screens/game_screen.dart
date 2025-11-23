@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:account_monopoly/dialogs/gamescreen_tutorial_dialog.dart';
 import 'package:account_monopoly/dialogs/loan_dialog.dart';
 import 'package:account_monopoly/dialogs/more_options_dialog.dart';
 import 'package:account_monopoly/dialogs/pay_rent_dialog.dart';
@@ -222,11 +223,12 @@ class GameScreenState extends State<GameScreen> {
                                     backgroundColor: Theme.of(context).primaryColor
                                   ),
                                   child: const Text(
-                                      "Fechar turno", textAlign: TextAlign.center,
+                                      "Manual de utilidade", textAlign: TextAlign.center,
                                       style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500)
                                   ),
                                   onPressed: () async {
-                                    gameProvider.eventComposer(type: EventType.closeTurn);
+                                    _dialogCaller(context, const GameScreenTutorialDialog());
+                                    //gameProvider.eventComposer(type: EventType.closeTurn);
                                   },
                                 )
                               ],
