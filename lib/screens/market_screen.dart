@@ -257,7 +257,7 @@ class MarketScreen extends StatelessWidget {
                     gameProvider.eventComposer(
                       type: EventType.buyFromTrade,
                       tradeOffer: offer,
-                      value: offer.sharesAmount,
+                      quantity: offer.sharesAmount,
                       destinationPlayer: offer.source == OfferSource.playerMarket ? gameProvider.otherPlayers[offer.sellerPlayerId] : null
                     );
                   } else {
@@ -267,7 +267,7 @@ class MarketScreen extends StatelessWidget {
                     gameProvider.eventComposer(
                       type: EventType.buyFromIPO,
                       propertyId: offer.propertyId,
-                      value: quantity
+                      quantity: quantity
                     );
                   }
                   // Sucesso: Agendamos a SnackBar no Scaffold da tela principal (context é o correto).

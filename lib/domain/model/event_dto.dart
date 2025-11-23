@@ -14,20 +14,22 @@ class EventDTO{
   final Player sourcePlayer;
   GameModelDTO? gameData; ///somente enviado nos eventos do tipo HANDSHAKE para passar as confi do jogo para um novo player
   int referenceRound;
-  num? value;
+  double? price;
+  int? quantity;
   Property? property;
   TradeOffer? tradeOffer;
 
 
   EventDTO({String ?eventId, this.gameData, required this.type, this.destinationPlayer, required this.sourcePlayer, required this.referenceRound,
-    this.value, this.property, this.tradeOffer}){
+    this.price, this.quantity, this.property, this.tradeOffer}){
     this.eventId = eventId ?? "${StringUtils.generateUUID(size: 8)}-${sourcePlayer.username}";
   }
 
   String getEventLog(Player currentPlayer){
     String message = type.messageScope
           !.replaceAll('{SOURCE}', sourcePlayer.username == currentPlayer.username ? 'Sua empresa' : sourcePlayer.username)
-            .replaceAll('{VALUE}', (value is double) ? StringUtils.currencyFormat(value!.toDouble()) : value.toString())
+            .replaceAll('{PRICE}', (price != null ? StringUtils.currencyFormat(price!) : ""))
+            .replaceAll('{QUANTITY}', (quantity != null ? quantity.toString() : ""))
               .replaceAll('{DEST}', (destinationPlayer != null && destinationPlayer?.username == currentPlayer.username) ? 'Sua empresa' : sourcePlayer.username)
               .replaceAll('{PROPERTY}', (property != null ? property!.name : ""))
               .replaceAll('{TRADEOFFER}', tradeOffer != null ? "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer!.propertyId} no valor total de ${StringUtils.currencyFormat(tradeOffer!.totalAskingPrice)}" : "")
@@ -41,7 +43,8 @@ class EventDTO{
       "EventType": type.name,
       "destinationPlayer": destinationPlayer?.toMap(),
       "sourcePlayer": sourcePlayer.toMap(),
-      "value": value,
+      "price": price,
+      "quantity": quantity,
       "gameData": gameData?.toMap(),
       "property": property?.toMap(),
       'referenceRound': referenceRound
@@ -55,9 +58,10 @@ class EventDTO{
         type: parsedType,
         destinationPlayer: map['destinationPlayer'] != null ? Player.fromMap(map['destinationPlayer']) : null,
         sourcePlayer: Player.fromMap(map['sourcePlayer']),
-        value: map['value'] as num?,
+        quantity: map['quantity'] as int?,
+        price: (map['price'] as num?)?.toDouble(),
         gameData: map['gameData'] != null ? GameModelDTO.fromMap( map['gameData']) : null,
         property: map['property'] != null ? Property.fromMap(map['property']) : null,
-        referenceRound: map['referenceRound'] as int
+        referenceRound: (map['referenceRound'] as num?)?.toInt() ?? 0
     );}
 }

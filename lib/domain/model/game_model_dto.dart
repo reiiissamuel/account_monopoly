@@ -61,10 +61,6 @@ class GameModelDTO{
 
  factory GameModelDTO.fromMap(Map<String, dynamic> map) {
   try {
-   /* final List<String> safeLogs = (map['logs'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ?? []; */
-      
     final Player? restoredWinner = map['winner'] != null 
         ? Player.fromMap(map['winner'] as Map<String, dynamic>) 
         : null;
@@ -79,7 +75,7 @@ class GameModelDTO{
     chancesEnabled: map['chancesEnabled'] as bool,
     player: Player.fromMap(map['player'] as Map<String, dynamic>),
     ledger: Ledger.fromMap(map['ledger'] as Map<String, dynamic>),
-    limitPlayer: map['limitPlayer'] as int,
+    limitPlayer: (map['limitPlayer'] as num?)?.toInt() ?? 0,
     winner: restoredWinner,
     //chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
   );

@@ -372,7 +372,7 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                   gameProvider.eventComposer(
                       type: EventType.loanPayment,
                       loan: loan,
-                      value: payment
+                      price: payment
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Pagamento realizado"), backgroundColor: Colors.green));

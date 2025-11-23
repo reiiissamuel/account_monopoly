@@ -56,11 +56,12 @@ class Loan {
     return Loan(
       id: map['id'] as String,
       type: LoanType.values.firstWhere((e) => e.toString() == map['type']),
-      totalDue: (map['totalDue'] as num).toDouble(),
-      principalBorrowed: (map['principalBorrowed'] as num).toDouble(),
+      totalDue: (map['totalDue'] as num?)?.toDouble() ?? 0,
+      principalBorrowed: (map['principalBorrowed'] as num?)?.toDouble() ?? 0,
       collateralId: map['collateralId'] as String?,
-      roundsToPayOff: map['roundsToPayOff'] as int, collateralAmountShares: map['collateralAmountShares'] as int
-    )..principalPaid = (map['principalPaid'] as num).toDouble();
+      roundsToPayOff: (map['roundsToPayOff'] as num?)?.toInt() ?? 0,
+        collateralAmountShares: (map['collateralAmountShares'] as num?)?.toInt() ?? 0
+    )..principalPaid = (map['principalPaid'] as num?)?.toDouble() ?? 0;
   }
 
 }

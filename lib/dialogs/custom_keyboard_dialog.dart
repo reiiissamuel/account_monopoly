@@ -123,7 +123,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
           Navigator.of(context).pop();
           Navigator.of(context).pop();
           Navigator.of(context).pop();
-          gameProvider.eventComposer(type: widget.eventType, value: value);
+          gameProvider.eventComposer(type: widget.eventType, price: value);
         });
       });
     }
@@ -139,7 +139,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
               try{
                 gameProvider.eventComposer(
                     type: widget.eventType,
-                    value: value
+                    price: value
                 );
                 ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Pagamento confirmado."), backgroundColor: Colors.green));
@@ -162,7 +162,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
               try{
                 gameProvider.eventComposer(
                     type: widget.eventType,
-                    value: value,
+                    price: value,
                     destinationPlayer: gameProvider.gameModelDTO!.othersPlayers[widget.playerToPayId]
                 );
                 ScaffoldMessenger.of(context).showSnackBar(

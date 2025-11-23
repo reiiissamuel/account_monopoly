@@ -435,11 +435,11 @@ class Ledger {
     
     final ledger = Ledger(
       properties: deserializeProperties(propertiesMap),
-      currentInterestRate: map['currentInterestRate'] as double? ?? 0.05,
-      propertyProfitTaxRate: map['propertyProfitTaxRate'] as double? ?? 0.15,
-      roundBonus: map['roundBonus'] as double? ?? 0.0,
-      incomeTaxRate: map['incomeTaxRate'] as double? ?? 0.10,
-      lateFeeRate: map['lateFeeRate'] as double? ?? 0.05,
+      currentInterestRate: (map['currentInterestRate'] as num?)?.toDouble() ?? 0.05,
+      propertyProfitTaxRate: (map['propertyProfitTaxRate'] as num?)?.toDouble() ?? 0.15,
+      roundBonus: (map['roundBonus'] as num?)?.toDouble() ?? 0.0,
+      incomeTaxRate: (map['incomeTaxRate'] as num?)?.toDouble() ?? 0.1,
+      lateFeeRate: (map['lateFeeRate'] as num?)?.toDouble() ?? 0.05,
     );
     // População de campos mutáveis (não-finais) após a instanciação
     

@@ -52,10 +52,10 @@ class Chance {
 
   factory Chance.fromMap(Map<String, dynamic> map) {
     return Chance(
-        id: map['id'] as int,
+        id: (map['id'] as num?)?.toInt() ?? 0,
         name: map['name'] as String,
         description: map['description'] as String,
-        effect: map['effect'] as int,
+        effect: (map['effect'] as num?)?.toInt() ?? 0,
         incoming: map['incoming'] as String,
         isbenefit: map['isbenefit'] as bool
     );}

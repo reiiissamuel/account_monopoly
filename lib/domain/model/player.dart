@@ -133,7 +133,7 @@ class Player {
   }
 
   factory Player.fromMap(Map<String, dynamic> map) {
-    double credit = (map["currentCredit"] as num).toDouble();
+    double credit = (map["currentCredit"] as num?)?.toDouble() ?? 0.0;
     double incomeTax = (map["incomeTax"] as num?)?.toDouble() ?? 0.0;
     double taxRefund = (map["taxRefund"] as num?)?.toDouble() ?? 0.0;
     double received = (map["receivedFrom"] as num?)?.toDouble() ?? 0.0;

@@ -273,7 +273,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
          gameProvider.eventComposer(
           type: EventType.propertyUpdatePayout,
           propertyId: property.id,
-          value: (payout/100)
+          price: (payout/100)
          );
          ScaffoldMessenger.of(context).showSnackBar(
            const SnackBar(content: Text("Payout atualizado")));
@@ -444,7 +444,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
                     type: EventType.build,
                     propertyId: property.id,
                     newBuildings: quantity,
-                    value: newRent,
+                    price: newRent,
                     markupUsage: _markupUsage.toInt()
                   );
                   ScaffoldMessenger.of(context).showSnackBar(

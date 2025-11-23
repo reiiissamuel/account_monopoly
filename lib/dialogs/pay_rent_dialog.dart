@@ -187,7 +187,7 @@ class _PayRentDialogState extends State<PayRentDialog> {
                    _provider.eventComposer(
                     type: EventType.payRent,
                     propertyId: _selectedProperty.id,
-                    value: rentToPay
+                    price: rentToPay
                   );
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Pagamento realizado"), backgroundColor: Colors.green));

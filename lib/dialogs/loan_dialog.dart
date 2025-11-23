@@ -475,7 +475,7 @@ class LoanDialogState extends State<LoanDialog> {
               // 3. Executa a Ação de Empréstimo no GameProvider
               gameProvider.eventComposer(
                   type: EventType.loan,
-                  value: _loanAmountAvailable,
+                  price: _loanAmountAvailable,
                   loan: Loan(
                       id: StringUtils.generateUUID(size: 5),
                       type: _selectedLoanType,

@@ -167,7 +167,7 @@ class Property {
         colorSignature: Color(map['colorSignature'] as int),
         iconSignature: restoredIcon,
 
-        lastDividendRound: map['lastDividendRound'] != null ? (map['lastDividendRound'] as num).toInt() : 0,
+        lastDividendRound: map['lastDividendRound'] as int,
         totalShares: map['totalShares'] as int,
         availableShares: map['availableShares'] as int,
         buildings: map['buildings'] as int
