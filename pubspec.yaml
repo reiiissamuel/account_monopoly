@@ -33,12 +33,11 @@ dependencies:
 
   provider: ^6.1.2
   url_launcher: ^6.3.2
-  fluttertoast: ^9.0.0
   flutter_launcher_icons: ^0.14.0
   fl_chart: ^1.1.1
   peerdart: ^0.5.6
   sembast: ^3.7.1
-  sembast_web: '>=1.0.0'
+  sembast_web: ^2.4.2
   get_it: ^8.2.0
   path_provider: ^2.1.5
   google_sign_in: ^7.2.0

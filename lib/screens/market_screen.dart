@@ -69,6 +69,7 @@ class MarketScreen extends StatelessWidget {
     final String currentMarketPrice = StringUtils.currencyFormat(offer.currentMarketPrice);
     final String askingPrice = StringUtils.currencyFormat(offer.askingPrice);
     final String available = offer.sharesAmount.toString();
+    final property = gameProvider.ledger.properties[offer.propertyId];
     
     // Cor do texto de origem (para destaque)
     final Color sourceColor = switch (offer.source) {
@@ -92,8 +93,8 @@ class MarketScreen extends StatelessWidget {
           Row(
               spacing: 5, 
               children: [
-                Icon(gameProvider.ledger.properties[offer.propertyId]!.iconSignature.icon),
-                Text('Nome: ${offer.propertyId}',
+                Icon(property!.iconSignature.icon),
+                Text('${property.name} (${offer.propertyId})',
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -132,7 +133,7 @@ class MarketScreen extends StatelessWidget {
               // BOTÃO DE DETALHES
               OutlinedButton.icon(
                 icon: const Icon(Icons.info_outline, color: Colors.white),
-                label: const Text("Detalhes da propriedade", style: TextStyle(color: Colors.white)),
+                label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.white70),
                 ),

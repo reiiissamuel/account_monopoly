@@ -7,7 +7,8 @@ class ConfigsConstants {
   static final String newUserSuccessMsg = "Cadastro concluído: ";
   static final String newUserErrorMsg = "Falha ao cadastrar usuário!";
   static final String userExistsErrorMsg = "Este nome de usuário ja está sendo usado";
-  //regras de negocia
+  //regras de negocio
+  static const double initialPayout = 0.5;
   static const int maxBuildings = 5;
   static const String maxBuildingsErrorMsg = "Você não pode passar o limite de construções da propriedade";
   static const int maxBonnusLoans = 1;

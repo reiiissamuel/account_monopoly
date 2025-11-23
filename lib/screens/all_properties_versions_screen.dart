@@ -5,11 +5,10 @@ import 'package:account_monopoly/screens/properties_screen.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
-import 'package:account_monopoly/domain/model/property.dart'; // Import assumido para 'Property'
+import 'package:account_monopoly/domain/model/property.dart';
 
 class AllPropertiesVesionsScreen extends StatelessWidget {
 
@@ -174,20 +173,17 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                             title: "Alerta de Exclusão!",
                             textContent: "Essa ação não poderá ser desfeita",
                             onConfirm: () async {
-                              userProvider.deletePropertiesCollection(summary["version"]);
-                              // A navegação/fechamento do diálogo deve ser aqui,
-                              // mas como o `ConfirmActionDialog` geralmente faz isso internamente,
-                              // mantemos apenas o toast e a ação do provider.
-                              Fluttertoast.showToast(
-                                  msg: "Lote de propriedades excluído com sucesso",
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.BOTTOM,
-                                  timeInSecForIosWeb: 2,
-                                  backgroundColor: Colors.green,
-                                  textColor: Colors.white,
-                                  fontSize: 16.0
-                              );
+
                               Navigator.pop(context);
+                              try {
+                                userProvider.deletePropertiesCollection(
+                                    summary["version"]);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Exclusão realizada com sucesso."), backgroundColor: Colors.green));
+                              } on Exception{
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Erro interno ao tentar efetuar a exclusão."), backgroundColor: Colors.red));
+                              }
                             });
                         });
                       },

@@ -12,7 +12,7 @@ class Property {
   final Color colorSignature;
   final Icon iconSignature;
 
-  int lastUpdateRound;
+  int lastDividendRound;
   double currentPrice;
   double currentRent;
   double currentBuildingCost;
@@ -34,7 +34,7 @@ class Property {
     required this.propertyType,
     required this.iconSignature,
     required this.currentBuildingCost,
-    this.payoutPercentage = 0.3,
+    this.payoutPercentage = ConfigsConstants.initialPayout,
     this.currentRent = 0,
     this.totalShares = 0,
     this.currentPrice = 0.0,
@@ -42,7 +42,7 @@ class Property {
     this.collectedRent = 0,
     this.buildings = 0,
     this.majorOwnerId = "",
-    this.lastUpdateRound = 0,
+    this.lastDividendRound = 0,
   }) {
     if (currentPrice == 0.0) {
       currentPrice = basePrice;
@@ -73,7 +73,6 @@ class Property {
     _updateRent(netRetainedProfit);
 
     collectedRent = 0;
-    lastUpdateRound = referenceRound;
   }
 
   void _updateRent(double netRetainedProfit) {
@@ -136,7 +135,7 @@ class Property {
       'historicalRents': historicalRents,
       'historicalDividends': historicalDividends,
       'currentBuildingCost': currentBuildingCost,
-      'lastDividendRound': lastUpdateRound,
+      'lastDividendRound': lastDividendRound,
 
       // ✅ SERIALIZAÇÃO DO ÍCONE: Converte o IconData para Map.
       'iconSignature': iconData.toMap(),
@@ -168,7 +167,7 @@ class Property {
         colorSignature: Color(map['colorSignature'] as int),
         iconSignature: restoredIcon,
 
-        lastUpdateRound: map['lastUpdateRound'] != null ? (map['lastUpdateRound'] as num).toInt() : 0,
+        lastDividendRound: map['lastDividendRound'] != null ? (map['lastDividendRound'] as num).toInt() : 0,
         totalShares: map['totalShares'] as int,
         availableShares: map['availableShares'] as int,
         buildings: map['buildings'] as int
@@ -176,10 +175,6 @@ class Property {
     property._setHistoricalData(rents, dividends, sharesPrices);
     return property;
   }
-
-  // 2. Override do hashCode
-  @override
-  int get hashCode => id.hashCode; // Gera o hash baseado no
 
   Property copyWith({
     int? totalShares,

@@ -18,6 +18,7 @@ class Ledger {
 
   final Map<String, Property> properties; 
   final String bankId = "bank";
+  int lastPropertiesUpdateRound ; // indica numero do round no qual o metodo updatePropertiesValuation foi chamado pela ultima vez
   double roundBonus = 0.0;
   double currentInterestRate;
   double propertyProfitTaxRate;
@@ -35,10 +36,12 @@ class Ledger {
     required this.roundBonus,
     required this.incomeTaxRate,
     required this.lateFeeRate,
+    this.lastPropertiesUpdateRound = 0,
     Map<String, TradeOffer> tradeOffers = const {}
   }) : tradeOffers = Map.from(tradeOffers);
 
-  Ledger.empty() : 
+  Ledger.empty() :
+        lastPropertiesUpdateRound = 0,
     properties = {},
     currentInterestRate = 0.05,
     propertyProfitTaxRate = 0.15,
@@ -193,21 +196,21 @@ class Ledger {
 
   void updatePropertiesValuation(Player player, int referenceRound){
     properties.forEach((id, property) {
-      if (referenceRound > property!.lastUpdateRound){
-        double netRetainedProfit = property.profitToRetain * (1.0 - propertyProfitTaxRate);
-        _distributePayout(player, property);
-        property.applyValuation(netRetainedProfit, referenceRound);
-      }
+      double netRetainedProfit = property.profitToRetain * (1.0 - propertyProfitTaxRate);
+      _distributePayout(player, property, referenceRound);
+      property.applyValuation(netRetainedProfit, referenceRound);
     });
+    lastPropertiesUpdateRound = referenceRound;
   }
  
-  void _distributePayout(Player player, Property property) {
+  void _distributePayout(Player player, Property property, int referenceRound) {
     ShareHolder? item = player.portfolio[property.id];
     if(item != null){
       double dividendReceived = property.currentDividendsPerShare * item.sharesOwned;
       player.receiveCredit(dividendReceived, incomeTaxRate);
       player.roundBalance.dividendsIn += dividendReceived;
       item.dividendsReceived += dividendReceived;
+      property.lastDividendRound = referenceRound;
       logger.i('${player.username} recebeu ${dividendReceived.toStringAsFixed(2)} da ${property.name}');
     }
   }

@@ -1,3 +1,4 @@
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
@@ -36,11 +37,8 @@ class MoreOptionsDialog extends StatelessWidget {
                 dialog: ConfirmActionDialog(
                     title: "Pagar imposto de renda?",
                     textContent: "Serão deduzidos ${StringUtils.currencyFormat(gameProvider.currentPlayer.incomeTax)} da sua conta.",
-                    onConfirm: () {
-                      gameProvider.eventComposer(type: EventType.payTax);
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    })),
+                    onConfirm: () => _payIncomeTax(context, gameProvider)
+                )),
 
             _optionButton(context: context, img: "icons/rest.png", title: "Restituição",
                 dialog: ConfirmActionDialog(title: "Restituição",
@@ -67,14 +65,6 @@ class MoreOptionsDialog extends StatelessWidget {
                       Navigator.of(context).pop();
                       Navigator.of(context).pop();
               })),
-
-            /*_optionButton(context: context, img: "icons/bit.png", title: "Leiloar Propriedade",
-               screen: const SetAuctionScreen()),
-
-            _optionButton(context: context, img: "icons/loan.png", title: "Pegar Empréstimo",
-                onPressed: gameProvider.forbiddenAction ? () {} : null,
-                dialog: gameProvider.forbiddenAction  ? null : const LoanDialog()
-            ),*/
             _optionButton(
                 context: context,
                 img: "icons/benefits.png",
@@ -86,6 +76,22 @@ class MoreOptionsDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _payIncomeTax(BuildContext context, GameProvider gameProvider) {
+    try{
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+      gameProvider.currentPlayer.incomeTax;
+      gameProvider.eventComposer(
+          type: EventType.payTax
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Pagamento efetuado"), backgroundColor: Colors.green));
+    } on DomainException catch(e){
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+    }
   }
 }
 
@@ -113,7 +119,7 @@ Widget _optionButton({required BuildContext context, required String img, requir
                   showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return dialog; // <--- AQUI ESTÁ A CORREÇÃO PRINCIPAL
+                        return dialog;
                       });
                 }
               },

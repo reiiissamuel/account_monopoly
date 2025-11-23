@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:account_monopoly/domain/model/chance.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
 import 'package:account_monopoly/domain/model/player.dart';
@@ -82,7 +84,7 @@ class GameModelDTO{
     //chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
   );
   } catch (e) {
-   print('ERRO DE DESSERIALIZAÇÃO DE GameModelDTO: $e');
+   log('ERRO DE DESSERIALIZAÇÃO DE GameModelDTO: $e');
    return GameModelDTO.empty();
   }
  }

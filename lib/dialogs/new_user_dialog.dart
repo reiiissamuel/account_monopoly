@@ -1,9 +1,7 @@
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/service/google_login.dart';
-import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 

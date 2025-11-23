@@ -5,11 +5,9 @@ import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
-// Import assumido para 'Property'
 
 class PropertiesScreen extends StatelessWidget {
 
@@ -55,7 +53,9 @@ class PropertiesScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const NewPropertyScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => NewPropertyScreen(
+                          versionId: versionId,
+                        )));
                       },
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
@@ -160,17 +160,15 @@ class PropertiesScreen extends StatelessWidget {
                             title: "Alerta de Exclusão!",
                             textContent: "Essa ação não poderá ser desfeita",
                             onConfirm: () async {
-                              userProvider.deleteProperty(versionId, property.id);
-                              Fluttertoast.showToast(
-                                  msg: "Propriedade excluída com sucesso",
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.BOTTOM,
-                                  timeInSecForIosWeb: 2,
-                                  backgroundColor: Colors.green,
-                                  textColor: Colors.white,
-                                  fontSize: 16.0
-                              );
                               Navigator.pop(context);
+                              try{
+                                userProvider.deleteProperty(versionId, property.id);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Propriedade excluída."), backgroundColor: Colors.green));
+                              } on Exception catch(e){
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                              }
                             });
                         });
                       },

@@ -108,6 +108,7 @@ class GameScreenState extends State<GameScreen> {
                             textContent: "Você poderá entrar nele novamete\n"
                             "indo até a sessão 'jogos ativos'",
                             onConfirm: (){
+                              gameProvider.peerConnectionController!.closeConnection();
                               Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
                             }
                         );
@@ -115,8 +116,7 @@ class GameScreenState extends State<GameScreen> {
                     },
                   )
                 ],
-              ),
-              floatingActionButton: gameProvider.gameModelDTO!.chancesEnabled ? Padding(
+              ),              floatingActionButton: gameProvider.gameModelDTO!.chancesEnabled ? Padding(
                 padding: const EdgeInsets.only(bottom: 195.0),
                 child: FloatingActionButton(
                   backgroundColor: Theme.of(context).primaryColor,
@@ -284,7 +284,7 @@ class GameScreenState extends State<GameScreen> {
                             }
                         ),
 
-                        if(gameProvider.currentPlayer.portfolio.values.isNotEmpty) ...[
+                        if(gameProvider.currentPlayer.portfolio.values.isNotEmpty && gameProvider.gameModelDTO!.loanEnabled) ...[
                           GameIconButtonBuilder(
                               imgPath: "icons/loan.png",
                               title: "Empréstimo",

@@ -221,7 +221,7 @@ class UserProvider extends ChangeNotifier{
     try{
       notifyListeners();
       if(propertiesVersion.containsKey(versionId)){
-        if(propertiesVersion[versionId]!.contains(property)){
+        if(propertiesVersion[versionId]!.any((p) => p.id == property.id)){
           final int index = propertiesVersion[versionId]!.indexWhere((p) => p.id == property.id);
           propertiesVersion[versionId]![index] = property;
         } else {

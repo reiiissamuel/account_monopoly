@@ -10,7 +10,6 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart'; 
 
 class NewPropertyScreen extends StatelessWidget {
-  // Dados que você quer passar
   final String? versionId;
   final Property? property; 
 
@@ -84,7 +83,8 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     Colors.purple,
     Colors.deepPurpleAccent,
     Colors.cyanAccent,
-    Colors.lime
+    Colors.lime,
+    Colors.blueGrey
   ];
 
   final List<Icon> availableIconsData = [
@@ -112,7 +112,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
       _colorSignature = widget.property!.colorSignature;
       _iconSignatureData = widget.property!.iconSignature; // Valor inicial
       _propertyId = widget.property!.id;
-      _rentPrice = StringUtils.currencyFormat(widget.property!.currentPrice);
+      _rentPrice = StringUtils.currencyFormat(widget.property!.currentRent);
       _buildingCost = StringUtils.currencyFormat(widget.property!.currentBuildingCost);
     }
   }
@@ -321,7 +321,8 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
         // Feedback visual
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Propriedade "$_name" registrada com sucesso!'),
+            content: Text('Propriedade "$_name" registrada com sucesso!''Atualização concluída.'
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -355,7 +356,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
               ],
               alertMsg: "Nome sem caracteres especiais",
               initialValue: _versionid,
-              enabled: widget.versionId == null
+              enabled: widget.property == null
             ),
             _buildField(
               label: 'Nome da Propriedade', 
@@ -375,7 +376,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
                 alertMsg: 'O código deve ter 4 letras maiúsculas',
                 maxLength: 4,
                 initialValue: _propertyId,
-                enabled: widget.versionId == null
+                enabled: widget.property == null
               )
             ,
             _buildTypeDropdown(initialValue: _propertyType),
@@ -414,20 +415,20 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             _propertyType == PropertyType.reit ? 
               _buildField(
                 label: 'Custo de construção', 
-                onSave: (value) => _rentPrice = value, 
+                onSave: (value) => _buildingCost = value,
                 inputsTypes:  [
                   FilteringTextInputFormatter.digitsOnly,
                   StringUtils()
                 ],
                 alertMsg: "insira um número válido",
-                initialValue: _rentPrice.toString()
+                initialValue: _buildingCost.toString()
               ) : const SizedBox(height: 0),
             
             const SizedBox(height: 30),
             
             ElevatedButton.icon(
               icon: const Icon(Icons.save),
-              label: Text(widget.versionId == null ? 'Cadastrar Propriedade' : 'Atualizar Propriedade'),
+              label: Text(widget.property == null ? 'Cadastrar Propriedade' : 'Atualizar Propriedade'),
               onPressed: _submitForm,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,

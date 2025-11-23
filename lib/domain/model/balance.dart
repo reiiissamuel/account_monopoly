@@ -107,9 +107,7 @@ class Balance {
   }
 
   factory Balance.fromMap(Map<String, dynamic> map) {
-    // Note: Usando (map['key'] as num?)?.toDouble() ?? 0.0 para desserialização segura
     return Balance(
-      // Lê como num?, chama toDouble() se não for nulo, caso contrário usa 0.0
       sharePurchasesOut: (map['sharePurchasesOut'] as num?)?.toDouble() ?? 0.0,
       shareSalesIn: (map['shareSalesIn'] as num?)?.toDouble() ?? 0.0,
       eventIn: (map['eventIn'] as num?)?.toDouble() ?? 0.0,

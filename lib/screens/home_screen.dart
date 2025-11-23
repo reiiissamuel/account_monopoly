@@ -7,7 +7,6 @@ import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/screens/all_properties_versions_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/load_user_dialog.dart';
@@ -230,6 +229,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _showEnterCodeDialog(BuildContext context) {
     final controller = TextEditingController();
+    if(Provider.of<GameProvider>(context, listen: false).gameModelDTO != null){
+      Provider.of<GameProvider>(context, listen: false).reset();
+    }
 
     showDialog(
         context: context,

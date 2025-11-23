@@ -1,7 +1,7 @@
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -117,61 +117,62 @@ class CustomKeyboardState extends State<CustomKeyboard> {
     GameProvider gameProvider = Provider.of<GameProvider>(context, listen: false);
     double value = StringUtils.currencyAsDouble(valueController.text);
 
-    if(widget.eventType == EventType.build) {
-      if(gameProvider.currentPlayer.currentCredit >= value) {
-          showDialog(context: context, builder: (BuildContext context){
-            return ConfirmActionDialog(title: "Alerta de Compra!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
-              gameProvider.eventComposer(type: widget.eventType, value: value);
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            });
-          }
-        );
-      } else {
-        _paymentFail();
-      }
-    }
-    else if(widget.eventType == EventType.receiveFromBank) {
+    if(widget.eventType == EventType.receiveFromBank) {
       showDialog(context: context, builder: (BuildContext context){
         return ConfirmActionDialog(title: "Alerta de Rebebimento!", textContent: "Você Confirma o recebimento de $value?", onConfirm: (){
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
           gameProvider.eventComposer(type: widget.eventType, value: value);
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
         });
       });
     }
     else if(widget.eventType == EventType.payBank){
-          if(gameProvider.currentPlayer.currentCredit >= value) {
-            showDialog(context: context, builder: (BuildContext context){
-            return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
-              gameProvider.eventComposer(
-                  type: widget.eventType,
-                  value: value
-              );
+      showDialog(context: context, builder: (BuildContext context){
+        return ConfirmActionDialog(
+            title: "Alerta de Pagamento!",
+            textContent: "Você Confirma o pagamento de $value?",
+            onConfirm: (){
               Navigator.of(context).pop();
               Navigator.of(context).pop();
-            });
-          });
-          } else {
-            _paymentFail();
-          }
+              Navigator.of(context).pop();
+              try{
+                gameProvider.eventComposer(
+                    type: widget.eventType,
+                    value: value
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Pagamento confirmado."), backgroundColor: Colors.green));
+              } on DomainException catch(e){
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+              }
+        });
+      });
     }
     else if(widget.eventType == EventType.transfer){
-      if(gameProvider.currentPlayer.currentCredit >= value) {
-        showDialog(context: context, builder: (BuildContext context){
-          return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma a transferência de $value?", onConfirm: (){
-            gameProvider.eventComposer(
-                type: widget.eventType,
-                value: value,
-                destinationPlayer: gameProvider.gameModelDTO!.othersPlayers[widget.playerToPayId]
-            );
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
-          });
-        });
-      } else {
-        _paymentFail();
-      }
+      showDialog(context: context, builder: (BuildContext context){
+        return ConfirmActionDialog(
+            title: "Alerta de transferência!",
+            textContent: "Você Confirma a transferência de $value?",
+            onConfirm: (){
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+              try{
+                gameProvider.eventComposer(
+                    type: widget.eventType,
+                    value: value,
+                    destinationPlayer: gameProvider.gameModelDTO!.othersPlayers[widget.playerToPayId]
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Transferência concluída"), backgroundColor: Colors.green));
+              } on DomainException catch(e){
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+              }
+            });
+      });
     }
   }
 
@@ -242,17 +243,5 @@ class CustomKeyboardState extends State<CustomKeyboard> {
     setState(() {
       valueController.text = StringUtils.currencyFormat(value);
     });
-  }
-
-  void _paymentFail(){
-    Fluttertoast.showToast(
-        msg: "Saldo insuficiente!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
   }
 }

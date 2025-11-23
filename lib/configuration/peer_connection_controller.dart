@@ -121,6 +121,7 @@ class PeerConnectionController {
             EventDTO(
               type: EventType.lostConnection,
               sourcePlayer: lostPlayer,
+              referenceRound: 0
             ),
           );
         } else {

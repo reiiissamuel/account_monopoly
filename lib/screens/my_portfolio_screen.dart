@@ -7,8 +7,10 @@ import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:account_monopoly/domain/model/shares_holder_summary.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
+import 'package:account_monopoly/screens/property_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
@@ -23,7 +25,6 @@ class MyPortfolioScreen extends StatelessWidget {
     return Consumer<GameProvider>(
       builder: (context, gameProvider, child) {
         final currentPlayer = gameProvider.currentPlayer;
-        final properties = gameProvider.ledger.properties;
         List<MapEntry<String, ShareHolder>> currentPortfolio = currentPlayer.portfolio.entries.where((entry) => entry.value.sharesOwned > 0).toList();
 
         return Scaffold(
@@ -48,7 +49,10 @@ class MyPortfolioScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(10.0),
                         itemCount: currentPortfolio.length,
                         itemBuilder: (context, index) {
-                          return _portfolioTile(context, currentPortfolio[index].value, gameProvider);
+                          return _portfolioTile(
+                              context,
+                              currentPortfolio[index].value,
+                              gameProvider);
                         }),
               ),
             ],
@@ -139,6 +143,17 @@ class MyPortfolioScreen extends StatelessWidget {
               _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(property.sharePrice), Colors.yellow),
             ],
           ),
+          const SizedBox(height: 10),
+
+          // Extra
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildInfoColumn(
+                  "Última distribuição",
+                  "Rodada ${gameProvider.ledger.properties[item.propertyId]!.lastDividendRound}", Colors.white70),
+            ],
+          ),
           
           const SizedBox(height: 15),
           
@@ -152,8 +167,9 @@ class MyPortfolioScreen extends StatelessWidget {
                 label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
                 style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white70)),
                 onPressed: () {
-                  // Navegação para PropertyDetailsScreen
-                  // Navigator.of(context).push(...)
+                  MaterialPageRoute(
+                    builder: (context) => PropertyDetailsScreen(propertyId: item.propertyId),
+                  );
                 },
               ),
               const SizedBox(width: 8),

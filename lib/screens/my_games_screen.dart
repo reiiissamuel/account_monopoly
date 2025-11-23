@@ -2,7 +2,6 @@
 import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
@@ -110,7 +109,15 @@ class MyGamesScreen extends StatelessWidget {
                         backgroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        Provider.of<GameProvider>(context, listen: false).getGameById( onFail: _onFail, onSuccess: _onSuccess, gameModelDTO: game);
+                        try{
+                          Provider.of<GameProvider>(context, listen: false).getGameById(game);
+                          Navigator.of(_scafoldKey.currentState!.context).pop();
+                          Navigator.pushReplacement(_scafoldKey.currentState!.context, MaterialPageRoute(builder: (context) => const GameScreen()));
+                          //.then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());
+                        } on Exception{
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Houve um erro interno na tentativa de carregar um jogo"), backgroundColor: Colors.red));
+                        }
                       },
                       child: const Icon(
                         Icons.arrow_forward,
@@ -145,24 +152,5 @@ class MyGamesScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _onFail(String msg){
-    Navigator.of(_scafoldKey.currentState!.context).pop();
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-  }
-
-  Future<void> _onSuccess() async {
-    Navigator.of(_scafoldKey.currentState!.context).pop();
-    Navigator.pushReplacement(_scafoldKey.currentState!.context, MaterialPageRoute(builder: (context) => const GameScreen()));
-        //.then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());
   }
 }

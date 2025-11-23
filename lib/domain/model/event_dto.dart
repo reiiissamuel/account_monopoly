@@ -19,7 +19,7 @@ class EventDTO{
   TradeOffer? tradeOffer;
 
 
-  EventDTO({String ?eventId, this.gameData, required this.type, this.destinationPlayer, required this.sourcePlayer, this.referenceRound = 0,
+  EventDTO({String ?eventId, this.gameData, required this.type, this.destinationPlayer, required this.sourcePlayer, required this.referenceRound,
     this.value, this.property, this.tradeOffer}){
     this.eventId = eventId ?? "${StringUtils.generateUUID(size: 8)}-${sourcePlayer.username}";
   }
@@ -58,6 +58,6 @@ class EventDTO{
         value: map['value'] as num?,
         gameData: map['gameData'] != null ? GameModelDTO.fromMap( map['gameData']) : null,
         property: map['property'] != null ? Property.fromMap(map['property']) : null,
-        referenceRound: map['referenceRound'] ?? 0
+        referenceRound: map['referenceRound'] as int
     );}
 }

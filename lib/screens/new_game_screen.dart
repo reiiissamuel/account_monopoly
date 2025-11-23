@@ -8,7 +8,6 @@ import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
@@ -330,39 +329,47 @@ class NewGameScreenState extends State<NewGameScreen> {
             ),
             TextButton(
               onPressed: !_enableConfirmButton ? null : () async {
-                String generatedGameId = StringUtils.generateUUID(size: 8);
-                Map<String, Property> properties = {};
-                if (userProvider.user!.propertiesVersion![_selectedPropertyVersion] != null) {
-                  for (var originalProperty in userProvider.user!.propertiesVersion![_selectedPropertyVersion]!) {
-                    final newShares = int.parse(_sharesController.text);
-                    final clonedProperty = originalProperty.copyWith(
-                      totalShares: newShares,
-                      availableShares: newShares,
-                    );
-                  
-                    properties[clonedProperty.id] = clonedProperty;
+                try{
+                  String generatedGameId = StringUtils.generateUUID(size: 8);
+                  Map<String, Property> properties = {};
+                  if (userProvider.user!.propertiesVersion![_selectedPropertyVersion] != null) {
+                    for (var originalProperty in userProvider.user!.propertiesVersion![_selectedPropertyVersion]!) {
+                      final newShares = int.parse(_sharesController.text);
+                      final clonedProperty = originalProperty.copyWith(
+                        totalShares: newShares,
+                        availableShares: newShares,
+                      );
+
+                      properties[clonedProperty.id] = clonedProperty;
+                    }
                   }
+
+                  Ledger ledger =  Ledger(
+                      properties: properties,
+                      currentInterestRate: gameLevel.initalInterestRate,
+                      propertyProfitTaxRate: gameLevel.propertyProfitTaxRate,
+                      incomeTaxRate: gameLevel.incomeTaxRate,
+                      lateFeeRate: gameLevel.lateFeeRate,
+                      roundBonus: StringUtils.currencyAsDouble(_bonusController.text)
+                  );
+
+                  GameModelDTO gameData = GameModelDTO(
+                      ledger: ledger,
+                      id: generatedGameId,
+                      limitPlayer: dropdownValue,
+                      initalGameCredit: StringUtils.currencyAsDouble(_initialCreditController.text),
+                      chancesEnabled: isChanceSwitchEnabled,
+                      loanEnabled: isLoanEnabled
+                  );
+                  gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
+                  gameProvider.createNewGame(game: gameData);
+                  Navigator.of(context).pop();
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
+                  //.then((value) => GameModelController.of(context).exitGame());
+                } on Exception{
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Não foi possível criar um novo por causa de um erro interno"), backgroundColor: Colors.red));
                 }
-              
-                Ledger ledger =  Ledger(
-                  properties: properties, 
-                  currentInterestRate: gameLevel.initalInterestRate, 
-                  propertyProfitTaxRate: gameLevel.propertyProfitTaxRate, 
-                  incomeTaxRate: gameLevel.incomeTaxRate, 
-                  lateFeeRate: gameLevel.lateFeeRate,
-                  roundBonus: StringUtils.currencyAsDouble(_bonusController.text)
-                );
-                
-                GameModelDTO gameData = GameModelDTO(
-                    ledger: ledger,
-                    id: generatedGameId,
-                    limitPlayer: dropdownValue,
-                    initalGameCredit: StringUtils.currencyAsDouble(_initialCreditController.text),
-                    chancesEnabled: isChanceSwitchEnabled,
-                    loanEnabled: isLoanEnabled
-                );
-                gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                gameProvider.createNewGame(onFail: _onFail, onSuccess: _onSuccess, game: gameData);
               },
               child: const Text("Confirmar", style: TextStyle(fontSize: 17.0, color: Colors.white )),
             ),
@@ -370,24 +377,5 @@ class NewGameScreenState extends State<NewGameScreen> {
         );
       },
     );
-  }
-
-  void _onFail(String msg){
-    Navigator.of(context).pop();
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-  }
-
-  Future<void> _onSuccess() async {
-    Navigator.of(context).pop();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
-      //.then((value) => GameModelController.of(context).exitGame());
   }
 }

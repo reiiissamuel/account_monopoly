@@ -1,4 +1,6 @@
 
+import 'dart:developer';
+
 import 'package:account_monopoly/configuration/peer_connection_controller.dart';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
@@ -20,15 +22,19 @@ import 'package:account_monopoly/domain/enums/event_type.dart';
 
 class GameProvider extends ChangeNotifier {
   late UserProvider userModelController;
-  //late Player player;
   PeerConnectionController? peerConnectionController;
   GameModelDTO? gameModelDTO;
   bool isLoading = false;
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
-  String ?any;
+  String? any;
 
-
+  void reset(){
+    gameModelDTO = null;
+    isLoading = false;
+    events = [];
+    lastEventReceived = null;
+  }
   GameProvider();
 
   Ledger get ledger => gameModelDTO!.ledger;
@@ -99,6 +105,7 @@ class GameProvider extends ChangeNotifier {
               saleCapitalGain: 0);
           break;
         case EventType.closeRound:
+          if(event.referenceRound < ledger.lastPropertiesUpdateRound) return;
           ledger.updatePropertiesValuation(currentPlayer, event.referenceRound);
           event.value = currentPlayer.roundBalance.dividendsIn;
           break;
@@ -127,9 +134,9 @@ class GameProvider extends ChangeNotifier {
     eventComposer(type: EventType.roundBonus, value: ledger.roundBonus);
     eventComposer(type: EventType.closeRound);
 
-    List<Loan> foreclosusureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
-    if(foreclosusureLoans.isNotEmpty){
-      for(var loan in foreclosusureLoans){
+    List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
+    if(foreclosureLoans.isNotEmpty){
+      for(var loan in foreclosureLoans){
         if(loan.type == LoanType.bankLoan){
           eventComposer(type: EventType.loanForeclosure, value: loan.totalDue);
         }
@@ -212,10 +219,16 @@ class GameProvider extends ChangeNotifier {
           ledger.checkForMajorOwner(currentPlayer, tradeOffer.propertyId);
           break;
         case EventType.closeRound:
-          ledger.updatePropertiesValuation(currentPlayer, gameModelDTO!.currentRound);
-          event.value = currentPlayer.roundBalance.dividendsIn;
-          currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
-          gameModelDTO!.currentRound += 1;
+          if(gameModelDTO!.currentRound > ledger.lastPropertiesUpdateRound){
+            ledger.updatePropertiesValuation(currentPlayer, gameModelDTO!.currentRound);
+            event.value = currentPlayer.roundBalance.dividendsIn;
+            currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
+            gameModelDTO!.currentRound += 1;
+          } else{
+            currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
+            gameModelDTO!.currentRound += 1;
+            return;
+          }
           break;
         case EventType.build:
           event.property = ledger.processBuildingPurchase(currentPlayer, propertyId!, newBuildings!, value!.toDouble(), markupUsage!);
@@ -322,7 +335,7 @@ class GameProvider extends ChangeNotifier {
   return listings;
 }
 
-  void createNewGame({required GameModelDTO game, required Function onFail, required Function onSuccess}) async {
+  void createNewGame({required GameModelDTO game}) async {
     isLoading = true;
     notifyListeners();
     String usermodelname = userModelController.user!.username;
@@ -344,15 +357,15 @@ class GameProvider extends ChangeNotifier {
       userModelController.user!.games.add(gameModelDTO!);
       await _updateUserModel();
     } catch (e) {
-      onFail("Algo deu errado!");
+      log("Erro na tentativa de criar um novo jogo no repositório: $e");
+      rethrow;
     } finally{
-      onSuccess();
       isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> getGameById({required GameModelDTO gameModelDTO,  required Function onFail, required Function onSuccess}) async {
+  Future<void> getGameById(GameModelDTO gameModelDTO) async {
     isLoading = true;
     notifyListeners();
     gameModelDTO.player.isHost = false;
@@ -361,7 +374,8 @@ class GameProvider extends ChangeNotifier {
     try {
       peerConnectionController!.reconnect();
     } on Exception catch(e) {
-      onFail(e);
+      log("Erro ao tentar carrega um jogo existente: $e");
+      rethrow;
     }
     isLoading = false;
     notifyListeners();
@@ -386,6 +400,7 @@ class GameProvider extends ChangeNotifier {
       );
       peerConnectionController!.connectToHost(destinationPeerId);
     } catch (e){
+      log("Erro: $e");
       rethrow;
     } finally {
       isLoading = false;
@@ -424,6 +439,7 @@ class GameProvider extends ChangeNotifier {
     gameModelDTO!.updateOtherPlayers(event.sourcePlayer); //add hostplayer as otherplayer
     gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
     _sendEvent(EventDTO(
+        referenceRound: 0,
         type: EventType.joinTable,
         destinationPlayer: event.sourcePlayer,
         sourcePlayer: gameModelDTO!.player,
