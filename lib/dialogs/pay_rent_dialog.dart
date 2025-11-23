@@ -31,8 +31,10 @@ class _PayRentDialogState extends State<PayRentDialog> {
   void initState() {
     super.initState();
     _properties = widget.properties;
-    _selectedProperty = _properties.first;
-    _rentToPay = _calculateRent(_selectedProperty, _multiplier);
+    if(_properties != null && _properties.isNotEmpty) {
+      _selectedProperty = _properties.first;
+      _rentToPay = _calculateRent(_selectedProperty, _multiplier);
+    }
     _provider = widget.provider;
   }
   
@@ -64,7 +66,8 @@ class _PayRentDialogState extends State<PayRentDialog> {
           title: const Text("💸 Pagamento de alugel",
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
             textAlign: TextAlign.center,),
-          content: Column(
+          content: (_properties != null && _properties.isNotEmpty)
+              ? Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -172,33 +175,47 @@ class _PayRentDialogState extends State<PayRentDialog> {
               //const Center(child: TipIconButton(title: "Construções", tip: TipsResourse.BUILDINGS, width: 25.0, height: 25.0, iconSize: 19.0)),
               const Divider(color: Colors.white70),
             ],
+          ) : Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.hourglass_empty_outlined, size: 60.0, color: Colors.white),
+                const SizedBox(height: 10),
+                Text("Não há propriedades cadastradas neste jogo.",
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white70)),
+              ],
+            ),
           ),
           actions: <Widget>[
             TextButton(
               child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            ElevatedButton(
-              child: Text("Pagar Aluguel", style: TextStyle(color: Theme.of(context).primaryColor)),
-              onPressed: () {
-                try{
-                  double rentToPay = _calculateRent(_selectedProperty, _multiplier);
 
-                   _provider.eventComposer(
-                    type: EventType.payRent,
-                    propertyId: _selectedProperty.id,
-                    price: rentToPay
-                  );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Pagamento realizado"), backgroundColor: Colors.green));
-                } on DomainException catch(e){
-                    ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.message), backgroundColor: Colors.red));
-                }
+            if(_properties != null && _properties.isNotEmpty) ...[
+              ElevatedButton(
+                child: Text("Pagar Aluguel", style: TextStyle(color: Theme.of(context).primaryColor)),
+                onPressed: () {
+                  try{
+                    double rentToPay = _calculateRent(_selectedProperty, _multiplier);
 
-                Navigator.pop(context);
-              },
-            ),
+                     _provider.eventComposer(
+                      type: EventType.payRent,
+                      propertyId: _selectedProperty.id,
+                      price: rentToPay
+                    );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Pagamento realizado"), backgroundColor: Colors.green));
+                  } on DomainException catch(e){
+                      ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+                  }
+
+                  Navigator.pop(context);
+                },
+              )
+            ]
           ],
     );
   }

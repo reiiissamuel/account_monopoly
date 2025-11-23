@@ -107,6 +107,10 @@ class Property {
     }
   }
 
+  bool checkMajorOwnerById(String playerId){
+    return majorOwnerId == playerId;
+  }
+
   Map<String, dynamic> toMap() {
     // ⚠️ Pegamos o IconData da propriedade 'icon' do widget Icon.
     final IconData? iconData = iconSignature.icon;
@@ -156,7 +160,11 @@ class Property {
         id: map['id'] as String,
         name: map['name'] as String,
 
-        propertyType: PropertyType.values.firstWhere((t) => t.name == map['propertyType'] as String),
+        propertyType: map['propertyType'] is String // Verifica se é uma String
+        ? PropertyType.values.firstWhere(
+            (t) => t.name == map['propertyType'],
+            orElse: () => PropertyType.reit,
+        ) : PropertyType.reit,
         basePrice: (map['basePrice'] as num).toDouble(),
         currentPrice: (map['currentPrice'] as num).toDouble(),
         currentRent: (map['currentRent'] as num).toDouble(),

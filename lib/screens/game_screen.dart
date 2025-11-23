@@ -74,6 +74,8 @@ class GameScreenState extends State<GameScreen> {
                 automaticallyImplyLeading: false,
                 title: Text(
                   "Painel ${gameProvider!.currentPlayer.username}",
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
                   style: const TextStyle(
                       letterSpacing: 2,
                       color: Colors.white,

@@ -334,23 +334,23 @@ class GameProvider extends ChangeNotifier {
   return listings;
 }
 
-  void createNewGame({required GameModelDTO game}) async {
-    isLoading = true;
-    notifyListeners();
-    String usermodelname = userModelController.user!.username;
-    int usermodelId = userModelController.user!.id!;
-    String generatedGameId = StringUtils.generateUUID(size: 8);
-
-    gameModelDTO = game;
-    gameModelDTO!.player = Player.newGamePlayer(
-        currentCredit: gameModelDTO!.initalGameCredit,
-        userModelId: usermodelId,
-        gameId: generatedGameId,
-        username: usermodelname,
-        isHost: true
-    );
-    gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
+  Future<void> createNewGame({required GameModelDTO game}) async {
     try{
+      isLoading = true;
+      notifyListeners();
+      String usermodelname = userModelController.user!.username;
+      int usermodelId = userModelController.user!.id!;
+      String generatedGameId = StringUtils.generateUUID(size: 8);
+
+      gameModelDTO = game;
+      gameModelDTO!.player = Player.newGamePlayer(
+          currentCredit: gameModelDTO!.initalGameCredit,
+          userModelId: usermodelId,
+          gameId: generatedGameId,
+          username: usermodelname,
+          isHost: true
+      );
+      gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
       _createPeerConnectionController(peerId: gameModelDTO!.player.id);
       peerConnectionController!.openConnectionsAsHost();
       userModelController.user!.games.add(gameModelDTO!);
@@ -414,9 +414,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> _updateUserModel() async {
-    await userModelController.updateUser().catchError((e) => {
-      throw e
-    });
+    await userModelController.updateUser();
   }
 
   static String _generatePlayerId({required usermodelname, required usermodelId, required gameId}){

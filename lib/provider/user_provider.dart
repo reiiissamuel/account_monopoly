@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:account_monopoly/domain/model/game_model_dto.dart';
 import 'package:account_monopoly/domain/model/property.dart';
@@ -138,12 +139,12 @@ class UserProvider extends ChangeNotifier{
       isLoading = true;
       notifyListeners();
       await userRepository.updateUser(user!);
-      isLoading = false;
-      notifyListeners();
-    } on Exception {
-      isLoading = false;
-      notifyListeners();
+    } on Exception catch(e) {
+      log("Error updateUser: $e");
       rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 

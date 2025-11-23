@@ -151,7 +151,23 @@ class MyPortfolioScreen extends StatelessWidget {
             children: [
               _buildInfoColumn(
                   "Última distribuição",
-                  "Rodada ${gameProvider.ledger.properties[item.propertyId]!.lastDividendRound}", Colors.white70),
+                  "Rodada ${property!.lastDividendRound}", Colors.white70),
+
+              if(property!.checkMajorOwnerById(gameProvider.currentPlayer.id)) ...[
+                const SizedBox(
+                  height: 50,
+                  width: 180,
+                  child: const Text("👨‍💼 Você é o maior acionista desta empresa",
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 13
+                    ),
+                  ),
+                )
+              ]
             ],
           ),
           
@@ -167,8 +183,10 @@ class MyPortfolioScreen extends StatelessWidget {
                 label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
                 style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white70)),
                 onPressed: () {
-                  MaterialPageRoute(
-                    builder: (context) => PropertyDetailsScreen(propertyId: item.propertyId),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => PropertyDetailsScreen(propertyId: item.propertyId),
+                    ),
                   );
                 },
               ),

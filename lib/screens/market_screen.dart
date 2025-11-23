@@ -44,7 +44,8 @@ class MarketScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.show_chart, size: 60.0, color: Colors.indigo),
                           const SizedBox(height: 10),
-                          Text("Nenhuma ação disponível para negociação no momento.", 
+                          Text("Nenhuma ação disponível para negociação no momento.",
+                              textAlign: TextAlign.center,
                               style: Theme.of(scaffoldContext).textTheme.titleLarge?.copyWith(color: Colors.white70)),
                         ],
                       ),

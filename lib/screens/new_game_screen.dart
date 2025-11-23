@@ -244,7 +244,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                     children: <Widget>[
                       ListTile(
                         title: const Text(
-                            'Habilitar eventos inesperados de mercado', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
+                            'Habilitar eventos de mercado', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
                         ),
                         trailing: Switch(
                           activeThumbColor: Theme.of(context).primaryColor,
@@ -258,7 +258,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                       ),
                       ListTile(
                         title: const Text(
-                            'Habilitar emprestimos', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
+                            'Habilitar empréstimos', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500, color: Colors.white)
                         ),
                         trailing: Switch(
                           activeThumbColor: Theme.of(context).primaryColor,
@@ -362,13 +362,13 @@ class NewGameScreenState extends State<NewGameScreen> {
                       loanEnabled: isLoanEnabled
                   );
                   gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                  gameProvider.createNewGame(game: gameData);
-                  Navigator.of(context).pop();
+                  await gameProvider.createNewGame(game: gameData);
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
                   //.then((value) => GameModelController.of(context).exitGame());
-                } on Exception{
+
+                } on Exception catch(e){
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Não foi possível criar um novo por causa de um erro interno"), backgroundColor: Colors.red));
+                      SnackBar(content: Text("Erro interno: $e"), backgroundColor: Colors.red));
                 }
               },
               child: const Text("Confirmar", style: TextStyle(fontSize: 17.0, color: Colors.white )),
