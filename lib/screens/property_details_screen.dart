@@ -420,7 +420,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
                         _markupUsage = newValue;
                     },
                   ),
-                  const SizedBox(height: 17),
+                  const SizedBox(height: 5),
                   const Center(child: TipIconButton(title: "Construções", tip: TipsResourse.BUILDINGS, width: 25.0, height: 25.0, iconSize: 19.0))
                 ],
               );

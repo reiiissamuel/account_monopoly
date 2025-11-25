@@ -178,12 +178,16 @@ class GameScreenState extends State<GameScreen> {
                                 style: TextStyle(fontSize: 25, letterSpacing: 2, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
                               )
                               :
-                              Text(
-                                StringUtils.currencyFormat(gameProvider.currentPlayer.currentCredit),
-                                style: TextStyle(
-                                    fontSize: 27.0,
-                                    color: _creditSituationColor(gameProvider.currentPlayer.currentCredit, gameProvider.gameModelDTO!.initalGameCredit),
-                                    fontWeight: FontWeight.w500),
+                              FittedBox(
+                                fit: BoxFit.scaleDown, // Tenta ajustar o tamanho, mas mantém o alinhamento
+                                child: Text(
+                                  StringUtils.currencyFormat(gameProvider.currentPlayer.currentCredit),
+                                  maxLines: 1, // Garantindo que não quebre linha
+                                  style: TextStyle(
+                                      fontSize: 27.0, // O FittedBox usará este tamanho como máximo
+                                      color: _creditSituationColor(gameProvider.currentPlayer.currentCredit, gameProvider.gameModelDTO!.initalGameCredit),
+                                      fontWeight: FontWeight.w500),
+                                ),
                               ),
                               IconButton(
                                   icon: Icon(_balanceVisibility ? Icons.visibility_off : Icons.visibility, size: 25, color: Theme.of(context).primaryColor),

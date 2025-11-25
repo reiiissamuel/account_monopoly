@@ -26,7 +26,10 @@ class PropertiesScreen extends StatelessWidget {
           title: const Text("Propriedades cadastradas", style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              letterSpacing: 2)),
+              letterSpacing: 2),
+              maxLines: 2,
+              textAlign: TextAlign.center,
+          ),
           centerTitle: true,
           actions: [
             const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
@@ -79,7 +82,7 @@ class PropertiesScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(10.0),
                           itemCount: properties.length,
                           itemBuilder: (context, index) {
-                            return _gameTile(context, properties[index]);
+                            return _propertyTile(context, properties[index]);
                           }),
                 ),
               ],
@@ -88,7 +91,7 @@ class PropertiesScreen extends StatelessWidget {
     );
   }
 
-  Widget _gameTile(BuildContext context, Property property){
+  Widget _propertyTile(BuildContext context, Property property){
     // Usar Provider.of com listen: false fora do build principal está OK aqui
     UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
     return Container(
@@ -111,10 +114,11 @@ class PropertiesScreen extends StatelessWidget {
               spacing: 5,
               children: [
                 Icon(property.iconSignature.icon),
-                Text('Nome: ${property.name}',
+                Text( property.name,
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 21
                   ) ,
                 )
               ],

@@ -157,10 +157,12 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            const Text(
+            const FittedBox(
+                fit: BoxFit.scaleDown, // Tenta ajustar o tamanho, mas mantém o alinhamento
+                child: Text(
               "CRÉDITO ATUAL",
               style: TextStyle(fontSize: 18, color: Colors.white70, letterSpacing: 1.5, fontWeight: FontWeight.bold),
-            ),
+            )),
             const SizedBox(height: 10),
             Text(
               StringUtils.currencyFormat(player.currentCredit),

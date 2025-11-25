@@ -19,7 +19,10 @@ class NewPropertyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(versionId == null ? 'Cadastrar Nova Propriedade' : 'Atualizar Propriedade', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(versionId == null ? 'Cadastrar Nova Propriedade' : 'Atualizar Propriedade', style: const TextStyle(fontWeight: FontWeight.bold),
+          maxLines: 2,
+          textAlign: TextAlign.center,
+        ),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         actions: [

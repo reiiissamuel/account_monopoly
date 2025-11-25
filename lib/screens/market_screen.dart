@@ -99,6 +99,7 @@ class MarketScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 21
                   ) ,
                 )
               ],
@@ -116,17 +117,22 @@ class MarketScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildInfoColumn(context, "Preço de mercado", currentMarketPrice, Colors.black),
-              _buildInfoColumn(context, "Preço pedido", askingPrice, Colors.black),
               _buildInfoColumn(
                 context,
                   "Você possui:", gameProvider.currentPlayer.portfolio.containsKey(offer.propertyId) ?
-                  gameProvider.currentPlayer.portfolio[offer.propertyId]!.sharesOwned.toString() : "0", Colors.black),
+                  gameProvider.currentPlayer.portfolio[offer.propertyId]!.sharesOwned.toString() : "0", Colors.black)
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildInfoColumn(context, "Preço pedido", askingPrice, Colors.black),
               _buildInfoColumn(context, "Disponível", available, Colors.white),
             ],
           ),
-
           // Linha de Ação (Botão Comprar)
-          const SizedBox(height: 15),
+          const Divider(color: Colors.white70),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             spacing: 5, 

@@ -414,7 +414,12 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> _updateUserModel() async {
-    await userModelController.updateUser();
+    try{
+      await userModelController.updateUser();
+    } on Exception catch(e){
+      log("Erro na tentativa salvar os dados do jogo");
+      rethrow;
+    }
   }
 
   static String _generatePlayerId({required usermodelname, required usermodelId, required gameId}){

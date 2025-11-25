@@ -80,7 +80,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
                     )),
                 const Spacer(flex:1),
                 SizedBox(
-                  height: 300.0,
+                  height: 290.0,
                   child: GridView(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4,
