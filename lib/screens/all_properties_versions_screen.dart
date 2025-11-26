@@ -112,9 +112,9 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8.0),
       height: 210.0,
-      decoration: const BoxDecoration(
-        color: Color(0xff0087a8),
-        borderRadius: BorderRadius.all(Radius.circular(15.0)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withValues(alpha: .3),
+        borderRadius: const BorderRadius.all(Radius.circular(15.0)),
       ),
       child: Container(
         padding: const EdgeInsets.all(20.0),
@@ -150,14 +150,14 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).primaryColor.withValues(alpha: .3),
                       ),
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(builder: (context) => PropertiesScreen(versionId: summary["version"])));
                       },
                       child: const Icon(
                         Icons.arrow_forward,
-                        color: Colors.green,
+                        color: Colors.white,
                         size: 50.0,
                       ),
                     ),
@@ -165,7 +165,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).primaryColor.withValues(alpha: .3),
                       ),
                       onPressed: () async {
                         showDialog(context: context, builder: (BuildContext context){
@@ -189,7 +189,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                       },
                       child: const Icon(
                         Icons.delete,
-                        color: Colors.red,
+                        color: Colors.white,
                         size: 50.0,
                       ),
                     ),

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:account_monopoly/domain/model/game_model_dto.dart';
+import 'package:account_monopoly/domain/model/game.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/repository/user_repository.dart';

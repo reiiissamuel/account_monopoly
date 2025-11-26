@@ -5,7 +5,7 @@ import 'package:account_monopoly/configuration/peer_connection_controller.dart';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
-import 'package:account_monopoly/domain/model/game_model_dto.dart';
+import 'package:account_monopoly/domain/model/game.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
 import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
@@ -131,25 +131,32 @@ class GameProvider extends ChangeNotifier {
     gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
   }
 
-  void processRoundEnding(){
-    eventComposer(type: EventType.roundBonus, price: ledger.roundBonus);
-    eventComposer(type: EventType.dividendsCalculation);
-    currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
-    gameModelDTO!.currentRound += 1;
+  Future<void> processRoundEnding() async {
+    try{
+      eventComposer(type: EventType.roundBonus, price: ledger.roundBonus);
+      eventComposer(type: EventType.dividendsCalculation);
+      currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
+      gameModelDTO!.currentRound += 1;
 
-    List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
-    if(foreclosureLoans.isNotEmpty){
-      for(var loan in foreclosureLoans){
-        if(loan.type == LoanType.bankLoan){
-          eventComposer(type: EventType.loanForeclosure, price: loan.totalDue);
-        }
-        else if(loan.type == LoanType.mortgage){
-          eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId);
+      List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
+      if(foreclosureLoans.isNotEmpty){
+        for(var loan in foreclosureLoans){
+          if(loan.type == LoanType.bankLoan){
+            eventComposer(type: EventType.loanForeclosure, price: loan.totalDue);
+          }
+          else if(loan.type == LoanType.mortgage){
+            eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId);
+          }
         }
       }
-    }
-    if (ledger.badCreditList.containsKey(currentPlayer.id)){
-      eventComposer(type: EventType.bankBlacklisted);
+      if (ledger.badCreditList.containsKey(currentPlayer.id)){
+        eventComposer(type: EventType.bankBlacklisted);
+      }
+
+      await _updateUserModel();
+    } on Exception{
+      notifyChanges(false);
+      rethrow;
     }
   }
 
@@ -242,6 +249,7 @@ class GameProvider extends ChangeNotifier {
           gameModelDTO!.othersPlayers[gameModelDTO!.player.id] = gameModelDTO!.player;
           gameModelDTO!.othersPlayers[destinationPlayer!.id] = destinationPlayer;
           event.gameData = gameModelDTO;
+          _updateUserModel();
           break;
         case EventType.lostConnection:
           gameModelDTO!.othersPlayers.remove(currentPlayer.id);
@@ -252,11 +260,11 @@ class GameProvider extends ChangeNotifier {
       }
       _sendEvent(event);
       gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
-      _updateUserModel();
       notifyChanges(false);
     } on PropertiesAlreadyUpdateException{
       notifyChanges(false);
     } on Exception{
+      notifyChanges(false);
       rethrow;
     }
   }
@@ -417,7 +425,7 @@ class GameProvider extends ChangeNotifier {
     try{
       await userModelController.updateUser();
     } on Exception catch(e){
-      log("Erro na tentativa salvar os dados do jogo");
+      log("Erro na tentativa salvar os dados do jogo: $e");
       rethrow;
     }
   }

@@ -1,4 +1,4 @@
-import 'package:account_monopoly/domain/model/game_model_dto.dart';
+import 'package:account_monopoly/domain/model/game.dart';
 import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';

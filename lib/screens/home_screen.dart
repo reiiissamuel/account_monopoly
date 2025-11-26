@@ -1,11 +1,13 @@
 import 'dart:developer';
 
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
+import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
 import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/screens/all_properties_versions_screen.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +36,7 @@ class HomeScreenState extends State<HomeScreen> {
               child: Scaffold(
                 appBar: AppBar(
                     backgroundColor: Theme.of(context).primaryColor,
-                    title: const Text("Conta Móvel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    title: const Text("Meu Monopólio", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     centerTitle: true,
                     automaticallyImplyLeading: false,
                     actions: <Widget>[
@@ -43,6 +45,12 @@ class HomeScreenState extends State<HomeScreen> {
                           child: GestureDetector(
                               child: const Icon(Icons.question_mark_rounded, color: Colors.white),
                               onTap: () => {
+                                showDialog(context: context, builder: (BuildContext context){
+                                  return const TipDialog(
+                                    tip: TipsResourse.HOME_SCREEN_TIP,
+                                    title: "Tela inicial",
+                                  );
+                                })
                               }))
                     ]
                 ),

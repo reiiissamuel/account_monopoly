@@ -1,7 +1,7 @@
 import 'dart:collection';
 
 import 'package:account_monopoly/domain/enums/game_level.dart';
-import 'package:account_monopoly/domain/model/game_model_dto.dart';
+import 'package:account_monopoly/domain/model/game.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
@@ -312,13 +312,21 @@ class NewGameScreenState extends State<NewGameScreen> {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20.0)
           ),
-          backgroundColor: Colors.black,
-          title: const Text("Resumo",
+          backgroundColor: Theme.of(context).primaryColor,
+          title: const Text("Resumo das configurações",
               style: TextStyle(color: Colors.white)),
-          content: Text(
-              "Saldo inicial: \$ ${_initialCreditController.text}\nLimite de Jogadores: $dropdownValue\nBônus da rodada: ${_bonusController.text}\n"
-                  "Nível: ${gameLevel.description}\n\nDeseja confirmar as configurações?",
-              style: const TextStyle(color: Colors.white)),
+          content: SizedBox(
+            height: 200,
+            child: Column(
+              children: [
+                const Divider(color: Colors.white70),
+                Text(
+                    "Saldo inicial: \$ ${_initialCreditController.text}\nLimite de Jogadores: $dropdownValue\nBônus da rodada: ${_bonusController.text}\n"
+                        "Nível: ${gameLevel.description}\n\nDeseja confirmar as configurações?",
+                    style: const TextStyle(color: Colors.white)),
+              ],
+            ),
+          ),
           actions: <Widget>[
             // define os botões na base do dialogo
             TextButton(

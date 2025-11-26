@@ -22,8 +22,8 @@ class Player {
   double currentCredit;
   double incomeTax;
   double taxRefund;
-  double receivedFrom;
-  double payedTo;
+  double receivedFrom; //todo variaveis não mais utilizdas
+  double payedTo; //todo variaveis não mais utilizdas
   Balance roundBalance;
   bool youWon = false;
   bool youBankrupt = false;

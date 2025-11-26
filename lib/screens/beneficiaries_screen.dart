@@ -55,9 +55,9 @@ class BeneficiariesScreen extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 8.0),
         height: 210.0,
-        decoration: const BoxDecoration(
-          color: Color(0xff0087a8),
-          borderRadius: BorderRadius.all(Radius.circular(15.0)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withValues(alpha: .3),
+          borderRadius: const BorderRadius.all(Radius.circular(15.0)),
         ),
         child: Container(
           padding: const EdgeInsets.all(20.0),
@@ -82,7 +82,7 @@ class BeneficiariesScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text(StringUtils.currencyFormat(player.receivedFrom),
+                    Text(StringUtils.currencyFormat(player.financialReport.totalIncome),
                       style: const TextStyle(color: Colors.green, fontSize: 25.0),
                     ),
                     const Icon(Icons.arrow_back, color: Colors.green, size: 50),
@@ -95,7 +95,7 @@ class BeneficiariesScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text(StringUtils.currencyFormat(player.payedTo),
+                    Text(StringUtils.currencyFormat(player.financialReport.totalExpenses),
                       style: const TextStyle(color: Colors.red, fontSize: 25.0),
                     ),
                     const Icon(Icons.arrow_forward, color: Colors.red, size: 50,),

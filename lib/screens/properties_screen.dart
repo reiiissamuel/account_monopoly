@@ -141,14 +141,14 @@ class PropertiesScreen extends StatelessWidget {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
-                        backgroundColor: Colors.white,
+                        backgroundColor: property.colorSignature.withValues(alpha: 0.3),
                       ),
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewPropertyScreen(property: property, versionId: versionId)));
                       },
                       child: const Icon(
-                        Icons.update,
-                        color: Colors.green,
+                        Icons.edit,
+                        color: Colors.white,
                         size: 50.0,
                       ),
                     ),
@@ -156,7 +156,7 @@ class PropertiesScreen extends StatelessWidget {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
-                        backgroundColor: Colors.white,
+                        backgroundColor: property.colorSignature.withValues(alpha: 0.3),
                       ),
                       onPressed: () async {
                         showDialog(context: context, builder: (BuildContext context){
@@ -178,7 +178,7 @@ class PropertiesScreen extends StatelessWidget {
                       },
                       child: const Icon(
                         Icons.delete,
-                        color: Colors.red,
+                        color: Colors.white,
                         size: 50.0,
                       ),
                     ),

@@ -60,10 +60,15 @@ class MoreOptionsDialog extends StatelessWidget {
             _optionButton(context: context, img: "icons/bonus.png", title: "Deseja retirar seu bonus?",
                 dialog: ConfirmActionDialog(title: "Deseja retirar seu bonus?",
                     textContent: "O valor será depositado em sua conta.",
-                    onConfirm: () {
-                      gameProvider.processRoundEnding();
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
+                    onConfirm: () async {
+                      try{
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                        await gameProvider.processRoundEnding();
+                      } on Exception catch(e){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                           SnackBar(content: Text("Salvamento indisponível por causa do erro: $e"), backgroundColor: Colors.red));
+                      }
               })),
             _optionButton(
                 context: context,

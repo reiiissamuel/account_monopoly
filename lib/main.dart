@@ -51,7 +51,7 @@ class AccountmonopolyAppState extends State<AccountmonopolyApp> {
         title: 'Account Monopoly',
         theme: ThemeData(
           primarySwatch: Colors.blue,
-          primaryColor: const Color(0xFF4682B4),
+          primaryColor: const Color(0xFF5f7887),
         ),
         debugShowCheckedModeBanner: false,
         routes: {
