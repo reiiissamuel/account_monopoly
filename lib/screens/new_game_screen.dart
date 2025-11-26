@@ -339,21 +339,28 @@ class NewGameScreenState extends State<NewGameScreen> {
               onPressed: !_enableConfirmButton ? null : () async {
                 try{
                   String generatedGameId = StringUtils.generateUUID(size: 8);
-                  Map<String, Property> properties = {};
-                  if (userProvider.user!.propertiesVersion![_selectedPropertyVersion] != null) {
-                    for (var originalProperty in userProvider.user!.propertiesVersion![_selectedPropertyVersion]!) {
+                  Map<String, Property> propertiesMap = {};
+                  final properties = userProvider.user!.propertiesVersion![_selectedPropertyVersion];
+
+                  if (properties != null) {
+                    // 1. Clonar e ordenar a lista original (para não modificar o objeto userProvider)
+                    var propertiesSorted = properties.toList()..sort(
+                            (a, b) => a.name.compareTo(b.name)
+                    );
+
+                    // 2. Usar a lista ordenada para construir o Map
+                    for (var originalProperty in propertiesSorted) { // Use propertiesSorted aqui
                       final newShares = int.parse(_sharesController.text);
                       final clonedProperty = originalProperty.copyWith(
                         totalShares: newShares,
                         availableShares: newShares,
                       );
-
-                      properties[clonedProperty.id] = clonedProperty;
+                      propertiesMap[clonedProperty.id] = clonedProperty;
                     }
                   }
 
                   Ledger ledger =  Ledger(
-                      properties: properties,
+                      properties: propertiesMap,
                       currentInterestRate: gameLevel.initalInterestRate,
                       propertyProfitTaxRate: gameLevel.propertyProfitTaxRate,
                       incomeTaxRate: gameLevel.incomeTaxRate,
