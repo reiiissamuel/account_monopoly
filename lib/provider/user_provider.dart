@@ -120,13 +120,13 @@ class UserProvider extends ChangeNotifier{
       );
 
       await userRepository.insertUser(userModelDTO);
+      await _getAllLocalUsers();
       user = userModelDTO;
-      isLoading = false;
-      notifyListeners();
     } on Exception catch(e){
+      throw Exception("${ConfigsConstants.newUserErrorMsg} ${e.toString()}");
+    } finally {
       isLoading = false;
       notifyListeners();
-      throw Exception("${ConfigsConstants.newUserErrorMsg} ${e.toString()}");
     }
   }
 
@@ -149,21 +149,21 @@ class UserProvider extends ChangeNotifier{
   }
 
   Future<void> deleteUser(int userId) async {
-    try{
+    isLoading = true;
+    notifyListeners();
+    try {
       await userRepository.deleteUser(userId);
-      
+      await _getAllLocalUsers();
     } on Exception {
+      rethrow;
+    } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> getAllLocalUsers() async {
-    notifyListeners();
-    isLoading = true;
+  Future<void> _getAllLocalUsers() async {
     allUsers = await userRepository.getAllUsers();
-    isLoading = false;
-    notifyListeners();
   }
 
   void signIn({required UserModelDTO userModelDTO}) {
@@ -177,14 +177,18 @@ class UserProvider extends ChangeNotifier{
   }
 
   Future<void> signOut() async {
-    isLoading = true;
-    notifyListeners();
+    try{
+      isLoading = true;
+      notifyListeners();
 
-    user = null;
-    await getAllLocalUsers();
-
-    isLoading = false;
-    notifyListeners();
+      user = null;
+      await _getAllLocalUsers();
+    }  on Exception {
+      rethrow;
+    } finally {
+      notifyListeners();
+      isLoading = false;
+    }
   }
 
   /*void recoverPass(String email){
@@ -195,17 +199,18 @@ class UserProvider extends ChangeNotifier{
     return user != null;
   }
 
-  /*Future<bool> usernameCheck(String username) async {
-
-  }*/
-
   Future<void> _loadCurrentUser() async {
-    isLoading = true;
-    notifyListeners();
-    getAllLocalUsers();
-    user ??= await userRepository.getUserWithLatestLastLogged();
-    isLoading = false;
-    notifyListeners();
+    try{
+      isLoading = true;
+      notifyListeners();
+      _getAllLocalUsers();
+      user ??= await userRepository.getUserWithLatestLastLogged();
+    } on Exception {
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> deleteGame(String gameId) async {
