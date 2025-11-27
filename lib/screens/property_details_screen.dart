@@ -1,5 +1,6 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/property_type.dart';
+import 'package:account_monopoly/domain/model/ledger.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
@@ -164,7 +165,7 @@ double _markupUsage = 0;
  }
 
  // Seção 2: Status do Ativo (Total de Ações, Valor Total, Edifícios)
- Widget _buildStatusSection(BuildContext context, Property property, dynamic ledger) {
+ Widget _buildStatusSection(BuildContext context, Property property, Ledger ledger) {
   var currentPlayer = Provider.of<GameProvider>(context).currentPlayer;
   String? owner = (currentPlayer.id == property.majorOwnerId) ? currentPlayer.username : Provider.of<GameProvider>(context).otherPlayers[property.majorOwnerId]?.username;
   return Card(
@@ -178,7 +179,7 @@ double _markupUsage = 0;
       _buildDetailRow("💰 Valor Total de Mercado (Market Cap)", StringUtils.currencyFormat(property.currentPrice), context, Colors.lightGreen),
       _buildDetailRow("🏠 Edifícios Construídos", property.buildings.toString(), context, Colors.white),
       _buildDetailRow("🏗️ Custo por construção", StringUtils.currencyFormat(property.currentBuildingCost), context, Colors.white),
-      _buildDetailRow("💸 Despesas/Rodada", "calculando...", context, Colors.red),
+      _buildDetailRow("💸 Despesas/Rodada", StringUtils.currencyFormat(property.currentPrice * ledger.propertyTaxRate), context, Colors.red),
       _buildDetailRow("🧾 Valor atual do aluguel", StringUtils.currencyFormat(property.currentRent), context, Colors.lightGreen),
       const Divider(color: Colors.white12),
       _buildDetailRow("🏷️ Ações Totais Emitidas", property.totalShares.toString(), context, Colors.white70),

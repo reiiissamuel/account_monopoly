@@ -32,7 +32,7 @@ class NewGameScreenState extends State<NewGameScreen> {
   String _selectedPropertyVersion = '';
   List<String> _propertiesVersionsOptions = [];
   int dropdownValue = 3;
-  GameLevel gameLevel = GameLevel.nomal;
+  GameLevel gameLevel = GameLevel.normal;
   List <int> spinnerItems = [2,3,4,5,6,7,8,9,10];
   bool isChanceSwitchEnabled = true;
   bool isLoanEnabled = true;
@@ -363,6 +363,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                       properties: propertiesMap,
                       currentInterestRate: gameLevel.initalInterestRate,
                       propertyProfitTaxRate: gameLevel.propertyProfitTaxRate,
+                      propertyTaxRate: gameLevel.propertyTax,
                       incomeTaxRate: gameLevel.incomeTaxRate,
                       lateFeeRate: gameLevel.lateFeeRate,
                       roundBonus: StringUtils.currencyAsDouble(_bonusController.text)

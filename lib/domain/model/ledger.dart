@@ -22,6 +22,7 @@ class Ledger {
   double roundBonus = 0.0;
   double currentInterestRate;
   double propertyProfitTaxRate;
+  double propertyTaxRate;
   double lateFeeRate = 0.05;
   double incomeTaxRate = 0.10;
   Map<String, Player> badCreditList = {};
@@ -33,6 +34,7 @@ class Ledger {
     required this.properties,
     required this.currentInterestRate,
     required this.propertyProfitTaxRate,
+    required this.propertyTaxRate,
     required this.roundBonus,
     required this.incomeTaxRate,
     required this.lateFeeRate,
@@ -45,6 +47,7 @@ class Ledger {
     properties = {},
     currentInterestRate = 0.05,
     propertyProfitTaxRate = 0.15,
+    propertyTaxRate = 0.03,
     tradeOffers = {};
 
   bool isBlacklisted(String playerId){
@@ -197,8 +200,9 @@ class Ledger {
   void updatePropertiesValuation(Player player, int referenceRound){
     properties.forEach((id, property) {
       double netRetainedProfit = property.profitToRetain * (1.0 - propertyProfitTaxRate);
+      double propertyTax = _calculatePropertyTax(property);
       _distributePayout(player, property, referenceRound);
-      property.applyValuation(netRetainedProfit, referenceRound);
+      property.applyValuation((netRetainedProfit - propertyTax), referenceRound);
     });
     lastPropertiesUpdateRound = referenceRound;
   }
@@ -212,6 +216,14 @@ class Ledger {
       item.dividendsReceived += dividendReceived;
       property.lastDividendRound = referenceRound;
       logger.i('${player.username} recebeu ${dividendReceived.toStringAsFixed(2)} da ${property.name}');
+    }
+  }
+
+  double _calculatePropertyTax(Property property){
+    if(property.availableShares < property.totalShares){
+      return propertyTaxRate * property.currentPrice;
+    } else {
+      return 0.0;
     }
   }
   
@@ -412,6 +424,7 @@ class Ledger {
       'roundBonus': roundBonus,
       'currentInterestRate': currentInterestRate,
       'propertyProfitTaxRate': propertyProfitTaxRate,
+      'propertyTaxRate': propertyTaxRate,
       'lateFeeRate': lateFeeRate,
       'incomeTaxRate': incomeTaxRate,
     };
@@ -437,6 +450,7 @@ class Ledger {
       properties: deserializeProperties(propertiesMap),
       currentInterestRate: (map['currentInterestRate'] as num?)?.toDouble() ?? 0.05,
       propertyProfitTaxRate: (map['propertyProfitTaxRate'] as num?)?.toDouble() ?? 0.15,
+      propertyTaxRate: (map['propertyTaxRate'] as num?)?.toDouble() ?? 0.03,
       roundBonus: (map['roundBonus'] as num?)?.toDouble() ?? 0.0,
       incomeTaxRate: (map['incomeTaxRate'] as num?)?.toDouble() ?? 0.1,
       lateFeeRate: (map['lateFeeRate'] as num?)?.toDouble() ?? 0.05,

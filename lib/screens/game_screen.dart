@@ -127,7 +127,7 @@ class GameScreenState extends State<GameScreen> {
                       side: BorderSide(color: Colors.black)
                   ),
                   onPressed: (){
-                    _dialogCaller(context, ConfirmActionDialog(title: "???", textContent: "Deseja pegar uma carta evento?", onConfirm:(){
+                    /*_dialogCaller(context, ConfirmActionDialog(title: "???", textContent: "Deseja pegar uma carta evento?", onConfirm:(){
                       Navigator.of(context).pop();
                       showDialog(context: context, builder: (BuildContext context){
                         if(_chances[eventDeckCount].isbenefit) {
@@ -145,7 +145,7 @@ class GameScreenState extends State<GameScreen> {
 
                     if(eventDeckCount == _chances.length) {
                       eventDeckCount -= eventDeckCount;
-                    }
+                    }*/
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(5.0),

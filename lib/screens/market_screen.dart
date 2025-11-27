@@ -412,6 +412,38 @@ class _MarketScreenState extends State<MarketScreen> {
                       onChanged: (text) {
                         setState(() {});
                       },
+                      decoration: const InputDecoration(
+                        hintText: "Ex: 100",
+                        labelText: "Quantidade de ações",
+                        labelStyle: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15.0,
+                        ),
+                        prefixIcon: Icon(Icons.account_balance_wallet_rounded, color: Colors.white),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white12, width: 3.0),
+                          borderRadius: BorderRadius.all(Radius.circular(20)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: Colors.white, width: 5.0
+                            ),
+                            borderRadius: BorderRadius.all(Radius.circular(20))
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                            borderSide: BorderSide(
+                                color: Colors.blueGrey, width: 3.0
+                            )
+                        ),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                            borderSide: BorderSide(
+                                color: Colors.blueGrey, width: 3.0
+                            )
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(

@@ -83,7 +83,6 @@ class _PayRentDialogState extends State<PayRentDialog> {
                       fontWeight: FontWeight.w500,
                       fontSize: 15.0,
                     ),
-                    prefixIcon: Icon(Icons.send, color: Theme.of(context).primaryColor),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 3.0),
                       borderRadius: const BorderRadius.all(Radius.circular(20)),
