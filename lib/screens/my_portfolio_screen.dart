@@ -270,12 +270,17 @@ class MyPortfolioScreen extends StatelessWidget {
               TextField(
                 controller: priceController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Preço por ação", "Ex:100,00")),
+                decoration: _getInputDecoration("Preço por ação", "Ex:100,00"),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  StringUtils()
+                ]
+              ),
               const SizedBox(height: 10),
               TextField(
                 controller: turnController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Prazo da oferta em turnos", "5"),
+                decoration: _getInputDecoration("Duração da oferta (Rodadas)", "5"),
               ),
             ],
           ),
@@ -289,9 +294,10 @@ class MyPortfolioScreen extends StatelessWidget {
               onPressed: () {
                 try {
                   final int? quantity = int.tryParse(quantityController.text);
-                  final double? price = double.tryParse(priceController.text);
+                  final double? price = StringUtils.currencyAsDouble(priceController.text);
                   final int? turns = int.tryParse(turnController.text);
-                  if (quantity == null || price == null || quantity > 0) {
+                  print("a $quantity b $price c$turns");
+                  if (quantity == null || price == null || quantity < 0) {
                     throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
                   }
                   final offer = TradeOffer(

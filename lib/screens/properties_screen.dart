@@ -95,20 +95,20 @@ class PropertiesScreen extends StatelessWidget {
     // Usar Provider.of com listen: false fora do build principal está OK aqui
     UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
     return Container(
-      margin: const EdgeInsets.only(bottom: 8.0),
-      height: 210.0,
+      margin: const EdgeInsets.only(bottom: 5.0),
+      height: 215.0,
       decoration: BoxDecoration(
-        color: property.colorSignature,
+        color: property.colorSignature.withValues(alpha: 0.3),
         borderRadius: const BorderRadius.all(Radius.circular(15.0)),
       ),
       child: Container(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(10.0),
         margin: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.all(Radius.circular(15.0)),
           color: property.colorSignature,
         ),
-        child: Stack(
+        child: Column(
           children: <Widget>[
             Row(
               spacing: 5,
@@ -116,74 +116,91 @@ class PropertiesScreen extends StatelessWidget {
                 Icon(property.iconSignature.icon),
                 Text( property.name,
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 21
                   ) ,
                 )
               ],
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                // Informações adicionais
-                "Valor inicial: ${StringUtils.currencyFormat(property.basePrice)} | "
-                "Aluguel inicial: ${StringUtils.currencyFormat(property.currentRent)}",
-                style: const TextStyle(color: Colors.white, fontSize: 18.0),
-              ),
-            ),
-            Align(
-                alignment: Alignment.bottomRight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Botão de Usar/Selecionar
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        backgroundColor: property.colorSignature.withValues(alpha: 0.3),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewPropertyScreen(property: property, versionId: versionId)));
-                      },
-                      child: const Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 50.0,
-                      ),
-                    ),
-                    // Botão de Excluir
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        backgroundColor: property.colorSignature.withValues(alpha: 0.3),
-                      ),
-                      onPressed: () async {
-                        showDialog(context: context, builder: (BuildContext context){
-                          return ConfirmActionDialog(
-                            title: "Alerta de Exclusão!",
-                            textContent: "Essa ação não poderá ser desfeita",
-                            onConfirm: () async {
-                              Navigator.pop(context);
-                              try{
-                                userProvider.deleteProperty(versionId, property.id);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Propriedade excluída."), backgroundColor: Colors.green));
-                              } on Exception catch(e){
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
-                              }
-                            });
-                        });
-                      },
-                      child: const Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                        size: 50.0,
-                      ),
-                    ),
-                  ],
+            const Divider(color: Colors.white70),
+            Column(
+              spacing: 2,
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  // Informações adicionais
+                  "Código: ${property.id}",
+                  style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  // Informações adicionais
+                  "Valor: ${StringUtils.currencyFormat(property.basePrice)}",
+                  style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  // Informações adicionais
+                  "Aluguel: ${StringUtils.currencyFormat(property.currentRent)}",
+                  style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
                 )
+              ],
+            ),
+            const Divider(color: Colors.white70),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Botão de Usar/Selecionar
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    shape: const CircleBorder(),
+                    backgroundColor: property.colorSignature.withValues(alpha: 0.3),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewPropertyScreen(property: property, versionId: versionId)));
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 38.0,
+                    ),
+                  )
+                ),
+                // Botão de Excluir
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    shape: const CircleBorder(),
+                    backgroundColor: property.colorSignature.withValues(alpha: 0.3),
+                  ),
+                  onPressed: () async {
+                    showDialog(context: context, builder: (BuildContext context){
+                      return ConfirmActionDialog(
+                          title: "Alerta de Exclusão!",
+                          textContent: "Essa ação não poderá ser desfeita",
+                          onConfirm: () async {
+                            Navigator.pop(context);
+                            try{
+                              userProvider.deleteProperty(versionId, property.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Propriedade excluída."), backgroundColor: Colors.green));
+                            } on Exception catch(e){
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                            }
+                          });
+                    });
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 40.0,
+                    ),
+                  ),
+                ),
+              ],
             )
           ],
         ),

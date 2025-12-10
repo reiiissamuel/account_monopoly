@@ -51,10 +51,11 @@ class LoadUserDialogState extends State<LoadUserDialog> {
                 )
             )
         )
-            : SizedBox(
+            : Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
             height: 300,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 const Text("Quem está aí?",
                     style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
@@ -135,7 +136,7 @@ class LoadUserDialogState extends State<LoadUserDialog> {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: SizedBox(
-                        width: 250,
+                        width: 170,
                         child: content,
                       ),
                     );

@@ -330,100 +330,103 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
            textAlign: TextAlign.center,),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter dialogSetState){
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Espaço disponível: ${ConfigsConstants.maxBuildings - property.buildings} construções"),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: quantityController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Quantidade de construções",
-                      hintText: "Max. 2 por compra",
-                      labelStyle: TextStyle(color: Colors.white54),
-                      hoverColor: Colors.white,
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide: BorderSide(
-                          color: Colors.white, width: 5.0
-                        )
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide: BorderSide(
-                          color: Colors.blueGrey, width: 3.0
-                        )
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide: BorderSide(
-                          color: Colors.blueGrey, width: 3.0
-                        )
-                      )
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Espaço disponível: ${ConfigsConstants.maxBuildings - property.buildings} construções"),
+                    const SizedBox(height: 15),
+                    TextField(
+                        controller: quantityController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                            labelText: "Quantidade de construções",
+                            hintText: "Max. 2 por compra",
+                            labelStyle: TextStyle(color: Colors.white54),
+                            hoverColor: Colors.white,
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                                borderSide: BorderSide(
+                                    color: Colors.white, width: 5.0
+                                )
+                            ),
+                            disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey, width: 3.0
+                                )
+                            ),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey, width: 3.0
+                                )
+                            )
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ]
                     ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly
-                    ]
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: newRentController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Novo valor do aluguel",
-                      hintText: "Indicado no cartão da propriedade",
-                      labelStyle: TextStyle(color: Colors.white54),
-                      hoverColor: Colors.white,
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide: BorderSide(
-                          color: Colors.white, width: 5.0
-                        )
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide: BorderSide(
-                          color: Colors.blueGrey, width: 3.0
-                        )
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide: BorderSide(
-                          color: Colors.blueGrey, width: 3.0
-                        )
-                      )
+                    const SizedBox(height: 15),
+                    TextField(
+                        controller: newRentController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                            labelText: "Novo valor do aluguel",
+                            hintText: "Indicado no cartão da propriedade",
+                            labelStyle: TextStyle(color: Colors.white54),
+                            hoverColor: Colors.white,
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                                borderSide: BorderSide(
+                                    color: Colors.white, width: 5.0
+                                )
+                            ),
+                            disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey, width: 3.0
+                                )
+                            ),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey, width: 3.0
+                                )
+                            )
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          StringUtils()
+                        ]
                     ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly
-                    ]
-                  ),
-                  const SizedBox(height: 15),
-                  const Center(
-                    child: Text("Qual % do markup da propriedade deseja usar",
-                    textAlign: TextAlign.center,
-                     style: TextStyle(color: Colors.white, fontSize: 12)),
-                  ),
-                  const SizedBox(height: 5),
-                  Slider(
-                    activeColor: Colors.black,
-                    value: _markupUsage,
-                    min: 0,
-                    max: 30,
-                    divisions: (30 / 5).toInt(), // 6 divisões (100/5)
-                    label: "${_markupUsage.toStringAsFixed(0)} %",
-                    onChanged: (double newValue) {
-                      dialogSetState(() {
+                    const SizedBox(height: 15),
+                    const Center(
+                      child: Text("Qual % do markup da propriedade deseja usar",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ),
+                    const SizedBox(height: 5),
+                    Slider(
+                      activeColor: Colors.black,
+                      value: _markupUsage,
+                      min: 0,
+                      max: 30,
+                      divisions: (30 / 5).toInt(), // 6 divisões (100/5)
+                      label: "${_markupUsage.toStringAsFixed(0)} %",
+                      onChanged: (double newValue) {
+                        dialogSetState(() {
                           _dialogMarkup = newValue; // Atualiza a variável local para o rebuild
                         });
                         // 4. Atualiza a variável da classe State principal (_markupUsage) para persistência
                         _markupUsage = newValue;
-                    },
-                  ),
-                  const SizedBox(height: 5),
-                  const Center(child: TipIconButton(title: "Construções", tip: TipsResourse.BUILDINGS, width: 25.0, height: 25.0, iconSize: 19.0))
-                ],
+                      },
+                    ),
+                    const SizedBox(height: 5),
+                    const Center(child: TipIconButton(title: "Construções", tip: TipsResourse.BUILDINGS, width: 25.0, height: 25.0, iconSize: 19.0))
+                  ],
+                )
               );
             }
           ),
@@ -437,7 +440,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
               onPressed: () {
                 try{
                   final int? quantity = int.tryParse(quantityController.text);
-                  final double? newRent = double.tryParse(newRentController.text);
+                  final double? newRent = StringUtils.currencyAsDouble(newRentController.text);
                   
                   if(quantity == null || newRent == null) throw MissValueException("Você não preencheu os campos.");
 

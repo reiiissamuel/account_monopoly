@@ -6,6 +6,7 @@ import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/repository/user_repository.dart';
 import 'package:account_monopoly/utils/configs_constants.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -39,7 +40,7 @@ class UserModelDTO{
     };
   }
 
-factory UserModelDTO.fromMap(int id, Map<String, dynamic> map) {
+  factory UserModelDTO.fromMap(int id, Map<String, dynamic> map) {
     // 1. Acesso Seguro e Verificação de Tipo (Correção Principal)
     final dynamic rawPropertiesVersion = map['propertiesVersion'];
     Map<String, dynamic> propertiesVersionMap = {};
@@ -222,9 +223,21 @@ class UserProvider extends ChangeNotifier{
     notifyListeners();
   }
 
+  String checkPropertyIdExistsByIdThenChange(String versionId, String propertyId){
+    if(versionId != null && user!.propertiesVersion![versionId] != null) {
+      List<Property> properties = user!.propertiesVersion![versionId]!;
+      if(properties.any((p) => p.id == propertyId)) {
+        return "${propertyId.substring(0, 2)}${StringUtils.generateUUID(size: 2).toUpperCase()}";
+      }
+    }
+
+    return propertyId;
+  }
+
   Future<void> newProperty(String versionId, Property property) async {
     var propertiesVersion = user!.propertiesVersion!;
     try{
+      isLoading = true;
       notifyListeners();
       if(propertiesVersion.containsKey(versionId)){
         if(propertiesVersion[versionId]!.any((p) => p.id == property.id)){
@@ -236,12 +249,14 @@ class UserProvider extends ChangeNotifier{
       } else {
         propertiesVersion[versionId] = [property];
       }
-      updateUser();
-      notify();
+      await updateUser();
     } on Exception {
       notifyListeners();
       rethrow;
-    } 
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> deletePropertiesCollection(String versionId) async {

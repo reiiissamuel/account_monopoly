@@ -72,8 +72,8 @@ class GameProvider extends ChangeNotifier {
       if(sourceplayer.id == currentPlayer.id) return;
       gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
       switch (event.type) {
-        case EventType.closeTurn:
-          ledger.checkTradeOffersDeadline();
+        case EventType.removeTradeOffer:
+          ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
           break;
         case EventType.transfer:
           if(destinationPlayer!.id == currentPlayer.id){
@@ -88,6 +88,9 @@ class GameProvider extends ChangeNotifier {
           break;
         case EventType.setTradeOffer:
           ledger.tradeOffers[event.tradeOffer!.offerId] = event.tradeOffer!;
+          break;
+        case EventType.removeTradeOffer:
+          ledger.finishTradeOffer(event.tradeOffer!.offerId);
           break;
         case EventType.buyFromTrade:
           if(destinationPlayer!.id == currentPlayer.id){
@@ -149,10 +152,16 @@ class GameProvider extends ChangeNotifier {
           }
         }
       }
+
       if (ledger.badCreditList.containsKey(currentPlayer.id)){
         eventComposer(type: EventType.bankBlacklisted);
       }
 
+      List<TradeOffer> expiredOffersIds = ledger.updatePlayerTradeOffersDeadline(currentPlayer.id);
+      for (var offer in expiredOffersIds) {
+        eventComposer(type: EventType.removeTradeOffer, tradeOffer: offer);
+      }
+      
       await _updateUserModel();
     } on Exception{
       notifyChanges(false);
@@ -179,9 +188,6 @@ class GameProvider extends ChangeNotifier {
       switch (event.type) {
         case EventType.propertyUpdatePayout:
           event.property = ledger.updatePropertyPayout(propertyId!, price!);
-          break;
-        case EventType.closeTurn:
-          ledger.checkTradeOffersDeadline();
           break;
         case EventType.payRent:
           event.property = ledger.processRentPayment(currentPlayer, propertyId!, price!);
@@ -225,6 +231,9 @@ class GameProvider extends ChangeNotifier {
           break;
         case EventType.setTradeOffer:
           ledger.setTradeOffer(currentPlayer, tradeOffer!);
+          break;
+        case EventType.removeTradeOffer:
+          ledger.finishTradeOffer(tradeOffer!.offerId);
           break;
         case EventType.buyFromTrade:
           ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);

@@ -62,7 +62,6 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
   PropertyType _propertyType = PropertyType.reit; // Valor inicial
   Color _colorSignature = Colors.grey; // Valor inicial
   Icon _iconSignatureData = const Icon(Bootstrap.building); // Valor inicial
-  String _propertyId = '';
   String _rentPrice = '';
   String _buildingCost = '';
 
@@ -114,14 +113,13 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
       _propertyType = widget.property!.propertyType;
       _colorSignature = widget.property!.colorSignature;
       _iconSignatureData = widget.property!.iconSignature; // Valor inicial
-      _propertyId = widget.property!.id;
       _rentPrice = StringUtils.currencyFormat(widget.property!.currentRent);
       _buildingCost = StringUtils.currencyFormat(widget.property!.currentBuildingCost);
     }
   }
 
   // Helper para criar TextFormFields para texto (String)
-  Widget _buildField({required String label, required ValueChanged<dynamic> onSave, required List<TextInputFormatter> inputsTypes,
+  Widget _buildField({required String label, required ValueChanged<dynamic> onSave, required bool digitsOnly,
    required String alertMsg, bool? enabled, int? maxLength, String? initialValue}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -140,7 +138,10 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
           hintText: alertMsg,
         ),
         style: const TextStyle(color: Colors.white),
-        inputFormatters: inputsTypes,
+        inputFormatters: digitsOnly ? [
+          FilteringTextInputFormatter.digitsOnly,
+          StringUtils(), // Aplica a formatação de moeda
+        ] : null,
         validator: (value) {
           if (value == null || value.isEmpty) {
             return alertMsg;
@@ -301,47 +302,6 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     );
   }
 
-  // Lógica de Submissão
-  void _submitForm() {
-    try{
-      if (_formKey.currentState!.validate()) {
-        _formKey.currentState!.save();
-
-        // Crie o objeto Property
-        final newProperty = Property(
-          id: _propertyId,
-          name: _name,
-          basePrice: StringUtils.currencyAsDouble(_basePrice),
-          colorSignature: _colorSignature,
-          propertyType: _propertyType,
-          iconSignature: _iconSignatureData,
-          currentRent: StringUtils.currencyAsDouble(_rentPrice),
-          currentBuildingCost: _propertyType == PropertyType.reit ? StringUtils.currencyAsDouble(_rentPrice) : 0
-        );
-        
-        Provider.of<UserProvider>(context, listen: false).newProperty(_versionid, newProperty);
-
-        // Feedback visual
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Propriedade "$_name" registrada com sucesso!''Atualização concluída.'
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pop();
-      }
-    } on Exception catch(e){
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro na tentativa de cadastro: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-    }
-  }
-
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -354,9 +314,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             _buildField(
               label:'Versão do tabuleiro', 
               onSave: (value) => _versionid = value,
-              inputsTypes: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\w \s \^\~\´\`Ç]'))
-              ],
+              digitsOnly: false,
               alertMsg: "Nome sem caracteres especiais",
               initialValue: _versionid,
               enabled: widget.property == null
@@ -364,24 +322,10 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             _buildField(
               label: 'Nome da Propriedade', 
               onSave: (value) => _name = value,
-              inputsTypes: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\w \s \^\~\´\`Ç]'))
-              ],
+                digitsOnly: false,
               alertMsg: "Nome sem caracteres especiais",
               initialValue: _name
             ),
-            _buildField(
-                label:'Escolha um código de 4 letras', 
-                onSave:(value) => _propertyId = value,
-                inputsTypes: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[A-Z]'))
-                ],
-                alertMsg: 'O código deve ter 4 letras maiúsculas',
-                maxLength: 4,
-                initialValue: _propertyId,
-                enabled: widget.property == null
-              )
-            ,
             _buildTypeDropdown(initialValue: _propertyType),
 
             _propertyType == PropertyType.reit ? _buildColorSelector() : _buildIconSelector(),
@@ -397,42 +341,83 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             _buildField(
               label: 'Preço Base', 
               onSave: (value) => _basePrice = value,
-              inputsTypes:  [
-                FilteringTextInputFormatter.digitsOnly,
-                StringUtils()
-              ],
+              digitsOnly: true,
               alertMsg: "insira um número válido",
               initialValue: _basePrice.toString()
             ),
             const SizedBox(height: 16),
             _buildField(
               label: 'Aluguel inicial', 
-              onSave: (value) => _rentPrice = value, 
-              inputsTypes:  [
-                FilteringTextInputFormatter.digitsOnly,
-                StringUtils()
-              ],
+              onSave: (value) => _rentPrice = value,
+              digitsOnly: true,
               alertMsg: "insira um número válido",
               initialValue: _rentPrice.toString()
             ),
-            _propertyType == PropertyType.reit ? 
+            if(_propertyType == PropertyType.reit) ...[
               _buildField(
-                label: 'Custo de construção', 
-                onSave: (value) => _buildingCost = value,
-                inputsTypes:  [
-                  FilteringTextInputFormatter.digitsOnly,
-                  StringUtils()
-                ],
-                alertMsg: "insira um número válido",
-                initialValue: _buildingCost.toString()
-              ) : const SizedBox(height: 0),
-            
+                  label: 'Custo de construção',
+                  onSave: (value) => _buildingCost = value,
+                  digitsOnly: true,
+                  alertMsg: "insira um número válido",
+                  initialValue: _buildingCost.toString()
+              )
+             ],
+
             const SizedBox(height: 30),
             
             ElevatedButton.icon(
               icon: const Icon(Icons.save),
               label: Text(widget.property == null ? 'Cadastrar Propriedade' : 'Atualizar Propriedade'),
-              onPressed: _submitForm,
+              onPressed: () async {
+                try{
+                  final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+                  if (_formKey.currentState!.validate()) {
+                    _formKey.currentState!.save();
+
+                    String propertyId;
+                    if(widget.property == null){
+                      propertyId = userProvider.checkPropertyIdExistsByIdThenChange(
+                          _versionid,
+                          StringUtils.generateAbrevCodeFromString(_name)
+                      );
+                    } else {
+                      propertyId = widget.property!.id;
+                    }
+
+                    // Crie o objeto Property
+                    final newProperty = Property(
+                        id: propertyId,
+                        name: _name,
+                        basePrice: StringUtils.currencyAsDouble(_basePrice),
+                        colorSignature: _colorSignature,
+                        propertyType: _propertyType,
+                        iconSignature: _iconSignatureData,
+                        currentRent: StringUtils.currencyAsDouble(_rentPrice),
+                        currentBuildingCost: _propertyType == PropertyType.reit ? StringUtils.currencyAsDouble(_buildingCost) : 0
+                    );
+
+                    await userProvider.newProperty(_versionid, newProperty);
+
+                    // Feedback visual
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Propriedade "$_name" concluída.'
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    Navigator.of(context).pop();
+                  }
+                } on Exception catch(e){
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erro na tentativa de cadastro: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,

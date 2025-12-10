@@ -1,6 +1,8 @@
 
 import 'package:account_monopoly/domain/model/game.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -23,17 +25,13 @@ class MyGamesScreen extends StatelessWidget {
         key: _scafoldKey,
         appBar: AppBar(
           backgroundColor: Theme.of(context).primaryColor,
-          title: const Text("Jogos Ativo", style: TextStyle(
+          title: const Text("Jogos Ativos", style: TextStyle(
             color: Colors.white,
               fontWeight: FontWeight.bold,
               letterSpacing: 2)),
           centerTitle: true,
           actions: [
-            Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-                child: GestureDetector(
-                    child: const Icon(Icons.question_mark_rounded, color: Colors.white),
-                    onTap: () => {}))
+            const TipIconButton(title: "Meus Jogos", tip: TipsResourse.MY_GAMES_SCREEN_TIP)
           ],
         ),
         backgroundColor: Colors.black,
@@ -60,7 +58,7 @@ class MyGamesScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  );;
+                  );
             }
           })
     );
@@ -119,10 +117,13 @@ class MyGamesScreen extends StatelessWidget {
                               const SnackBar(content: Text("Houve um erro interno na tentativa de carregar um jogo"), backgroundColor: Colors.red));
                         }
                       },
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                        size: 50.0,
+                      child: const Padding(
+                        padding: EdgeInsets.all(2),
+                        child: Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: 40.0,
+                        ),
                       ),
                     ),
                     ElevatedButton(
@@ -139,10 +140,13 @@ class MyGamesScreen extends StatelessWidget {
                           });
                         });
                       },
-                      child: const Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                        size: 50.0,
+                      child: const Padding(
+                        padding: EdgeInsets.all(2),
+                        child: Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 40.0,
+                        ),
                       ),
                     ),
                   ],

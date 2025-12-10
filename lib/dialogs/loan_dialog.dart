@@ -302,15 +302,15 @@ class LoanDialogState extends State<LoanDialog> {
       return Container();
     }
 
-    final Color indicatorColor = _selectedLoanType == 'BONUS' ? Colors.lightBlueAccent : Colors.yellow;
-    final String rateText = _selectedLoanType == 'BONUS'
-        ? "15% total (Fixo em ${BONUS_FIXED_TURNS} roundos)"
+    final Color indicatorColor = _selectedLoanType == LoanType.bankLoan ? Colors.lightBlueAccent : Colors.yellow;
+    final String rateText = _selectedLoanType == LoanType.bankLoan
+        ? "15% total (Fixo em $BONUS_FIXED_TURNS roundos)"
         : "${(ASSET_INTEREST_PER_TURN * 100).toInt()}% por roundo";
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: indicatorColor.withOpacity(0.1),
+        color: indicatorColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -343,7 +343,7 @@ class LoanDialogState extends State<LoanDialog> {
           const Text("Detalhes da Garantia:", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           const Divider(color: Colors.white12, height: 10),
           if(_selectedLoanType == LoanType.mortgage)...[
-            _buildDetailRow("Valor dos Ativos selecionados:", StringUtils.currencyFormat(_selectetShareHolderValue), Colors.white70)
+            _buildDetailRow("Valor do Ativo:", StringUtils.currencyFormat(_selectetShareHolderValue), Colors.white70)
           ],
           _buildDetailRow("Máximo liberado:", StringUtils.currencyFormat(_loanAmountAvailable), Colors.yellowAccent),
         ],
@@ -409,12 +409,12 @@ class LoanDialogState extends State<LoanDialog> {
             backgroundColor: Colors.redAccent,
             foregroundColor: Colors.white,
           ),
-          child: const Text("CANCELAR", style: TextStyle(fontSize: 15.0, letterSpacing: 1)),
+          child: const Text("CANCELAR", style: TextStyle(fontSize: 11.0)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.check),
-          label: const Text("CONCLUIR", style: TextStyle(fontSize: 15.0, letterSpacing: 1)),
+          label: const Text("CONCLUIR", style: TextStyle(fontSize: 11.0)),
           style: ElevatedButton.styleFrom(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             backgroundColor: _loanAmountAvailable > 0 ? Colors.green : Colors.grey,

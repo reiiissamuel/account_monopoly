@@ -194,7 +194,7 @@ class Ledger {
   }
 
   void finishTradeOffer(String offerId){
-    tradeOffers.remove(offerId);
+    tradeOffers.removeWhere((key, offer) => offer.offerId == offerId);
   }
 
   void updatePropertiesValuation(Player player, int referenceRound){
@@ -318,9 +318,22 @@ class Ledger {
     }
   }
   
-  void checkTradeOffersDeadline(){
-    tradeOffers.forEach((key, offer) => offer.turnsToEnd -= 1 );
-    tradeOffers.removeWhere((key, offer) => offer.turnsToEnd < 1);
+  List<TradeOffer> updatePlayerTradeOffersDeadline(String playerId){
+    List<TradeOffer> expiredOffers = <TradeOffer>[];
+    tradeOffers.forEach((key, offer){
+      if(offer.sellerPlayerId == playerId){
+        offer.turnsToEnd -= 1;
+        if (offer.turnsToEnd <= 0){
+          expiredOffers.add(tradeOffers[key]!);
+          removeTradeOffersByKey(key);
+        }
+      }
+    });
+    return expiredOffers;
+  }
+
+  void removeTradeOffersByKey(String key){
+    tradeOffers.remove(key);
   }
 
   // FUNÇÔES AUXILIAR: GESTÃO DAS DÍVIDAS

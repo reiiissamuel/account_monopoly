@@ -60,4 +60,64 @@ class StringUtils extends TextInputFormatter{
       selection: TextSelection.collapsed(offset: formattedText.length),
     );
   }
+
+  static String generateAbrevCodeFromString(String value){
+    if(value == null || value.isEmpty) throw Exception("Erro ao gerar codigo de abreviação da propriedade: Valor nulo ou vazio");
+    final StringBuffer codeBuffer = StringBuffer();
+    List<String> parts = value.toUpperCase().split(' ');
+    switch (parts.length){
+      case 1:
+        codeBuffer.write(parts[0].substring(0, 4));
+        break;
+      case 2:
+        codeBuffer.write(parts[0].substring(0,2));
+        codeBuffer.write(parts[1].substring(0,2));
+        break;
+      case 3:
+        codeBuffer.write(parts[0].substring(0,2));
+        codeBuffer.write(parts[1][0]);
+        codeBuffer.write(parts[2][0]);
+        break;
+      default:
+        codeBuffer.write(parts[0][0]);
+        codeBuffer.write(parts[1][0]);
+        codeBuffer.write(parts[2][0]);
+        codeBuffer.write(parts[3][0]);
+    }
+    return replaceDiacriticalMarks(codeBuffer.toString());
+  }
+
+  static String replaceDiacriticalMarks(String input) {
+    const Map<String, String> replacements = {
+      // A
+      'Á': 'A', 'À': 'A', 'Ã': 'A', 'Ä': 'A', 'Â': 'A', 'Å': 'A', 'Ā': 'A',
+      // E
+      'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E', 'Ē': 'E',
+      // I
+      'Í': 'I', 'Ì': 'I', 'Î': 'I', 'Ï': 'I', 'Ī': 'I',
+      // O
+      'Ó': 'O', 'Ò': 'O', 'Õ': 'O', 'Ö': 'O', 'Ô': 'O', 'Ø': 'O', 'Ō': 'O',
+      // U
+      'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'Ü': 'U', 'Ū': 'U',
+      // C
+      'Ç': 'C',
+      // N
+      'Ñ': 'N',
+      //
+      'Ÿ': 'Y',
+      // Símbolos Especiais (Ligaturas, etc.)
+      'Æ': 'AE', 'Œ': 'OE', 'Þ': 'TH', 'Đ': 'D',
+    };
+    final StringBuffer buffer = StringBuffer();
+    for (final rune in input.runes) {
+      final char = String.fromCharCode(rune);
+      final String? replacement = replacements[char];
+      if (replacement != null) {
+        buffer.write(replacement);
+      } else {
+        buffer.write(char);
+      }
+    }
+    return buffer.toString();
+  }
 }

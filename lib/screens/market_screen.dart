@@ -229,7 +229,7 @@ class _MarketScreenState extends State<MarketScreen> {
                 style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 21,
+                  fontSize: property.name.length > 20 ? 15 : 20,
                 ),
               ),
             ],
@@ -237,7 +237,7 @@ class _MarketScreenState extends State<MarketScreen> {
 
           // Origem da Oferta
           Text(
-            "Origem: ${offer.source.description}",
+            "Origem: ${offer.sellerPlayerId != gameProvider.currentPlayer.id ? offer.source.description : "Você lançou esta oferta"}",
             style: TextStyle(
               color: sourceColor,
               fontSize: 14.0,
@@ -311,7 +311,8 @@ class _MarketScreenState extends State<MarketScreen> {
                   );
                 },
               ),
-              ElevatedButton.icon(
+              offer.sellerPlayerId != gameProvider.currentPlayer.id
+              ? ElevatedButton.icon(
                 icon: const Icon(Icons.shopping_cart),
                 label: Text(offer.sharesAmount > 0 ? "COMPRAR" : "ESGOTADO"),
                 style: ElevatedButton.styleFrom(
@@ -321,10 +322,24 @@ class _MarketScreenState extends State<MarketScreen> {
                   foregroundColor: Colors.white,
                 ),
                 onPressed:
-                    offer.sharesAmount > 0 &&
-                        offer.sellerPlayerId != gameProvider.currentPlayer.id
+                offer.sharesAmount > 0 &&
+                    offer.sellerPlayerId != gameProvider.currentPlayer.id
                     ? () => _showBuySharesDialog(context, offer, gameProvider)
                     : null, // Desabilita se não houver ações
+              )
+              : ElevatedButton.icon(
+                icon: const Icon(Icons.remove_circle_rounded, color: Colors.redAccent,),
+                label: const Text("REMOVER"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed:(){
+                  gameProvider.eventComposer(
+                      type: EventType.removeTradeOffer,
+                    tradeOffer: offer
+                  );
+                }
               ),
             ],
           ),
@@ -412,6 +427,9 @@ class _MarketScreenState extends State<MarketScreen> {
                       onChanged: (text) {
                         setState(() {});
                       },
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
                       decoration: const InputDecoration(
                         hintText: "Ex: 100",
                         labelText: "Quantidade de ações",

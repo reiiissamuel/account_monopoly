@@ -1,6 +1,7 @@
 class TipsResourse{
-  //HomeScreen
+  //Screen
   static const String HOME_SCREEN_TIP = "Esta é a página inicial do aplicativo. Antes de acessar qualquer opção você precisará fazer login, para isso clique no botão 'Entrar' no canto inferior da tela.";
+  static const String MY_GAMES_SCREEN_TIP = "Nesta tela você pode acessar o histórico de todos os jogos que não foram concluído e até mesmo inicia-los a partir do ponto no qual você parou";
 
   //new screen tips
   static const String PLAYERS_LIMIT_TIP = "Limite de jogadores desta partida!";
