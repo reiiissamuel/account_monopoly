@@ -455,7 +455,7 @@ class LoanDialogState extends State<LoanDialog> {
   void _confirmLoan(BuildContext context, GameProvider gameProvider) {
 
     // Define os parâmetros finais com base na garantia
-    final bool isBonusCollateral = _selectedLoanType == LoanType.mortgage;
+    final bool isBonusCollateral = _selectedLoanType == LoanType.bankLoan;
     final int rounds = isBonusCollateral ? BONUS_FIXED_TURNS : _roundValueSelected;
     final double interestRate = isBonusCollateral ? BONUS_FIXED_INTEREST : ASSET_INTEREST_PER_TURN * rounds;
 

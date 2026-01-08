@@ -110,11 +110,12 @@ class _PayRentDialogState extends State<PayRentDialog> {
                   style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
-                      fontSize: 20.0),
+                      fontSize: 15.0
+                  ),
                   items: _properties.map<DropdownMenuItem<Property>>((Property property) {
                     return DropdownMenuItem<Property>(
                       value: property,
-                      child: Text(property.name),
+                      child: Text(property.name, maxLines: 2),
                     );
                   }).toList(),
                   onChanged: (Property? newProperty) {

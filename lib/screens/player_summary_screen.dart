@@ -292,11 +292,31 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.label),
-                  label: const Text("Pagar"),
+                  label: const Text("Pagar 25%"),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                   onPressed: () {
                     // Ação: Abrir diálogo para criar oferta de venda (P2P)
-                    _showPayLoanDialog(context, loan, gameProvider, loanColor);
+                    _showPayLoanDialog(context, loan, gameProvider, 25, loanColor);
+                  },
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.label),
+                  label: const Text("Pagar 50%"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  onPressed: () {
+                    // Ação: Abrir diálogo para criar oferta de venda (P2P)
+                    _showPayLoanDialog(context, loan, gameProvider, 50, loanColor);
+                  },
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.label),
+                  label: const Text("Pagar Valor Total"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  onPressed: () {
+                    // Ação: Abrir diálogo para criar oferta de venda (P2P)
+                    _showPayLoanDialog(context, loan, gameProvider, 100, loanColor);
                   },
                 )
               ],
@@ -307,15 +327,16 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
     );
   }
 
-  void _showPayLoanDialog(BuildContext context, Loan loan, GameProvider gameProvider, Color loanColor) {
-    final TextEditingController paymentController = TextEditingController();
+  void _showPayLoanDialog(BuildContext context, Loan loan, GameProvider gameProvider, double paymentPercentage, Color loanColor) {
+
+    double valueToPay = loan.remainingDebt * (paymentPercentage / 100);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Pagar Empréstimo",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          title: Text("Pagar ${paymentPercentage.toInt()}% do Empréstimo",
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               textAlign: TextAlign.center
           ),
           backgroundColor: loanColor,
@@ -326,36 +347,11 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
               Text("Prazo (rodadas): ${loan.roundsToPayOff}",
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
               ),
-              const SizedBox(height: 15),
               const SizedBox(height: 10),
-              TextField(
-                  controller: paymentController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                      labelText: "Qual valor deseja pagar",
-                      hintText: "Ex: 100.000",
-                      labelStyle: TextStyle(color: Colors.white54),
-                      hoverColor: Colors.white,
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                          borderSide: BorderSide(
-                              color: Colors.white, width: 5.0
-                          )
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                          borderSide: BorderSide(
-                              color: Colors.blueGrey, width: 3.0
-                          )
-                      ),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                          borderSide: BorderSide(
-                              color: Colors.blueGrey, width: 3.0
-                          )
-                      )
-                  )
+              Text("Você pagará ${StringUtils.currencyFormat(valueToPay)}.",
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)
               ),
+              const SizedBox(height: 15)
             ],
           ),
           actions: [
@@ -367,14 +363,13 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
               child: const Text("Confirmar pagamento", style: TextStyle(color: Colors.black)),
               onPressed: () {
                 try {
-                  final double? payment = double.tryParse(paymentController.text);
-                  if (payment == null || payment! < 0) {
-                    throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
+                  if (valueToPay == null || valueToPay! < 0) {
+                    throw MissValueException("Você não preencheu os campos corretamento ou a quantidade é inválida.");
                   }
                   gameProvider.eventComposer(
                       type: EventType.loanPayment,
                       loan: loan,
-                      price: payment
+                      price: valueToPay
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Pagamento realizado"), backgroundColor: Colors.green));
@@ -384,7 +379,7 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                 }
                 Navigator.pop(context);
               },
-            ),
+            )
           ],
         );
       },
