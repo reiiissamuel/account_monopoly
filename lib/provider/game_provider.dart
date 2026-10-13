@@ -1,7 +1,7 @@
 
 import 'dart:developer';
 
-import 'package:account_monopoly/configuration/peer_connection_controller.dart';
+import 'package:account_monopoly/configuration/peer_connection_controller_v2.dart';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
@@ -22,7 +22,7 @@ import 'package:account_monopoly/domain/enums/event_type.dart';
 
 class GameProvider extends ChangeNotifier {
   late UserProvider userModelController;
-  PeerConnectionController? peerConnectionController;
+  PeerConnectionControllerV2? peerConnectionController;
   GameModelDTO? gameModelDTO;
   bool isLoading = false;
   List<EventDTO> events = [];
@@ -89,16 +89,13 @@ class GameProvider extends ChangeNotifier {
         case EventType.setTradeOffer:
           ledger.tradeOffers[event.tradeOffer!.offerId] = event.tradeOffer!;
           break;
-        case EventType.removeTradeOffer:
-          ledger.finishTradeOffer(event.tradeOffer!.offerId);
-          break;
         case EventType.buyFromTrade:
           if(destinationPlayer!.id == currentPlayer.id){
             currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount, event.tradeOffer!.totalAskingPrice);
           } else {
             gameModelDTO!.updateOtherPlayers(destinationPlayer);
           }
-          ledger.finishTradeOffer(event.tradeOffer!.offerId);
+          ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
           break;
         case EventType.mortgageForeclosure:
           ledger.bankPortfolio[event.property!.id] = ShareHolder(
@@ -233,7 +230,7 @@ class GameProvider extends ChangeNotifier {
           ledger.setTradeOffer(currentPlayer, tradeOffer!);
           break;
         case EventType.removeTradeOffer:
-          ledger.finishTradeOffer(tradeOffer!.offerId);
+          ledger.removeTradeOffersByKey(tradeOffer!.offerId);
           break;
         case EventType.buyFromTrade:
           ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);
@@ -388,7 +385,7 @@ class GameProvider extends ChangeNotifier {
     this.gameModelDTO = gameModelDTO;
     _createPeerConnectionController(peerId: this.gameModelDTO!.player.id);
     try {
-      peerConnectionController!.reconnect();
+      peerConnectionController!.reconnectToLastHost();
     } on Exception catch(e) {
       log("Erro ao tentar carrega um jogo existente: $e");
       rethrow;
@@ -406,7 +403,7 @@ class GameProvider extends ChangeNotifier {
 
     try{
       if(userModelController.checkHasGameById(gameId)){
-        throw GameAlreadyInPlayerListException;
+        throw GameAlreadyInPlayerListException();
       }
       _createPeerConnectionController(
           peerId: GameProvider._generatePlayerId(
@@ -426,7 +423,7 @@ class GameProvider extends ChangeNotifier {
 
   void _createPeerConnectionController({required String peerId}){
     Peer peer = Peer(id: peerId);
-    peerConnectionController = PeerConnectionController(
+    peerConnectionController = PeerConnectionControllerV2(
         gameModelController: this, peer: peer, myPeerId: peerId);
   }
 
@@ -466,3 +463,5 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+

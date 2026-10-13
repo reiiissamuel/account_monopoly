@@ -14,7 +14,6 @@ class NewUserDialog extends StatefulWidget {
 }
 
 class NewUserDialogState extends State<NewUserDialog> {
-
   late UserProvider userProvider;
 
   static const String NAME_HINT_TEXT = "Me diga seu nome.";
@@ -33,7 +32,7 @@ class NewUserDialogState extends State<NewUserDialog> {
       backgroundColor: Colors.black,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0)),
-      child: userProvider.isLoading ?
+      child: userProvider.isLoading ? 
      const Center(child: CircularProgressIndicator()) :
       Container(
           decoration: BoxDecoration(
@@ -116,7 +115,14 @@ class NewUserDialogState extends State<NewUserDialog> {
                               name: _nameController.text,
                               username: _usernameController.text
                           );
-                          userProvider.signIn(userModelDTO: userProvider.allUsers.firstWhere((u) => u.username == _nameController.text));
+                          if (userProvider.allUsers.isNotEmpty) {
+                            var user = userProvider.allUsers.firstWhere((u) => u.username == _nameController.text);
+                            userProvider.signIn(userModelDTO: user);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Nenhum usuário encontrado')),
+                            );
+                          }
                         }
                       },
                       child: const Text("Prosseguir",

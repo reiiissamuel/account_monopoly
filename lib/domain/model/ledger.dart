@@ -190,11 +190,7 @@ class Ledger {
     }
     
     // 4. FINALIZAÇÃO
-    finishTradeOffer(tradeOffer.offerId);
-  }
-
-  void finishTradeOffer(String offerId){
-    tradeOffers.removeWhere((key, offer) => offer.offerId == offerId);
+    removeTradeOffersByKey(tradeOffer.offerId);
   }
 
   void updatePropertiesValuation(Player player, int referenceRound){
