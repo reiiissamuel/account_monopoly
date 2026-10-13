@@ -45,7 +45,13 @@ class AccountmonopolyAppState extends State<AccountmonopolyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => UserProvider()),
-        ChangeNotifierProvider(create: (context) => GameProvider())
+        ChangeNotifierProxyProvider<UserProvider, GameProvider>(
+          create: (context) => GameProvider(
+            userModelController: Provider.of<UserProvider>(context, listen: false),
+          ),
+          update: (context, userProvider, gameProvider) => 
+            gameProvider ?? GameProvider(userModelController: userProvider),
+          )
       ],
       child: MaterialApp(
         title: 'Account Monopoly',

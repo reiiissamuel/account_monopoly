@@ -35,7 +35,8 @@ class GameProvider extends ChangeNotifier {
     events = [];
     lastEventReceived = null;
   }
-  GameProvider();
+  
+  GameProvider({required this.userModelController});
 
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
