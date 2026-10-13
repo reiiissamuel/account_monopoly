@@ -35,7 +35,7 @@ class GameProvider extends ChangeNotifier {
     events = [];
     lastEventReceived = null;
   }
-  
+
   GameProvider({required this.userModelController});
 
   Ledger get ledger => gameModelDTO!.ledger;
@@ -167,7 +167,7 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  void eventComposer({required EventType type, Player? destinationPlayer, Player? sourcePlayer, int? quantity, double? price, int? markupUsage,
+  void eventComposer({required EventType type, Player? destinationPlayer, Player? sourcePlayer, int? quantity, double? price, int? reserveUsage,
    String? propertyId, int? newBuildings, TradeOffer? tradeOffer, Loan? loan}) {
     try{
       notifyChanges(true);
@@ -243,7 +243,7 @@ class GameProvider extends ChangeNotifier {
           event.price = currentPlayer.roundBalance.dividendsIn;
           break;
         case EventType.build:
-          event.property = ledger.processBuildingPurchase(currentPlayer, propertyId!, newBuildings!, price!, markupUsage!);
+          event.property = ledger.processBuildingPurchase(currentPlayer, propertyId!, newBuildings!, price!, reserveUsage!);
           break;
         case EventType.bankruptcy:
           //

@@ -400,17 +400,17 @@ class Ledger {
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DE CONSTRUÇÔES
-  Property processBuildingPurchase(Player player, String propertyId, int newBuildings, double buildingRentIncrease, int markupUsagePercentage) {
+  Property processBuildingPurchase(Player player, String propertyId, int newBuildings, double buildingRentIncrease, int reserveUsagePercentage) {
     var property = properties[propertyId];
     var totalCost = newBuildings * property!.currentBuildingCost;
-    var markupUsageCost = totalCost * (markupUsagePercentage/100);
-    var playerCost = totalCost - markupUsageCost;
+    var reserveUsageCost = totalCost * (reserveUsagePercentage/100);
+    var playerCost = totalCost - reserveUsageCost;
     try{
       if(isBlacklisted(player.id)) throw(BlackListedException(ConfigsConstants.blackListErrorMsg));
-      property.checkIfEnoughMarkup(markupUsageCost);
+      property.checkIfEnoughReserve(reserveUsageCost);
       
       player.payDebit(playerCost);
-      property.addBuilding(buildingRentIncrease, newBuildings, markupUsageCost);
+      property.addBuilding(buildingRentIncrease, newBuildings, reserveUsageCost);
       player.roundBalance.buildingPurchasesOut += playerCost;
       logger.i('🏗️ ${player.username} construiu em ${property.name}.');
       return property;

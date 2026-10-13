@@ -89,7 +89,7 @@ class Property {
   void addBuilding(
     double buildingRentIncrease,
     int amountBuildings,
-    double markupUsage,
+    double reserveUsage,
   ) {
     if (amountBuildings + buildings > ConfigsConstants.maxBuildings) {
       throw MaxBuildingsException(ConfigsConstants.maxBuildingsErrorMsg);
@@ -98,12 +98,12 @@ class Property {
     currentRent = buildingRentIncrease > currentRent
         ? buildingRentIncrease
         : currentRent;
-    currentPrice -= markupUsage;
+    currentPrice -= reserveUsage;
   }
 
-  void checkIfEnoughMarkup(double value) {
+  void checkIfEnoughReserve(double value) {
     if (currentPrice < value) {
-      throw NotEnoughMarkUPException(ConfigsConstants.notEnoughMarkupErrorMsg);
+      throw NotEnoughReserveException(ConfigsConstants.notEnoughReserveErrorMsg);
     }
   }
 

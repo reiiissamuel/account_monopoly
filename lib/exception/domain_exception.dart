@@ -19,8 +19,8 @@ class MissValueException extends DomainException {
   MissValueException(super.message);
 }
 
-class NotEnoughMarkUPException extends DomainException {
-  NotEnoughMarkUPException(super.message);
+class NotEnoughReserveException extends DomainException {
+  NotEnoughReserveException(super.message);
 }
 
 class MaxBonnusLoansException extends DomainException {

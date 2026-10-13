@@ -14,7 +14,7 @@ class TipsResourse{
   static const String VERSION = "Nome do lote onde cadastrou previamente as propriedades que deseja usar no jogo.\nCaso um valor não seja selecionado, o cadastro acontecerá durante o jogo";
 
   //property detail screen tips
-  static const String BUILDINGS = "🏡Contruir em um propriedade gerará novos impostos, mas também elevará o valor do seu aluguel.";
+  static const String BUILDINGS = "🏡Construir em uma propriedade aumenta aluguel recebido, mas eleva os custos de manutenção.\n💡É possível financiar parte da construção com reservas da propriedade: você gasta menos do bolso, mas o preço das ações reflete essa descapitalização inicial.";
 
   static const String PROPERTIES = "Cadastre as propriedades do seu tabuleiro para usá-las no app. Você pode cadastrar diferentes versões de banco imobiliário.";
 

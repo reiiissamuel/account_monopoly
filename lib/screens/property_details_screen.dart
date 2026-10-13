@@ -29,7 +29,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
 int payout = 0;
 bool _payoutInitialized = false;
 
-double _markupUsage = 0;
+double _propertyReserveUsage = 0;
 
  @override
  Widget build(BuildContext context) {
@@ -319,7 +319,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
  void _processBuildingPurchase(BuildContext context, Property property, GameProvider gameProvider) {
     final TextEditingController quantityController = TextEditingController();
     final TextEditingController newRentController = TextEditingController();
-    double _dialogMarkup = _markupUsage;
+    double _dialogReserveUsage = _propertyReserveUsage;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -403,24 +403,24 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
                     ),
                     const SizedBox(height: 15),
                     const Center(
-                      child: Text("Qual % do markup da propriedade deseja usar",
+                      child: Text("Quanto deseja usar das reservas do imóvel?",
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white, fontSize: 12)),
                     ),
                     const SizedBox(height: 5),
                     Slider(
                       activeColor: Colors.black,
-                      value: _markupUsage,
+                      value: _propertyReserveUsage,
                       min: 0,
                       max: 30,
                       divisions: (30 / 5).toInt(), // 6 divisões (100/5)
-                      label: "${_markupUsage.toStringAsFixed(0)} %",
+                      label: "${_propertyReserveUsage.toStringAsFixed(0)} %",
                       onChanged: (double newValue) {
                         dialogSetState(() {
-                          _dialogMarkup = newValue; // Atualiza a variável local para o rebuild
+                          _dialogReserveUsage = newValue; // Atualiza a variável local para o rebuild
                         });
-                        // 4. Atualiza a variável da classe State principal (_markupUsage) para persistência
-                        _markupUsage = newValue;
+                        // 4. Atualiza a variável da classe State principal (_propertyReserveUsage) para persistência
+                        _propertyReserveUsage = newValue;
                       },
                     ),
                     const SizedBox(height: 5),
@@ -449,7 +449,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
                     propertyId: property.id,
                     newBuildings: quantity,
                     price: newRent,
-                    markupUsage: _markupUsage.toInt()
+                    reserveUsage: _propertyReserveUsage.toInt()
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Construção iniciada"), backgroundColor: Colors.green));
