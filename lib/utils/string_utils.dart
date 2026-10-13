@@ -28,9 +28,24 @@ class StringUtils extends TextInputFormatter{
   }
 
   static double currencyAsDouble(String input) {
-    final num parsedValue = _currencyFormat.parse(input);
-    return parsedValue.toDouble();
+  if (input.trim().isEmpty) {
+    return 0.0;
   }
+  
+  try {
+    // Tenta o parse estrito do NumberFormat
+    return _currencyFormat.parse(input).toDouble();
+  } catch (_) {
+    // Fallback robusto caso venha com espaços extras ou formatação parcial da UI
+    final cleaned = input
+        .replaceAll('\$', '')
+        .replaceAll(' ', '')
+        .replaceAll('.', '') // Remove pontos de milhar, se houver
+        .replaceAll(',', '.'); // Troca a vírgula decimal por ponto para o double.tryParse
+        
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+}
 
   static String unformatAsString(String input){
     return input.replaceAll("\$", "").replaceAll(".", "").replaceAll(",", "");

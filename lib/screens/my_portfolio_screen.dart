@@ -281,6 +281,9 @@ class MyPortfolioScreen extends StatelessWidget {
                 controller: turnController,
                 keyboardType: TextInputType.number,
                 decoration: _getInputDecoration("Duração da oferta (Rodadas)", "5"),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly
+                ]
               ),
             ],
           ),
