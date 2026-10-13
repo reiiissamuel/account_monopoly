@@ -423,9 +423,18 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _createPeerConnectionController({required String peerId}){
+    // Destrói o peer anterior se ele já existir, evitando conflitos de socket e stream
+    if (peerConnectionController != null) {
+      peerConnectionController!.destroy();
+      peerConnectionController = null;
+    }
+
     Peer peer = Peer(id: peerId);
     peerConnectionController = PeerConnectionControllerV2(
-        gameModelController: this, peer: peer, myPeerId: peerId);
+      gameModelController: this, 
+      peer: peer, 
+      myPeerId: peerId,
+    );
   }
 
   Future<void> _updateUserModel() async {

@@ -295,6 +295,7 @@ class PeerConnectionControllerV2 {
         username: extractedUsername,
         id: incomingPeerId,
       );
+      newPlayer.currentCredit = gameModel.initalGameCredit;
 
       gameModelController.eventComposer(
         type: EventType.serverHandShake,
@@ -302,4 +303,15 @@ class PeerConnectionControllerV2 {
       );
     }
   }
+
+  /// Desconecta a instância atual do peer de forma segura e limpa as conexões ativas
+  void destroy() {
+    closeConnection();
+    try {
+      peer.disconnect();
+    } catch (e) {
+      log("Erro ao desconectar o peer anterior: $e");
+    }
+  }
+  
 }
