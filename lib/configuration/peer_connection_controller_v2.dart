@@ -55,12 +55,7 @@ class PeerConnectionControllerV2 {
 
       event.on("open").listen((_) {
         log('$CONNECTION_RECEIVED_MSG ${event.peer}');
-
-        // Handshake original mantido: Apenas o Server precisa enviar o Handshake
-        gameModelController.eventComposer(
-          type: EventType.serverHandShake,
-          destinationPlayer: Player.ofDefinedId(username: "", id: event.peer),
-        );
+        handleIncomingPeerConnection(event.peer);
       });
 
       event.on("data").listen((data) {
@@ -247,6 +242,64 @@ class PeerConnectionControllerV2 {
       } else {
         log("Erro ao enviar dados: Conexão com o Host não está aberta.");
       }
+    }
+  }
+
+  /// Analisa a conexão recebida e trata caso seja uma reconexão ou um novo jogador
+  void handleIncomingPeerConnection(String incomingPeerId) {
+    final gameModel = gameModelController.gameModelDTO;
+    if (gameModel == null) return;
+
+    final incomingParts = incomingPeerId.split('-');
+    
+    if (incomingParts.length >= 2) {
+      final baseIdentifier = '${incomingParts[0]}-${incomingParts[1]}';
+      final extractedUsername = incomingParts[0];
+
+      String? existingKey;
+      Player? existingPlayer;
+
+      // Procura se já existe um jogador com a mesma base (mesmo usuário que caiu e voltou)
+      for (var entry in gameModel.othersPlayers.entries) {
+        final existingParts = entry.key.split('-');
+        if (existingParts.length >= 2) {
+          final existingBaseId = '${existingParts[0]}-${existingParts[1]}';
+          if (existingBaseId == baseIdentifier) {
+            existingKey = entry.key;
+            existingPlayer = entry.value;
+            break;
+          }
+        }
+      }
+
+      // CASO 1: Jogador reconectado após um crash (Usa o copyWith para substituir o ID sem perder o estado)
+      if (existingKey != null && existingPlayer != null && existingKey != incomingPeerId) {
+        log("Jogador reconectado detetado: ${existingPlayer.username}. Atualizando PeerID de $existingKey para $incomingPeerId");
+
+        gameModel.othersPlayers.remove(existingKey);
+
+        // Chamada limpa que substitui o Player.ofDefinedId e preserva todo o histórico
+        Player updatedPlayer = existingPlayer.copyWith(id: incomingPeerId);
+
+        gameModel.othersPlayers[incomingPeerId] = updatedPlayer;
+
+        gameModelController.eventComposer(
+          type: EventType.serverHandShake,
+          destinationPlayer: updatedPlayer,
+        );
+        return;
+      }
+
+      // CASO 2: Jogador totalmente novo
+      final newPlayer = Player.ofDefinedId(
+        username: extractedUsername,
+        id: incomingPeerId,
+      );
+
+      gameModelController.eventComposer(
+        type: EventType.serverHandShake,
+        destinationPlayer: newPlayer,
+      );
     }
   }
 }

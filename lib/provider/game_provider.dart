@@ -441,25 +441,34 @@ class GameProvider extends ChangeNotifier {
     return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
   }
 
-  void _dealHostHandShakeEvent(EventDTO event){
-    if(gameModelDTO == null){
-      gameModelDTO = event.gameData;
+  void _dealHostHandShakeEvent(EventDTO event) {
+    // 1. O Host enviou o estado completo do jogo em event.gameData
+    gameModelDTO = event.gameData;
+
+    final myId = peerConnectionController!.myPeerId;
+
+    // 2. Verifica se o Host já mapeou este jogador na lista (seja por reconexão ou nova entrada)
+    if (gameModelDTO!.othersPlayers.containsKey(myId)) {
+      // Restaura o player exato com todo o saldo, propriedades e histórico guardados
+      gameModelDTO!.player = gameModelDTO!.othersPlayers[myId]!;
     } else {
-      gameModelDTO!.othersPlayers.clear();
+      // Fallback de segurança para um jogador totalmente novo caso não venha no mapa
+      gameModelDTO!.player = Player.ofDefinedId(
+        id: myId,
+        username: userModelController.user!.username,
+      );
+      gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
+      gameModelDTO!.othersPlayers[myId] = gameModelDTO!.player;
     }
 
-    gameModelDTO!.player = Player.ofDefinedId(
-        id: peerConnectionController!.myPeerId,
-        username: userModelController.user!.username
-    );
-    gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
-    gameModelDTO!.updateOtherPlayers(event.sourcePlayer); //add hostplayer as otherplayer
-    gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
+    // 3. Notifica a mesa que o jogador está ativo / na mesa
     _sendEvent(EventDTO(
-        referenceRound: 0,
-        type: EventType.joinTable,
-        destinationPlayer: event.sourcePlayer,
-        sourcePlayer: gameModelDTO!.player));
+      referenceRound: 0,
+      type: EventType.joinTable,
+      destinationPlayer: event.sourcePlayer,
+      sourcePlayer: gameModelDTO!.player,
+    ));
+
     isLoading = false;
     notifyListeners();
   }

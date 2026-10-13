@@ -76,7 +76,7 @@ class Player {
     portfolio: {},
   );
 
-   Player.ofDefinedId({required String username, required id}) : this(
+  Player.ofDefinedId({required String username, required id}) : this(
     id: id,
     username: username,
     isHost: false,
@@ -85,7 +85,30 @@ class Player {
     financialReport: FinancialReport.empty(),
     roundBalance: Balance.empty(),
     loans: [],
-    portfolio: {});
+    portfolio: {}
+  );
+
+  Player copyWith({
+    String? id,
+    String? username,
+    bool? isHost,
+    double? currentCredit,
+    FinancialReport? financialReport,
+    Balance? roundBalance,
+    List<Loan>? loans,
+    Map<String, ShareHolder>? portfolio,
+  }) {
+    return Player(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      isHost: isHost ?? this.isHost,
+      currentCredit: currentCredit ?? this.currentCredit,
+      financialReport: financialReport ?? this.financialReport,
+      roundBalance: roundBalance ?? this.roundBalance,
+      loans: loans ?? List<Loan>.from(this.loans),
+      portfolio: portfolio ?? Map<String, ShareHolder>.from(this.portfolio),
+    );
+  }
   
   void upgradePortfolio(String propertyId, int sharesAmount, double totalCost) {
     if(portfolio.containsKey(propertyId)) {
