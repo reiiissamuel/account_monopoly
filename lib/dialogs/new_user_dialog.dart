@@ -2,7 +2,6 @@ import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/service/google_login.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 
 
@@ -128,25 +127,6 @@ class NewUserDialogState extends State<NewUserDialog> {
                       child: const Text("Prosseguir",
                           style: TextStyle(fontSize: 14.0, color:Colors.white)),
                     )),
-                    
-                const SizedBox(height: 16.0),
-                SignInButton(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0)
-                ),
-                  Buttons.Google,
-                  text: "Entrar com Google",
-                  onPressed: () async {
-                    var googleUser = await GoogleLogin.login();
-                    /* UserModelController.of(context).signUp(
-                      name: googleUser?.displayName,
-                      username: googleUser?.displayName,
-                      context: context,
-                      onSuccess: _onSuccess,
-                      onFail: _onFail
-                    ); */
-                  },
-                )
               ],
             ),
           ))
