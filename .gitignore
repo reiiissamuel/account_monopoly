@@ -44,11 +44,11 @@ app.*.map.json
 /android/app/release
 
 # Windows Desktop
-windows/flutter/ephemeral/
+windows/flutter/
 
 # Linux Desktop
-linux/flutter/ephemeral/
+linux/flutter/
 
 # macOS Desktop
-macos/Flutter/Generated/
+macos/Flutter/
 
