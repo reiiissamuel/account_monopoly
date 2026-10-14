@@ -28,4 +28,34 @@ class TradeOffer {
 
   // Cálculo de conveniência
   double get totalAskingPrice => sharesAmount * askingPrice;
+
+  Map<String, dynamic> toMap() {
+  return {
+    'offerId': offerId,
+    'sellerPlayerId': sellerPlayerId,
+    'propertyId': propertyId,
+    'sharesAmount': sharesAmount,
+    'askingPrice': askingPrice,
+    'source': source.name,
+    'currentMarketPrice': currentMarketPrice,
+    'colorSignature': colorSignature.value,
+    'propertyName': propertyName,
+    'turnsToEnd': turnsToEnd,
+  };
+  }
+
+  factory TradeOffer.fromMap(Map<String, dynamic> map) {
+    return TradeOffer(
+      offerId: map['offerId'] as String,
+      sellerPlayerId: map['sellerPlayerId'] as String,
+      propertyId: map['propertyId'] as String,
+      sharesAmount: map['sharesAmount'] as int,
+      askingPrice: (map['askingPrice'] as num).toDouble(),
+      source: OfferSource.values.firstWhere((e) => e.name == map['source']),
+      currentMarketPrice: (map['currentMarketPrice'] as num).toDouble(),
+      colorSignature: Color(map['colorSignature'] as int),
+      propertyName: map['propertyName'] as String,
+      turnsToEnd: map['turnsToEnd'] as int,
+    );
+  }
 }

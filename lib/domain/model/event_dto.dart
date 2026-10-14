@@ -47,6 +47,7 @@ class EventDTO{
       "quantity": quantity,
       "gameData": gameData?.toMap(),
       "property": property?.toMap(),
+      "tradeOffer": tradeOffer?.toMap(),
       'referenceRound': referenceRound
     };
   }
@@ -62,6 +63,7 @@ class EventDTO{
         price: (map['price'] as num?)?.toDouble(),
         gameData: map['gameData'] != null ? GameModelDTO.fromMap( map['gameData']) : null,
         property: map['property'] != null ? Property.fromMap(map['property']) : null,
+        tradeOffer: map['tradeOffer'] != null ? TradeOffer.fromMap(map['tradeOffer']) : null,
         referenceRound: (map['referenceRound'] as num?)?.toInt() ?? 0
     );}
 }
