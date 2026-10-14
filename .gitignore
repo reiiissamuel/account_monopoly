@@ -42,3 +42,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Windows Desktop
+windows/flutter/ephemeral/
+
+# Linux Desktop
+linux/flutter/ephemeral/
+
+# macOS Desktop
+macos/Flutter/Generated/
+
