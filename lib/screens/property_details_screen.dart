@@ -442,8 +442,9 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
                   final int? quantity = int.tryParse(quantityController.text);
                   final double? newRent = StringUtils.currencyAsDouble(newRentController.text);
                   
-                  if(quantity == null || newRent == null) throw MissValueException("Você não preencheu os campos.");
-
+                  if(quantity == null || newRent == null || quantity <= 0 || newRent <= 0) throw MissValueException("Valores inválidos. Tente novamente.");
+                  if(quantity > 2) throw MissValueException("A quantidade máxima de construções por rodada é 2.");
+                  
                   gameProvider.eventComposer(
                     type: EventType.build,
                     propertyId: property.id,

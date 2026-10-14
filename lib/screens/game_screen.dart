@@ -16,7 +16,6 @@ import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/chance_dialog.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
-import 'package:account_monopoly/dialogs/custom_keyboard_dialog.dart';
 import 'package:account_monopoly/dialogs/table_info_dialog.dart';
 import 'package:account_monopoly/domain/model/chance.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
@@ -73,7 +72,7 @@ class GameScreenState extends State<GameScreen> {
                 backgroundColor: Theme.of(context).primaryColor,
                 automaticallyImplyLeading: false,
                 title: Text(
-                  "Painel ${gameProvider!.currentPlayer.username}",
+                  "Painel ${gameProvider.currentPlayer.username}",
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   style: const TextStyle(

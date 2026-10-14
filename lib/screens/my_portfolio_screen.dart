@@ -150,13 +150,13 @@ class MyPortfolioScreen extends StatelessWidget {
             children: [
               _buildInfoColumn(
                   "Última distribuição",
-                  "Rodada ${property!.lastDividendRound}", Colors.white70),
+                  "Rodada ${property.lastDividendRound}", Colors.white70),
 
-              if(property!.checkMajorOwnerById(gameProvider.currentPlayer.id)) ...[
+              if(property.checkMajorOwnerById(gameProvider.currentPlayer.id)) ...[
                 const SizedBox(
                   height: 50,
                   width: 180,
-                  child: const Text("👨‍💼 Você é o maior acionista desta empresa",
+                  child: Text("👨‍💼 Você é o maior acionista desta empresa",
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     style: TextStyle(
@@ -298,17 +298,17 @@ class MyPortfolioScreen extends StatelessWidget {
                   final int? quantity = int.tryParse(quantityController.text);
                   final double? price = StringUtils.currencyAsDouble(priceController.text);
                   final int? turns = int.tryParse(turnController.text);
-                  print("a $quantity b $price c$turns");
-                  if (quantity == null || price == null || quantity < 0) {
+                  
+                  if (quantity == null || price == null || turns == null || turns <= 0 || price <= 0|| quantity <= 0) {
                     throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
                   }
                   final offer = TradeOffer(
                     offerId: StringUtils.generateUUID(size: 5),
                     propertyId: property.id,
                     sellerPlayerId: gameProvider.currentPlayer.id,
-                    sharesAmount: quantity!,
-                    askingPrice: price!,
-                    turnsToEnd: turns ?? 0,
+                    sharesAmount: quantity,
+                    askingPrice: price,
+                    turnsToEnd: turns,
                     source: OfferSource.playerMarket, 
                     currentMarketPrice: property.currentPrice, 
                     colorSignature: property.colorSignature, 
