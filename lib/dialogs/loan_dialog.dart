@@ -37,10 +37,10 @@ class LoanDialogState extends State<LoanDialog> {
 
   // --- CONSTANTES DE NEGÓCIO ---
 
-  static const double ASSET_LIQUIDATION_FACTOR = 0.80; // porcentagem do ativo hipotecado para emprestimo
-  static const double ASSET_INTEREST_PER_TURN = 0.05;  // 5% de juros por roundo
-  static const int BONUS_FIXED_TURNS = 3;              // 3 roundos fixos para bônus
-  static const double BONUS_FIXED_INTEREST = 0.15;      // 15% de juros fixos para bônus
+  static const double assetLiquidationFactor = 0.80; // porcentagem do ativo hipotecado para emprestimo
+  static const double assetInteresPerTurn = 0.05;  // 5% de juros por roundo
+  static const int bonusFixedTurns = 3;              // 3 roundos fixos para bônus
+  static const double bonusFixedInterest = 0.15;      // 15% de juros fixos para bônus
 
   // --- GETTERS DE VALOR CALCULADO ---
 
@@ -51,7 +51,7 @@ class LoanDialogState extends State<LoanDialog> {
       return gameProvider.ledger.roundBonus;
     } else if (_selectedLoanType == LoanType.mortgage) {
       // 80% do valor atual do ativo
-      return _selectetShareHolderValue * ASSET_LIQUIDATION_FACTOR;
+      return _selectetShareHolderValue * assetLiquidationFactor;
     }
     return 0.0;
   }
@@ -298,14 +298,11 @@ class LoanDialogState extends State<LoanDialog> {
 
   // Informações de Taxa de Juros
   Widget _buildRateInfoCard(BuildContext context) {
-    if (_selectedLoanType == null) {
-      return Container();
-    }
 
     final Color indicatorColor = _selectedLoanType == LoanType.bankLoan ? Colors.lightBlueAccent : Colors.yellow;
     final String rateText = _selectedLoanType == LoanType.bankLoan
-        ? "15% total (Fixo em $BONUS_FIXED_TURNS roundos)"
-        : "${(ASSET_INTEREST_PER_TURN * 100).toInt()}% por roundo";
+        ? "15% total (Fixo em $bonusFixedTurns roundos)"
+        : "${(assetInteresPerTurn * 100).toInt()}% por roundo";
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -437,11 +434,11 @@ class LoanDialogState extends State<LoanDialog> {
     if (loanAmount > 0) {
       if (_selectedLoanType == LoanType.bankLoan) {
         // BÔNUS: Taxa e roundos fixos
-        final double totalInterest = loanAmount * BONUS_FIXED_INTEREST;
+        final double totalInterest = loanAmount * bonusFixedInterest;
         totalToPay = loanAmount + totalInterest;
       } else if (_selectedPropertyCollateral != null) {
         // ATIVO: Taxa por roundo * número de roundos
-        final double totalInterestRate = ASSET_INTEREST_PER_TURN * _roundValueSelected;
+        final double totalInterestRate = assetInteresPerTurn * _roundValueSelected;
         final double interestValue = loanAmount * totalInterestRate;
         totalToPay = loanAmount + interestValue;
       }
@@ -456,8 +453,8 @@ class LoanDialogState extends State<LoanDialog> {
 
     // Define os parâmetros finais com base na garantia
     final bool isBonusCollateral = _selectedLoanType == LoanType.bankLoan;
-    final int rounds = isBonusCollateral ? BONUS_FIXED_TURNS : _roundValueSelected;
-    final double interestRate = isBonusCollateral ? BONUS_FIXED_INTEREST : ASSET_INTEREST_PER_TURN * rounds;
+    final int rounds = isBonusCollateral ? bonusFixedTurns : _roundValueSelected;
+    final double interestRate = isBonusCollateral ? bonusFixedInterest : assetInteresPerTurn * rounds;
 
     // 2. Confirmação Final
     showDialog(context: context, builder: (BuildContext context) {
@@ -468,7 +465,7 @@ class LoanDialogState extends State<LoanDialog> {
               "prazo: $rounds rodadas\n"
               "Juros Totais: ${(interestRate * 100).toStringAsFixed(1)}%\n"
               "Total a Pagar: ${_totalDueController.text}\n"
-              "Garantia: ${isBonusCollateral ? 'Bônus de Turno' : _selectedPropertyCollateral!.propertyId}\n\n"
+              "Garantia: ${isBonusCollateral ? 'Bônus de Turno' : _selectedPropertyCollateral.propertyId}\n\n"
               "Você confirma o empréstimo?",
           onConfirm: () {
             try{

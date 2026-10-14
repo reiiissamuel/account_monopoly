@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';

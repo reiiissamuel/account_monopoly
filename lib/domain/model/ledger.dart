@@ -79,7 +79,7 @@ class Ledger {
   }
 
   double calculateShareHolderValue(ShareHolder item){
-    final shareCurrentCost = properties[item!.propertyId]!.sharePrice;
+    final shareCurrentCost = properties[item.propertyId]!.sharePrice;
     return item.portfolioValue(shareCurrentCost);
   }
 
@@ -120,7 +120,7 @@ class Ledger {
 
     player.receiveCredit(loan.principalBorrowed, 0);
     player.loans.add(loan);
-    player!.roundBalance.otherIn += loan.principalBorrowed;
+    player.roundBalance.otherIn += loan.principalBorrowed;
   }
 
   void processLoanPayment(Player player, String loandId, double paymentAmount) {

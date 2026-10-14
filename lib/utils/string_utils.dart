@@ -77,7 +77,7 @@ class StringUtils extends TextInputFormatter{
   }
 
   static String generateAbrevCodeFromString(String value){
-    if(value == null || value.isEmpty) throw Exception("Erro ao gerar codigo de abreviação da propriedade: Valor nulo ou vazio");
+    if(value.isEmpty) throw Exception("Erro ao gerar codigo de abreviação da propriedade: Valor nulo ou vazio");
     final StringBuffer codeBuffer = StringBuffer();
     List<String> parts = value.toUpperCase().split(' ');
     switch (parts.length){

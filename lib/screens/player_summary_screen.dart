@@ -363,7 +363,7 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
               child: const Text("Confirmar pagamento", style: TextStyle(color: Colors.black)),
               onPressed: () {
                 try {
-                  if (valueToPay == null || valueToPay! < 0) {
+                  if (valueToPay < 0) {
                     throw MissValueException("Você não preencheu os campos corretamento ou a quantidade é inválida.");
                   }
                   gameProvider.eventComposer(

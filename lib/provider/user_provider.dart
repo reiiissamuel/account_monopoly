@@ -224,7 +224,7 @@ class UserProvider extends ChangeNotifier{
   }
 
   String checkPropertyIdExistsByIdThenChange(String versionId, String propertyId){
-    if(versionId != null && user!.propertiesVersion![versionId] != null) {
+    if(user!.propertiesVersion![versionId] != null) {
       List<Property> properties = user!.propertiesVersion![versionId]!;
       if(properties.any((p) => p.id == propertyId)) {
         return "${propertyId.substring(0, 2)}${StringUtils.generateUUID(size: 2).toUpperCase()}";
