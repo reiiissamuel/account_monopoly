@@ -7,14 +7,6 @@ import 'package:peerdart/peerdart.dart';
 import 'dart:developer';
 
 
-import 'package:account_monopoly/domain/model/event_dto.dart';
-import 'package:account_monopoly/domain/model/player.dart';
-import 'package:account_monopoly/domain/enums/event_type.dart';
-import 'package:account_monopoly/provider/game_provider.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:peerdart/peerdart.dart';
-import 'dart:developer';
-
 class PeerConnectionController {
   String myPeerId;
   Peer peer;
