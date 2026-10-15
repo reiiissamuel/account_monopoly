@@ -189,7 +189,6 @@ class Ledger {
       _transferSharesBank2P(propertyId: propertyId, sharesAmount: amount, transactionCost: totalCost, toPlayer: buyer);
     }
     
-    // 4. FINALIZAÇÃO
     removeTradeOffersByKey(tradeOffer.offerId);
   }
 
@@ -309,7 +308,10 @@ class Ledger {
     
     if (shareholderData!.sharesOwned > property.totalShares / 2) {
       property.majorOwnerId = player.id;
-    } else if (property.majorOwnerId == player.id) {
+      return;
+    }
+
+    if (property.majorOwnerId == player.id){
       property.majorOwnerId = "";
     }
   }
