@@ -39,7 +39,8 @@ class GameModelDTO{
   );
  }
 
- void updateOtherPlayers(Player player){
+ void updateOtherPlayers(Player? player){
+  if(player == null) return;
   othersPlayers[player.id] = player;
  }
 
