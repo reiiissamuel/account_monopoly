@@ -23,6 +23,7 @@ enum EventType{
   lostConnection(messageScope: '{SOURCE} está desconectado.'),
   joinTable(messageScope: '{SOURCE} juntou-se ao jogo.'),
   serverHandShake(messageScope: "recebendo nova conexão"),
+  saveGame(messageScope: "💾Salvando progresso..."),
   CHANCE_USED(messageScope: "{SOURCE}  usou um benefício.");
 
   final String? messageScope;

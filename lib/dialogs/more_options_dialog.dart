@@ -64,7 +64,7 @@ class MoreOptionsDialog extends StatelessWidget {
                       try{
                         Navigator.of(context).pop();
                         Navigator.of(context).pop();
-                        await gameProvider.processRoundEnding();
+                        gameProvider.processRoundEnding();
                       } on Exception catch(e){
                         ScaffoldMessenger.of(context).showSnackBar(
                            SnackBar(content: Text("Salvamento indisponível por causa do erro: $e"), backgroundColor: Colors.red));
