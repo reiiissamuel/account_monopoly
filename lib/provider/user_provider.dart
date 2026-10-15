@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:developer';
 
+import 'package:account_monopoly/domain/model/game.dart';
+import 'package:account_monopoly/domain/model/property.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/repository/user_repository.dart';
+import 'package:account_monopoly/utils/configs_constants.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
-
-import 'package:account_monopoly/provider/game_provider.dart';
 
 class UserModelDTO{
   final int? id;
@@ -12,25 +16,68 @@ class UserModelDTO{
   final String username;
   final DateTime lastLogged;
   final List<GameModelDTO> games;
+  Map<String, List<Property>>? propertiesVersion;
 
-  UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged, required this.games});
+  UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged, required this.games, this.propertiesVersion});
 
+// Método de SERIALIZAÇÃO (toDoMap) - NOVO E CORRIGIDO
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'name': name,
       'username': username,
       'lastLogged': lastLogged.toIso8601String(),
-      'games': games.map((game) => game.toMap()).toList()
+      
+      'games': games.map((game) => game.toMap()).toList(),
+      
+      'propertiesVersion': propertiesVersion?.map(
+        (key, propertyList) => MapEntry(
+          key,
+          // Mapeia cada Property dentro da lista para Map<String, dynamic>
+          propertyList.map((property) => property.toMap()).toList(),
+        ),
+      ),
     };
   }
 
   factory UserModelDTO.fromMap(int id, Map<String, dynamic> map) {
+    // 1. Acesso Seguro e Verificação de Tipo (Correção Principal)
+    final dynamic rawPropertiesVersion = map['propertiesVersion'];
+    Map<String, dynamic> propertiesVersionMap = {};
+
+    // Se o tipo for realmente um Map, usamos ele.
+    // Caso contrário (se for List, null, ou outro tipo inesperado), usamos o mapa vazio {}.
+    if (rawPropertiesVersion is Map) {
+      propertiesVersionMap = Map<String, dynamic>.from(rawPropertiesVersion);
+    } else {
+      // Opcional: Adicione um log para rastrear dados corrompidos
+      print('Warning: propertiesVersion expected Map but found ${rawPropertiesVersion.runtimeType}. Treating as empty map.');
+    }
+
     return UserModelDTO(
-        id: id,
-        name: map['name'] as String,
-        username: map['username'] as String,
-        lastLogged: DateTime.parse(map['lastLogged']  as String),
-        games: (map['games'] as List<dynamic>).map((gameMap) => GameModelDTO.fromMap(gameMap as Map<String, dynamic>)).toList()
+      id: id,
+      name: map['name'] as String,
+      username: map['username'] as String,
+      lastLogged: DateTime.parse(map['lastLogged'] as String),
+      games: (map['games'] as List<dynamic>)
+          .map((gameMap) =>
+              GameModelDTO.fromMap(gameMap as Map<String, dynamic>))
+          .toList(),
+      
+      // 2. Mapeamento do propertiesVersionMap (agora garantido ser um Map)
+      propertiesVersion: propertiesVersionMap.map(
+        (key, value) {
+          // Garantindo que 'value' é uma lista (fallback para [])
+          final List<dynamic> propertyList = (value is List) ? value : [];
+
+          return MapEntry(
+            key,
+            propertyList
+                .map((p) => Property.fromMap(p as Map<String, dynamic>))
+                .toList(),
+          );
+        },
+      ),
     );
   }
 
@@ -45,68 +92,79 @@ class UserModelDTO{
   }
 }
 class UserProvider extends ChangeNotifier{
-  static const String NEW_USER_SUCCESS_MSG = "Cadastro concluído: ";
-  static const String NEW_USER_ERROR_MSG = "Falha ao cadastrar usuário!";
   List<UserModelDTO> allUsers = [];
   UserModelDTO? user;
   UserRepository userRepository =  GetIt.I.get();
   //static UserModelController of(BuildContext context) => ScopedModel.of<UserModelController>(context);
   bool isLoading = false;
 
-  UserProvider(){
+  UserProvider() {
     _loadCurrentUser();
   }
-
-  //logar usuario atual ao abrir o app
-  /*@override
-  void addListener(VoidCallback listener) {
-    super.addListener(listener);
-    _loadCurrentUser();
-  }*/
 
   void notify(){
     notifyListeners();
   }
 
   Future<void> signUp(
-      {required name, required username, required BuildContext context, required Function onSuccess, required Function onFail}
+      {required String name, required String username}
       ) async {
-    isLoading = true;
-    notifyListeners();
+    try{
+      isLoading = true;
+      notifyListeners();
 
-    UserModelDTO userModelDTO = UserModelDTO(
-        name: name,
-        username: username,
-        lastLogged: DateTime.now(),
-        games: []
-    );
+      UserModelDTO userModelDTO = UserModelDTO(
+          name: name,
+          username: username,
+          lastLogged: DateTime.now(),
+          games: []
+      );
 
-    userRepository.insertUser(userModelDTO).then((value) async {
+      await userRepository.insertUser(userModelDTO);
+      await _getAllLocalUsers();
       user = userModelDTO;
-      onSuccess(NEW_USER_SUCCESS_MSG + value.toString(), context);
+    } on Exception catch(e){
+      throw Exception("${ConfigsConstants.newUserErrorMsg} ${e.toString()}");
+    } finally {
       isLoading = false;
       notifyListeners();
-    }).catchError((e){
-      onFail(NEW_USER_ERROR_MSG, context);
-      isLoading = false;
-      notifyListeners();
-    });
+    }
+  }
+
+  void checkUserExists(String username){
+    if(allUsers.where((u) => u.username == username).isNotEmpty) throw UserExistsException(ConfigsConstants.userExistsErrorMsg);
   }
 
   Future<void> updateUser() async {
-    isLoading = true;
-    notifyListeners();
-    await userRepository.updateUser(user!);
-    isLoading = false;
-    notifyListeners();
+    try{
+      isLoading = true;
+      notifyListeners();
+      await userRepository.updateUser(user!);
+    } on Exception catch(e) {
+      log("Error updateUser: $e");
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
-  Future<void> getAllLocalUsers() async {
-    notifyListeners();
+  Future<void> deleteUser(int userId) async {
     isLoading = true;
-    allUsers = await userRepository.getAllUsers();
-    isLoading = false;
     notifyListeners();
+    try {
+      await userRepository.deleteUser(userId);
+      await _getAllLocalUsers();
+    } on Exception {
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _getAllLocalUsers() async {
+    allUsers = await userRepository.getAllUsers();
   }
 
   void signIn({required UserModelDTO userModelDTO}) {
@@ -120,14 +178,18 @@ class UserProvider extends ChangeNotifier{
   }
 
   Future<void> signOut() async {
-    isLoading = true;
-    notifyListeners();
+    try{
+      isLoading = true;
+      notifyListeners();
 
-    user = null;
-    await getAllLocalUsers();
-
-    isLoading = false;
-    notifyListeners();
+      user = null;
+      await _getAllLocalUsers();
+    }  on Exception {
+      rethrow;
+    } finally {
+      notifyListeners();
+      isLoading = false;
+    }
   }
 
   /*void recoverPass(String email){
@@ -138,27 +200,78 @@ class UserProvider extends ChangeNotifier{
     return user != null;
   }
 
-  /*Future<bool> usernameCheck(String username) async {
-
-  }*/
-
   Future<void> _loadCurrentUser() async {
-    isLoading = true;
-    notifyListeners();
-    if(user == null) {
-      user = await userRepository.getUserWithLatestLastLogged();
-      if(user == null) {
-        getAllLocalUsers();
-      }
+    try{
+      isLoading = true;
+      notifyListeners();
+      _getAllLocalUsers();
+      user ??= await userRepository.getUserWithLatestLastLogged();
+    } on Exception {
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   Future<void> deleteGame(String gameId) async {
     isLoading = true;
     notifyListeners();
     user!.games.removeWhere((game) => game.id == gameId);
+    await userRepository.updateUser(user!);
+    isLoading = false;
+    notifyListeners();
+  }
+
+  String checkPropertyIdExistsByIdThenChange(String versionId, String propertyId){
+    if(user!.propertiesVersion![versionId] != null) {
+      List<Property> properties = user!.propertiesVersion![versionId]!;
+      if(properties.any((p) => p.id == propertyId)) {
+        return "${propertyId.substring(0, 2)}${StringUtils.generateUUID(size: 2).toUpperCase()}";
+      }
+    }
+
+    return propertyId;
+  }
+
+  Future<void> newProperty(String versionId, Property property) async {
+    var propertiesVersion = user!.propertiesVersion!;
+    try{
+      isLoading = true;
+      notifyListeners();
+      if(propertiesVersion.containsKey(versionId)){
+        if(propertiesVersion[versionId]!.any((p) => p.id == property.id)){
+          final int index = propertiesVersion[versionId]!.indexWhere((p) => p.id == property.id);
+          propertiesVersion[versionId]![index] = property;
+        } else {
+          propertiesVersion[versionId]!.add(property);
+        }  
+      } else {
+        propertiesVersion[versionId] = [property];
+      }
+      await updateUser();
+    } on Exception {
+      notifyListeners();
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deletePropertiesCollection(String versionId) async {
+    isLoading = true;
+    notifyListeners();
+    user!.propertiesVersion!.remove(versionId);
+    await userRepository.updateUser(user!);
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> deleteProperty(String versionId, String propertyid) async {
+    isLoading = true;
+    notifyListeners();
+    user!.propertiesVersion![versionId]!.removeWhere((p) => p.id == propertyid);
     await userRepository.updateUser(user!);
     isLoading = false;
     notifyListeners();

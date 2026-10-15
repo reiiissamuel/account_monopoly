@@ -1,13 +1,13 @@
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/screens/chances_screen.dart';
-import 'package:account_monopoly/screens/set_auction_screen.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/custom_keyboard_dialog.dart';
-import 'package:account_monopoly/dialogs/loan_dialog.dart';
 
 class MoreOptionsDialog extends StatelessWidget {
 
@@ -33,43 +33,43 @@ class MoreOptionsDialog extends StatelessWidget {
             _optionButton(
                 context: context,
                 img: "icons/ir.png",
-                title: "Imposto de renda",
+                title: "Pagar imposto de renda",
                 dialog: ConfirmActionDialog(
-                    title: "Pagar imposto de renda",
-                    textContent: "Confirmar Pagamento 200.000?",
-                    onConfirm: () {
-                      gameProvider.eventComposer(type: LogMsgType.CURRENT_ACCOUNT_UPDATE_DOWN);
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    })),
+                    title: "Pagar imposto de renda?",
+                    textContent: "Serão deduzidos ${StringUtils.currencyFormat(gameProvider.currentPlayer.incomeTax)} da sua conta.",
+                    onConfirm: () => _payIncomeTax(context, gameProvider)
+                )),
 
             _optionButton(context: context, img: "icons/rest.png", title: "Restituição",
                 dialog: ConfirmActionDialog(title: "Restituição",
-                    textContent: "Confirmar recebimento 200.000?",
+                    textContent: "O banco irá calcular sua restituição para depositar em sua conta.",
                     onConfirm: () {
-                      gameProvider.eventComposer(type: LogMsgType.CURRENT_ACCOUNT_UPDATE_UP);
+                      gameProvider.eventComposer(type: EventType.receiveTax);
                       Navigator.of(context).pop();
                       Navigator.of(context).pop();
                     })),
-            _optionButton(context: context, img: "icons/receive.png", title: "Receber",
+            _optionButton(context: context, img: "icons/receive.png", title: "Receber do banco",
                 dialog: const CustomKeyboard(
                     title: "Digite o valor a receber",
-                    playerToPayId: "",
-                    eventType: LogMsgType.RECEIVE_FROM_BANK)),
+                    eventType: EventType.receiveFromBank)),
             _optionButton(context: context, img: "icons/paybank.png", title: "Pagar banco",
                 dialog: const CustomKeyboard(
                     title: "Digite o valor a ser pago",
-                    playerToPayId: "",
-                    eventType: LogMsgType.PAY_BANK,
+                    eventType: EventType.payBank,
                 )),
-
-            _optionButton(context: context, img: "icons/bit.png", title: "Leiloar Propriedade",
-                screen: const SetAuctionScreen()),
-
-            _optionButton(context: context, img: "icons/loan.png", title: "Pegar Empréstimo",
-                onPressed: Provider.of<GameProvider>(context).hasAnyLoanRunning() ? () {} : null,
-                dialog: Provider.of<GameProvider>(context).hasAnyLoanRunning()  ? null : const LoanDialog()
-            ),
+            _optionButton(context: context, img: "icons/bonus.png", title: "Deseja retirar seu bonus?",
+                dialog: ConfirmActionDialog(title: "Deseja retirar seu bonus?",
+                    textContent: "O valor será depositado em sua conta.",
+                    onConfirm: () async {
+                      try{
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                        await gameProvider.processRoundEnding();
+                      } on Exception catch(e){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                           SnackBar(content: Text("Salvamento indisponível por causa do erro: $e"), backgroundColor: Colors.red));
+                      }
+              })),
             _optionButton(
                 context: context,
                 img: "icons/benefits.png",
@@ -81,6 +81,22 @@ class MoreOptionsDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _payIncomeTax(BuildContext context, GameProvider gameProvider) {
+    try{
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+      gameProvider.currentPlayer.incomeTax;
+      gameProvider.eventComposer(
+          type: EventType.payTax
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Pagamento efetuado"), backgroundColor: Colors.green));
+    } on DomainException catch(e){
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+    }
   }
 }
 
@@ -108,7 +124,7 @@ Widget _optionButton({required BuildContext context, required String img, requir
                   showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return dialog; // <--- AQUI ESTÁ A CORREÇÃO PRINCIPAL
+                        return dialog;
                       });
                 }
               },

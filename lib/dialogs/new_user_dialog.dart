@@ -1,8 +1,6 @@
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
-import 'package:account_monopoly/service/google_login.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 
 
@@ -14,7 +12,6 @@ class NewUserDialog extends StatefulWidget {
 }
 
 class NewUserDialogState extends State<NewUserDialog> {
-
   late UserProvider userProvider;
 
   static const String NAME_HINT_TEXT = "Me diga seu nome.";
@@ -33,7 +30,7 @@ class NewUserDialogState extends State<NewUserDialog> {
       backgroundColor: Colors.black,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0)),
-      child: userProvider.isLoading ?
+      child: userProvider.isLoading ? 
      const Center(child: CircularProgressIndicator()) :
       Container(
           decoration: BoxDecoration(
@@ -92,6 +89,11 @@ class NewUserDialogState extends State<NewUserDialog> {
                   ),
                   validator: (text) {
                     if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return VALIDATION_USERNAME_ERROR_MSG;
+                    try{
+                      userProvider.checkUserExists(text);
+                    } on UserExistsException catch(e){
+                      return e.message;
+                    }
                     return null;
                   },
                 ),
@@ -104,72 +106,29 @@ class NewUserDialogState extends State<NewUserDialog> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20.0)
                           )),
-                      onPressed:  () {
+                      onPressed:  () async {
                         if (_formKey.currentState!.validate()) {
-                          setState(() {
-                          userProvider.signUp(
-                            name: _nameController.text,
-                            username: _usernameController.text,
-                            context: context,
-                            onSuccess: _onSuccess,
-                            onFail: _onFail
+                          Navigator.pop(context);
+                          await userProvider.signUp(
+                              name: _nameController.text,
+                              username: _usernameController.text
                           );
-                        });
+                          if (userProvider.allUsers.isNotEmpty) {
+                            var user = userProvider.allUsers.firstWhere((u) => u.username == _nameController.text);
+                            userProvider.signIn(userModelDTO: user);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Nenhum usuário encontrado')),
+                            );
+                          }
                         }
                       },
                       child: const Text("Prosseguir",
                           style: TextStyle(fontSize: 14.0, color:Colors.white)),
                     )),
-                    
-                const SizedBox(height: 16.0),
-                SignInButton(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0)
-                ),
-                  Buttons.Google,
-                  text: "Entrar com Google",
-                  onPressed: () async {
-                    var googleUser = await GoogleLogin.login();
-                    /* UserModelController.of(context).signUp(
-                      name: googleUser?.displayName,
-                      username: googleUser?.displayName,
-                      context: context,
-                      onSuccess: _onSuccess,
-                      onFail: _onFail
-                    ); */
-                  },
-                )
               ],
             ),
           ))
-    );
-  }
-
-  void _onSuccess(String msg, BuildContext context) {
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-    Future.delayed(const Duration(seconds: 2)).then((_){
-      Navigator.of(context).pop();
-    });
-  }
-
-  void _onFail(String msg, BuildContext context) {
-    Navigator.of(context).pop();
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
     );
   }
 }

@@ -1,18 +1,19 @@
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 
 class CustomKeyboard extends StatefulWidget {
 
   final String title;
-  final LogMsgType eventType;
-  final String playerToPayId;
+  final EventType eventType;
+  final String? playerToPayId;
 
-  const CustomKeyboard({super.key, required this.title, required this.eventType, required this.playerToPayId});
+  const CustomKeyboard({super.key, required this.title, required this.eventType, this.playerToPayId});
 
   @override
   CustomKeyboardState createState() => CustomKeyboardState();
@@ -23,6 +24,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
 
   @override
   void initState() {
+    super.initState();
     setState(() {
       valueController.text = "0";
     });
@@ -49,6 +51,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
                     style: const TextStyle(
                         fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.white)),
                 TextField(
+                    maxLength: 17,
                     cursorColor: Colors.white,
                     controller: valueController,
                     readOnly: true,
@@ -59,6 +62,10 @@ class CustomKeyboardState extends State<CustomKeyboard> {
                       letterSpacing: 2,
                       color: Colors.white,
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      StringUtils()
+                    ],
                     decoration: const InputDecoration(
                       contentPadding: EdgeInsets.symmetric(vertical: 8.0),
                       fillColor: Colors.black12,
@@ -73,7 +80,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
                     )),
                 const Spacer(flex:1),
                 SizedBox(
-                  height: 300.0,
+                  height: 290.0,
                   child: GridView(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4,
@@ -108,62 +115,64 @@ class CustomKeyboardState extends State<CustomKeyboard> {
 
   void _finishOperation(BuildContext context){
     GameProvider gameProvider = Provider.of<GameProvider>(context, listen: false);
-    int value = int.parse(valueController.text.replaceAll(".", ""));
+    double value = StringUtils.currencyAsDouble(valueController.text);
 
-    if(widget.eventType == LogMsgType.BUY || widget.eventType == LogMsgType.BUILD_HOUSE || widget.eventType == LogMsgType.BUILD_HOTEL) {
-      if(gameProvider.hasEnoughBalance(value)) {
-        showDialog(context: context, builder: (BuildContext context){
-        return ConfirmActionDialog(title: "Alerta de Compra!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
-          gameProvider.eventComposer(type: widget.eventType, value: value);
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-        });
-      });
-      } else {
-        _paymentFail();
-      }
-      }
-    else if(widget.eventType == LogMsgType.RECEIVE_FROM_BANK) {
+    if(widget.eventType == EventType.receiveFromBank) {
       showDialog(context: context, builder: (BuildContext context){
         return ConfirmActionDialog(title: "Alerta de Rebebimento!", textContent: "Você Confirma o recebimento de $value?", onConfirm: (){
-          gameProvider.eventComposer(type: widget.eventType, value: value);
           Navigator.of(context).pop();
           Navigator.of(context).pop();
+          Navigator.of(context).pop();
+          gameProvider.eventComposer(type: widget.eventType, price: value);
         });
       });
     }
-    else if(widget.eventType == LogMsgType.PAY_BANK){
-          if(gameProvider.hasEnoughBalance(value)) {
-            showDialog(context: context, builder: (BuildContext context){
-            return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma o pagamento de $value?", onConfirm: (){
-              gameProvider.eventComposer(
-                  type: widget.eventType,
-                  value: value
-              );
+    else if(widget.eventType == EventType.payBank){
+      showDialog(context: context, builder: (BuildContext context){
+        return ConfirmActionDialog(
+            title: "Alerta de Pagamento!",
+            textContent: "Você Confirma o pagamento de $value?",
+            onConfirm: (){
               Navigator.of(context).pop();
               Navigator.of(context).pop();
-            });
-          });
-          } else {
-            _paymentFail();
-          }
-    }
-    else if(widget.eventType == LogMsgType.TRANSFER){
-      if(gameProvider.hasEnoughBalance(value)) {
-        showDialog(context: context, builder: (BuildContext context){
-          return ConfirmActionDialog(title: "Alerta de Pagamento!", textContent: "Você Confirma a transferência de $value?", onConfirm: (){
-            gameProvider.eventComposer(
-                type: widget.eventType,
-                value: value,
-                destinationPlayer: gameProvider.gameModelDTO!.othersPlayers.firstWhere((p) => p.id == widget.playerToPayId)
-            );
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
-          });
+              Navigator.of(context).pop();
+              try{
+                gameProvider.eventComposer(
+                    type: widget.eventType,
+                    price: value
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Pagamento confirmado."), backgroundColor: Colors.green));
+              } on DomainException catch(e){
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+              }
         });
-      } else {
-        _paymentFail();
-      }
+      });
+    }
+    else if(widget.eventType == EventType.transfer){
+      showDialog(context: context, builder: (BuildContext context){
+        return ConfirmActionDialog(
+            title: "Alerta de transferência!",
+            textContent: "Você Confirma a transferência de $value?",
+            onConfirm: (){
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+              try{
+                gameProvider.eventComposer(
+                    type: widget.eventType,
+                    price: value,
+                    destinationPlayer: gameProvider.gameModelDTO!.othersPlayers[widget.playerToPayId]
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Transferência concluída"), backgroundColor: Colors.green));
+              } on DomainException catch(e){
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+              }
+            });
+      });
     }
   }
 
@@ -191,61 +200,48 @@ class CustomKeyboardState extends State<CustomKeyboard> {
   }
 
   void buttonFunction(int i){
-
-    String value = valueController.text.replaceAll(".", "");
-
+    String value = StringUtils.unformatAsString(valueController.text);
     switch(i){
       case 3:
-        updateTextField(value.substring(0,value.length -1));
+        if(value.isEmpty) {
+         value = "0";
+         break;
+        }
+        value = value.substring(0,value.length -1);
         break;
       case 7:
-        updateTextField("0");
+        value = "0";
         break;
       case 11:
          Navigator.of(context).pop();
          break;
       case 12:
-        updateTextField("${value}00");
+        value = "${value}00";
         break;
       case 13:
-        updateTextField("${value}0");
+        value = "${value}0";
         break;
       case 14:
-        updateTextField("${value}000");
+        value = "${value}000";
         break;
       default:
-        if(i == 0 || i == 1 || i == 2) {
-          updateTextField(value + (i+1).toString());
-        } else if(i == 8 || i == 9 || i == 10){
-          updateTextField(value + (i-1).toString());
+        if(i >=0 && i<=3){
+          value +=  (i + 1).toString();
+        } else if (i >= 8 && i <11){
+          value += (i - 1).toString();
+        } else {
+          value +=  i.toString();
         }
-        else{
-          updateTextField(value + (i).toString());
-        }
+       
     }
+    //valueController.text = value;
+    updateTextField(value);
   }
   
-  void updateTextField(String value){
-    if(value == "" || int.parse(value) == 0) {
-      value = "0";
-    }
-
-    if (value.length <= 11){
-      setState(() {
-        valueController.text = StringUtils.currencyFormat((int.parse(value)).toString());
-      });
-    }
-  }
-
-  void _paymentFail(){
-    Fluttertoast.showToast(
-        msg: "Saldo insuficiente!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
+  void updateTextField(String newValue){
+    double value = double.parse(newValue) / 100;
+    setState(() {
+      valueController.text = StringUtils.currencyFormat(value);
+    });
   }
 }

@@ -1,8 +1,14 @@
+import 'dart:developer';
+
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
+import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
+import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
+import 'package:account_monopoly/screens/all_properties_versions_screen.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/load_user_dialog.dart';
@@ -18,13 +24,8 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
 
-  List<String> localUsers = [];
-
   @override
   Widget build(BuildContext context) {
-    if(Provider.of<UserProvider>(context).isLoading) {
-      return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
-    }
     return Consumer<UserProvider>(
         builder: (context, userProvider, child){
           if(userProvider.isLoading){
@@ -35,7 +36,7 @@ class HomeScreenState extends State<HomeScreen> {
               child: Scaffold(
                 appBar: AppBar(
                     backgroundColor: Theme.of(context).primaryColor,
-                    title: const Text("Conta Móvel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    title: const Text("Meu Monopólio", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     centerTitle: true,
                     automaticallyImplyLeading: false,
                     actions: <Widget>[
@@ -43,7 +44,14 @@ class HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
                           child: GestureDetector(
                               child: const Icon(Icons.question_mark_rounded, color: Colors.white),
-                              onTap: () => {}))
+                              onTap: () => {
+                                showDialog(context: context, builder: (BuildContext context){
+                                  return const TipDialog(
+                                    tip: TipsResourse.HOME_SCREEN_TIP,
+                                    title: "Tela inicial",
+                                  );
+                                })
+                              }))
                     ]
                 ),
                 floatingActionButton: Padding(
@@ -66,11 +74,7 @@ class HomeScreenState extends State<HomeScreen> {
                             return const NewUserDialog();
                           });
                         } else {
-                          userProvider.getAllLocalUsers();
-                          showDialog(context: context, builder: (BuildContext context){
-                            return const LoadUserDialog();
-                          }
-                          );
+                          _showNonLoggedDialog(context);
                         }
                       }
                   ),
@@ -120,6 +124,8 @@ class HomeScreenState extends State<HomeScreen> {
                                           borderRadius: BorderRadius.circular(20.0)
                                       ),
                                       splashFactory: InkRipple.splashFactory,
+                                      shadowColor: Theme.of(context).primaryColor,
+                                      elevation: 10,
                                     ),
                                     child: const Text("Novo Jogo",
                                         style: TextStyle(
@@ -145,6 +151,8 @@ class HomeScreenState extends State<HomeScreen> {
                                       ),
                                       backgroundColor: Colors.black,
                                       splashFactory: InkRipple.splashFactory,
+                                      shadowColor: Theme.of(context).primaryColor,
+                                      elevation: 10,
                                     ),
                                     child: const Text("Entrar com Código",
                                         style: TextStyle(
@@ -169,6 +177,8 @@ class HomeScreenState extends State<HomeScreen> {
                                         ),
                                         backgroundColor: Colors.black,
                                         splashFactory: InkRipple.splashFactory,
+                                        shadowColor: Theme.of(context).primaryColor,
+                                        elevation: 10,
                                       ),
                                       child: const Text("Jogos Ativos",
                                           style: TextStyle(
@@ -182,6 +192,30 @@ class HomeScreenState extends State<HomeScreen> {
                                         Navigator.push(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
                                       },
                                     )),
+                                SizedBox(
+                                    height: 50.0,
+                                    width: 200.0,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20.0)
+                                        ),
+                                        backgroundColor: Colors.black,
+                                        splashFactory: InkRipple.splashFactory,
+                                        shadowColor: Theme.of(context).primaryColor,
+                                      ),
+                                      child: const Text("Propriedades",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 20.0,
+                                              color: Colors.white)),
+                                      onPressed: () {
+                                        if (!userProvider.isLoggedIn()) {
+                                          return _showNonLoggedDialog(context);
+                                        }
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) => AllPropertiesVesionsScreen()));
+                                      },
+                                    ))
                               ],
                             )))
                   ],
@@ -195,11 +229,17 @@ class HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return const LoadUserDialog();
       },
-    );
+    ).catchError((e){
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+    });
   }
 
   void _showEnterCodeDialog(BuildContext context) {
     final controller = TextEditingController();
+    if(Provider.of<GameProvider>(context, listen: false).gameModelDTO != null){
+      Provider.of<GameProvider>(context, listen: false).reset();
+    }
 
     showDialog(
         context: context,
@@ -243,8 +283,20 @@ class HomeScreenState extends State<HomeScreen> {
               TextButton(
                 child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0, color: Colors.white)),
                 onPressed: () {
-
-                  Provider.of<GameProvider>(context, listen: false).enterNewGameByIdRequest(destinationPeerId: controller.text, context: context, onFail: _onFail, onSuccess: _onSuccess);
+                  try{
+                    var gameProvider = Provider.of<GameProvider>(context, listen: false);
+                    gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
+                    gameProvider.enterNewGameByIdRequest(destinationPeerId: controller.text);
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
+                  } on GameAlreadyInPlayerListException catch(g){
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(g.toString()), backgroundColor: Colors.red));
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
+                  } on Exception catch(e){
+                    log(e.toString());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                  }
                 },
               ),
             ],
@@ -312,23 +364,6 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           );
         });
-  }
-
-  void _onFail(String msg){
-    Navigator.of(context).pop();
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-  }
-
-  void _onSuccess(){
-    //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GameScreen())).then((value) => GameModel.of(context).exitGame());
   }
 
 }

@@ -45,14 +45,19 @@ class AccountmonopolyAppState extends State<AccountmonopolyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => UserProvider()),
-        ChangeNotifierProvider(create: (context) => GameProvider())
+        ChangeNotifierProxyProvider<UserProvider, GameProvider>(
+          create: (context) => GameProvider(
+            userModelController: Provider.of<UserProvider>(context, listen: false),
+          ),
+          update: (context, userProvider, gameProvider) => 
+            gameProvider ?? GameProvider(userModelController: userProvider),
+          )
       ],
       child: MaterialApp(
         title: 'Account Monopoly',
         theme: ThemeData(
           primarySwatch: Colors.blue,
-          primaryColor: const Color.fromARGB(
-              255, 70, 130, 180),
+          primaryColor: const Color(0xFF5f7887),
         ),
         debugShowCheckedModeBanner: false,
         routes: {

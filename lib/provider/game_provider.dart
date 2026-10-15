@@ -1,42 +1,48 @@
-import 'dart:collection';
 
-import 'package:account_monopoly/configuration/peer_connection_controller.dart';
-import 'package:account_monopoly/enums/installment_type.dart';
+import 'dart:developer';
+
+import 'package:account_monopoly/configuration/peer_connection_controller_v2.dart';
+import 'package:account_monopoly/domain/enums/loan_type.dart';
+import 'package:account_monopoly/domain/enums/offer_type.dart';
+import 'package:account_monopoly/domain/model/event_dto.dart';
+import 'package:account_monopoly/domain/model/game.dart';
+import 'package:account_monopoly/domain/model/ledger.dart';
+import 'package:account_monopoly/domain/model/loan.dart';
+import 'package:account_monopoly/domain/model/share_holder.dart';
+import 'package:account_monopoly/domain/model/trade_offer.dart';
+import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
-import 'package:account_monopoly/screens/my_games_screen.dart';
-import 'package:account_monopoly/dto/player.dart';
+import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:peerdart/peerdart.dart';
 
-import 'package:account_monopoly/dto/account.dart';
-import 'package:account_monopoly/dto/auction.dart';
-import 'package:account_monopoly/dto/balance.dart';
-import 'package:account_monopoly/dto/chance.dart';
-import 'package:account_monopoly/dto/event_dto.dart';
-import 'package:account_monopoly/dto/mortgage.dart';
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 
 class GameProvider extends ChangeNotifier {
   late UserProvider userModelController;
-  //late Player player;
-  PeerConnectionController? peerConnectionController;
+  PeerConnectionControllerV2? peerConnectionController;
   GameModelDTO? gameModelDTO;
   bool isLoading = false;
-  bool isThereAuction = false;
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
-  bool youWon = false;
-  String ?any;
+  String? any;
 
+  void reset(){
+    gameModelDTO = null;
+    isLoading = false;
+    events = [];
+    lastEventReceived = null;
+  }
 
-  GameProvider();
+  GameProvider({required this.userModelController});
 
-  //static GameModelController of(BuildContext context) =>
-  //    ScopedModel.of<GameModelController>(context);
+  Ledger get ledger => gameModelDTO!.ledger;
+  Player get currentPlayer => gameModelDTO!.player;
+  Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
 
-  void notifyChanges(isLoading) {
+  void notifyChanges(bool isLoading) {
     this.isLoading = isLoading;
     notifyListeners();
   }
@@ -55,243 +61,342 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _eventEntranceManager(EventDTO event) {
-    int? value = event.value;
+
     Player sourceplayer = event.sourcePlayer;
-    Player ?destinationPlayer = event.destinationPlayer;
-    switch (event.type) {
-      case LogMsgType.TRANSFER:
-        if(destinationPlayer != null || destinationPlayer!.id == userModelController.user!.id.toString()) {
-          _updateBalance(value!);
-        }
-        gameModelDTO!.othersPlayers
-            .firstWhere((p) => p.id == sourceplayer.id)
-            .receivedFrom += value!;
-        break;
-      case LogMsgType.AUCTION_START:
-        isThereAuction = true;
-        event.auction!.whichPlayersIdStillIn.add(Map.of({gameModelDTO!.player.id : true}));
-        gameModelDTO!.auctions.add(event.auction!);
-        break;
-      case LogMsgType.AUCTION_END:
-        isThereAuction = false;
-        gameModelDTO!.auctions.last = event.auction!;
-        if(gameModelDTO!.auctions.last.auctionCaller == gameModelDTO!.player.username){
-          _updateBalance(gameModelDTO!.auctions.last.endValue);
-        }
-        gameModelDTO!.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
-        break;
-      case (LogMsgType.AUCTION_RAISE || LogMsgType.AUCTION_PAY):
-        gameModelDTO!.auctions.last = event.auction!;
-        break;
-      case LogMsgType.JOIN_TABLE:
-        gameModelDTO!.othersPlayers.add(sourceplayer);
-        break;
-      case LogMsgType.SERVER_HAND_SHAKE:
-        _dealHostHandShakeEvent(event);
-        break;
-      case LogMsgType.BANKRUPTCY:
-        if (event.sourcePlayer.isHost) {
-          //todo vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
-        }
-        gameModelDTO!.othersPlayers.removeWhere((p) =>
-        p.id == sourceplayer.id);
-        break;
-      case LogMsgType.LOST_CONNECTION:
-        gameModelDTO!.othersPlayers.removeWhere((p) =>
-        p.id == sourceplayer.id);
-      default:
-        break;
+    if(event.type == EventType.serverHandShake) {
+      _dealHostHandShakeEvent(event);
+    } else {
+      double? price = event.price;
+      int? quantity = event.quantity;
+      Player ?destinationPlayer = event.destinationPlayer;
+
+      if(sourceplayer.id == currentPlayer.id) return;
+      gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
+      switch (event.type) {
+        case EventType.removeTradeOffer:
+          ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
+          break;
+        case EventType.transfer:
+          if(destinationPlayer!.id == currentPlayer.id){
+            currentPlayer.roundBalance.transferIn += price!;
+            currentPlayer.receiveCredit(price, ledger.incomeTaxRate);
+          } else {
+            gameModelDTO!.updateOtherPlayers(destinationPlayer);
+          }
+          break;
+        case EventType.build || EventType.buyFromIPO || EventType.propertyUpdatePayout || EventType.payRent:
+          ledger.properties[event.property!.id] = event.property!;
+          break;
+        case EventType.setTradeOffer:
+          ledger.tradeOffers[event.tradeOffer!.offerId] = event.tradeOffer!;
+          break;
+        case EventType.buyFromTrade:
+          if(destinationPlayer!.id == currentPlayer.id){
+            currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount, event.tradeOffer!.totalAskingPrice);
+          } else {
+            gameModelDTO!.updateOtherPlayers(destinationPlayer);
+          }
+          ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
+          break;
+        case EventType.mortgageForeclosure:
+          ledger.bankPortfolio[event.property!.id] = ShareHolder(
+              playerId: sourceplayer.id,
+              propertyId: event.property!.id,
+              sharesOwned: quantity!,
+              investmentValue: 0,
+              saleCapitalGain: 0);
+          break;
+        case EventType.dividendsCalculation:
+          if(ledger.lastPropertiesUpdateRound >= event.referenceRound) return;
+          ledger.updatePropertiesValuation(currentPlayer, event.referenceRound);
+          event.price = currentPlayer.roundBalance.dividendsIn;
+          break;
+        case EventType.bankruptcy:
+          if (event.sourcePlayer.isHost) {
+            //todo vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
+          }
+          break;
+        case EventType.iwon:
+          gameModelDTO!.winner = sourceplayer;
+          break;
+        case EventType.joinTable:
+          gameModelDTO!.updateOtherPlayers(sourceplayer);
+          break;
+        case EventType.lostConnection:
+          gameModelDTO!.othersPlayers.remove(sourceplayer.id);
+        default:
+          break;
+      }
     }
-    _logComposer(event);
+
+    gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
   }
 
-  Future<void> eventComposer({required LogMsgType type, Player ?destinationPlayer, int ?value,
-    Player ?sourcePlayer, Auction ?auction, int ?installments}) async {
-    notifyChanges(true);
+  Future<void> processRoundEnding() async {
+    try{
+      eventComposer(type: EventType.roundBonus, price: ledger.roundBonus);
+      eventComposer(type: EventType.dividendsCalculation);
+      currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
+      gameModelDTO!.currentRound += 1;
 
-    EventDTO event =
-    EventDTO(
-        type: type,
-        destinationPlayer: destinationPlayer,
-        sourcePlayer: sourcePlayer ?? gameModelDTO!.player,
-        value: value);
-
-    switch (event.type) {
-      case LogMsgType.CLOSE_TURN:
-        event.value = -(gameModelDTO!.account.getTotal());
-        _proccessCloseTurn(installments);
-        _updateMortgageCountdown();
-        break;
-      case LogMsgType.CURRENT_ACCOUNT_UPDATE_UP:
-        event.value = 200000;
-        gameModelDTO!.account.restituicao = 200000;
-        break;
-      case LogMsgType.CURRENT_ACCOUNT_UPDATE_DOWN:
-        event.value = 200000;
-        gameModelDTO!.account.ir = 200000;
-        break;
-      case LogMsgType.ROUND_BONUS:
-        gameModelDTO!.account.bonus += gameModelDTO!.roundBonus;
-        break;
-      case LogMsgType.TRANSFER:
-        gameModelDTO!.account.transferOut += value!;
-        _updateBalance(-value);
-        gameModelDTO!.othersPlayers
-            .firstWhere((p) => p.id == destinationPlayer!.id)
-            .payedTo += value;
-        break;
-      case LogMsgType.BUY:
-        gameModelDTO!.account.qtdPurchases += value!;
-        break;
-      case LogMsgType.PAY_BANK:
-        gameModelDTO!.account.otherPaymentsOut += value!;
-        _updateBalance(-value);
-        break;
-      case LogMsgType.RECEIVE_FROM_BANK:
-        _updateBalance(value!);
-        break;
-      case LogMsgType.BUILD_HOUSE:
-        gameModelDTO!.account.qtdHome += value!;
-        break;
-      case LogMsgType.BUILD_HOTEL:
-        gameModelDTO!.account.qtdHotel += value!;
-        break;
-      case LogMsgType.MORTGAGE:
-        gameModelDTO!.account.mortgagesIn += value!;
-        _updateBalance(value);
-        break;
-      case LogMsgType.LOAN:
-        gameModelDTO!.account.loanIn += value!;
-        _updateBalance(value);
-        gameModelDTO!.balance.generateInstallments(
-            tax: (installments! * gameModelDTO!.levelTax).floor(),
-            type: InstallmentType.LOAN_INSTALLMENT,
-            installments: installments,
-            total: value);
-        break;
-      case LogMsgType.AUCTION_START:
-        isThereAuction = true;
-        event.auction = auction;
-        event.value = auction!.startValue;
-        event.auction!.whichPlayersIdStillIn.add(Map.of({gameModelDTO!.player.id : false}));
-        gameModelDTO!.auctions.add(auction);
-        break;
-      case LogMsgType.AUCTION_END:
-        isThereAuction = false;
-        gameModelDTO!.auctions.last.setFinalValue();
-        _updateBalance(-gameModelDTO!.auctions.last.endValue);
-        gameModelDTO!.mortgages.removeWhere((m) => m.id == gameModelDTO!.auctions.last.mortgageId);
-        break;
-      case LogMsgType.AUCTION_LEAVE:
-        isThereAuction = false;
-        gameModelDTO!.auctions.last.whichPlayersIdStillIn.firstWhere((e) => e.containsKey([gameModelDTO!.player.id]))[gameModelDTO!.player.id] = false;
-        event.auction = gameModelDTO!.auctions.last;
-        break;
-      case LogMsgType.AUCTION_PAY:
-        gameModelDTO!.auctions.last.buyer = gameModelDTO!.player.username;
-        gameModelDTO!.auctions.last.currentValue = gameModelDTO!.auctions.last.startValue;
-        event.auction = gameModelDTO!.auctions.last;
-        event.value = gameModelDTO!.auctions.last.startValue;
-        break;
-      case (LogMsgType.AUCTION_RAISE):
-        gameModelDTO!.auctions.last.buyer = gameModelDTO!.player.username;
-        gameModelDTO!.auctions.last.currentValue += value!;
-        event.auction = gameModelDTO!.auctions.last;
-        break;
-      case LogMsgType.BANKRUPTCY:
-        if (gameModelDTO!.othersPlayers.isNotEmpty) {
-          gameModelDTO!.youBankrupt = true;
+      List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
+      if(foreclosureLoans.isNotEmpty){
+        for(var loan in foreclosureLoans){
+          if(loan.type == LoanType.bankLoan){
+            eventComposer(type: EventType.loanForeclosure, price: loan.totalDue);
+          }
+          else if(loan.type == LoanType.mortgage){
+            eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId);
+          }
         }
-        break;
-      case LogMsgType.IWON:
-        gameModelDTO!.youWon = true;
-        break;
-      case LogMsgType.SERVER_HAND_SHAKE:
-        gameModelDTO!.player.isHost = true;
-         //int i = gameModelDTO!.othersPlayers.indexWhere((p) => p.id == gameModelDTO!.player.id);
-        //i >= 0 ? gameModelDTO!.othersPlayers[i] = gameModelDTO!.player : gameModelDTO!.othersPlayers.add(gameModelDTO!.player);
-        event.gameData = gameModelDTO!.toInitialTemplate();
-        break;
-      case LogMsgType.LOST_CONNECTION:
-        gameModelDTO!.othersPlayers.removeWhere((p) => p.id == event.sourcePlayer.id);
-        break;
-      default:
-        break;
+      }
+
+      if (ledger.badCreditList.containsKey(currentPlayer.id)){
+        eventComposer(type: EventType.bankBlacklisted);
+      }
+
+      List<TradeOffer> expiredOffersIds = ledger.updatePlayerTradeOffersDeadline(currentPlayer.id);
+      for (var offer in expiredOffersIds) {
+        eventComposer(type: EventType.removeTradeOffer, tradeOffer: offer);
+      }
+      
+      await _updateUserModel();
+    } on Exception{
+      notifyChanges(false);
+      rethrow;
     }
-    _sendEvent(event);
-    _logComposer(event);
-    await _updateUserModel();
-    notifyChanges(false);
+  }
+
+  void eventComposer({required EventType type, Player? destinationPlayer, Player? sourcePlayer, int? quantity, double? price, int? reserveUsage,
+   String? propertyId, int? newBuildings, TradeOffer? tradeOffer, Loan? loan}) {
+    try{
+      notifyChanges(true);
+
+      EventDTO event = EventDTO(
+          referenceRound: gameModelDTO!.currentRound,
+          type: type,
+          destinationPlayer: destinationPlayer,
+          sourcePlayer: sourcePlayer ?? currentPlayer,
+          tradeOffer: tradeOffer,
+        // property: property,
+          price: price,
+          quantity: quantity
+      );
+
+      switch (event.type) {
+        case EventType.propertyUpdatePayout:
+          event.property = ledger.updatePropertyPayout(propertyId!, price!);
+          break;
+        case EventType.payRent:
+          event.property = ledger.processRentPayment(currentPlayer, propertyId!, price!);
+          break;
+        case EventType.payTax:
+          event.price = currentPlayer.incomeTax;
+          ledger.processIncomeTaxPayment(currentPlayer);
+          break;
+        case EventType.receiveTax:
+          event.price = ledger.processTaxRefund(currentPlayer);
+          break;
+        case EventType.roundBonus:
+          ledger.processRoundBonus(currentPlayer);
+          break;
+        case EventType.payBank:
+          currentPlayer.payDebit(price!);
+          currentPlayer.roundBalance.otherOut += price;
+          break;
+        case EventType.receiveFromBank:
+          currentPlayer.receiveCredit(price!, ledger.incomeTaxRate);
+          currentPlayer.roundBalance.otherIn += price;
+          break;
+        case EventType.transfer:
+          currentPlayer.payDebit(price!);
+          currentPlayer.roundBalance.transferOut += price;
+          destinationPlayer!.receiveCredit(price, ledger.incomeTaxRate);
+          destinationPlayer.roundBalance.transferIn += price;
+          break;
+        case EventType.loan:
+          ledger.processLoanAcquisition(currentPlayer, loan!);
+          break;
+        case EventType.loanPayment:
+          ledger.processLoanPayment(currentPlayer, loan!.id, price!);
+          break;
+        case EventType.mortgageForeclosure:
+          event.property = ledger.properties[propertyId];
+          break;
+        case EventType.buyFromIPO:
+          event.property = ledger.buyFromIPO(currentPlayer, propertyId!, quantity!);
+          ledger.checkForMajorOwner(currentPlayer, propertyId);
+          break;
+        case EventType.setTradeOffer:
+          ledger.setTradeOffer(currentPlayer, tradeOffer!);
+          break;
+        case EventType.removeTradeOffer:
+          ledger.removeTradeOffersByKey(tradeOffer!.offerId);
+          break;
+        case EventType.buyFromTrade:
+          ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);
+          ledger.checkForMajorOwner(currentPlayer, tradeOffer.propertyId);
+          break;
+        case EventType.dividendsCalculation:
+          if(ledger.lastPropertiesUpdateRound >= gameModelDTO!.currentRound) throw PropertiesAlreadyUpdateException("");
+          ledger.updatePropertiesValuation(currentPlayer, gameModelDTO!.currentRound);
+          event.price = currentPlayer.roundBalance.dividendsIn;
+          break;
+        case EventType.build:
+          event.property = ledger.processBuildingPurchase(currentPlayer, propertyId!, newBuildings!, price!, reserveUsage!);
+          break;
+        case EventType.bankruptcy:
+          //
+          break;
+        case EventType.iwon:
+          gameModelDTO!.winner = currentPlayer;
+          break;
+        case EventType.serverHandShake:
+          currentPlayer.isHost = true;
+          gameModelDTO!.othersPlayers[gameModelDTO!.player.id] = gameModelDTO!.player;
+          gameModelDTO!.othersPlayers[destinationPlayer!.id] = destinationPlayer;
+          event.gameData = gameModelDTO;
+          _updateUserModel();
+          break;
+        case EventType.lostConnection:
+          gameModelDTO!.othersPlayers.remove(currentPlayer.id);
+          //todo salvar jogo e sair;
+          break;
+        default:
+          break;
+      }
+      _sendEvent(event);
+      gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
+      notifyChanges(false);
+    } on PropertiesAlreadyUpdateException{
+      notifyChanges(false);
+    } on Exception{
+      notifyChanges(false);
+      rethrow;
+    }
   }
 
   void _sendEvent(EventDTO event) {
     peerConnectionController!.send(event);
-    //processComingEvent(event);
   }
 
-  void _logComposer(EventDTO event) {
-    if (event.type.messageScope != null) {
-      gameModelDTO!.logs.add(
-          event.type.messageScope
-          !.replaceAll('{SOURCE}', event.sourcePlayer.username == gameModelDTO!.player.username ? 'Você' : event.sourcePlayer.username)
-              .replaceAll('{VALUE}', StringUtils.currencyFormat(event.value.toString()))
-              .replaceAll('{DEST}', event.destinationPlayer != null && event.destinationPlayer!.username == gameModelDTO!.player.username ? 'Você' : event.sourcePlayer.username)
-      );
+  List<TradeOffer> getAllMarketListings() {
+  final List<TradeOffer> listings = [];
+
+  // -------------------------------------------------------------
+  // A. IPO / FUNDO (Property.availableShares)
+  // -------------------------------------------------------------
+  for (var property in ledger.properties.values) {
+    if (property.availableShares > 0) {
+      listings.add(TradeOffer(
+        offerId: property.id,
+        propertyId: property.id,
+        sellerPlayerId: ledger.bankId,
+        sharesAmount: property.availableShares,
+        askingPrice: property.sharePrice,
+        source: OfferSource.fundIPO,
+        currentMarketPrice: property.sharePrice,
+        colorSignature: property.colorSignature,
+        propertyName: property.name,
+        turnsToEnd: 1
+      ));
     }
   }
 
-  void createNewGame({required GameModelDTO game, required Function onFail, required Function onSuccess}) async {
-    isLoading = true;
-    notifyListeners();
-    String usermodelname = userModelController.user!.username;
-    int usermodelId = userModelController.user!.id!;
-    String generatedGameId = StringUtils.generateUUID(size: 8);
+  // -------------------------------------------------------------
+  // B. ATIVOS RECUPERADOS DO BANCO (Ledger.bankPortfolio)
+  // -------------------------------------------------------------
+  for (var entry in ledger.bankPortfolio.entries) {
+    final propertyId = entry.key;
+    final bankShare = entry.value;
+    final property = ledger.properties[propertyId]!;
+    
+    if (bankShare.sharesOwned > 0) {
+      listings.add(TradeOffer(
+        offerId: propertyId,
+        propertyId: propertyId,
+        sellerPlayerId: ledger.bankId,
+        sharesAmount: bankShare.sharesOwned,
+        askingPrice: property.sharePrice - (property.sharePrice * 0.1),
+        source: OfferSource.bankForeclosed,
+        currentMarketPrice: property.sharePrice,
+        colorSignature: property.colorSignature.withValues(alpha: 0.7), // Cor ligeiramente diferente
+        propertyName: '${property.name} (Recup.)',
+        turnsToEnd: 1
+      ));
+    }
+  }
 
-    gameModelDTO = game;
-    gameModelDTO!.player = Player.of(
-      id:  GameProvider._generatePlayerId(
-          usermodelname: userModelController.user!.username,
-          usermodelId: userModelController.user!.id,
-          gameId: gameModelDTO!.id),
-      userModelId: usermodelId,
-      gameId: generatedGameId,
-      username: usermodelname,
-      isHost: true
-    );
+  // -------------------------------------------------------------
+  // C. MERCADO SECUNDÁRIO (P2P - Ofertas de Jogadores)
+  // -------------------------------------------------------------
+  for (var offer in ledger.tradeOffers.values) {
+    final property = ledger.properties[offer.propertyId];
+    listings.add(TradeOffer(
+      offerId: offer.offerId,
+      propertyId: offer.propertyId,
+      sellerPlayerId: offer.sellerPlayerId,
+      sharesAmount: offer.sharesAmount,
+      askingPrice: offer.askingPrice,
+      turnsToEnd: offer.turnsToEnd,
+      source: OfferSource.playerMarket,
+      currentMarketPrice: property!.sharePrice,
+      colorSignature: property.colorSignature,
+      propertyName: '${property.name} (Venda P2P)',
+    ));
+  }
+  
+  return listings;
+}
 
-
+  Future<void> createNewGame({required GameModelDTO game}) async {
     try{
+      isLoading = true;
+      notifyListeners();
+      String usermodelname = userModelController.user!.username;
+      int usermodelId = userModelController.user!.id!;
+      String generatedGameId = StringUtils.generateUUID(size: 8);
+
+      gameModelDTO = game;
+      gameModelDTO!.player = Player.newGamePlayer(
+          currentCredit: gameModelDTO!.initalGameCredit,
+          userModelId: usermodelId,
+          gameId: generatedGameId,
+          username: usermodelname,
+          isHost: true
+      );
+      gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
       _createPeerConnectionController(peerId: gameModelDTO!.player.id);
       peerConnectionController!.openConnectionsAsHost();
       userModelController.user!.games.add(gameModelDTO!);
       await _updateUserModel();
     } catch (e) {
-      onFail("Algo deu errado!");
+      log("Erro na tentativa de criar um novo jogo no repositório: $e");
+      rethrow;
     } finally{
-      onSuccess();
       isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> getGameById({required GameModelDTO gameModelDTO,  required Function onFail, required Function onSuccess}) async {
+  Future<void> getGameById(GameModelDTO gameModelDTO) async {
     isLoading = true;
     notifyListeners();
     gameModelDTO.player.isHost = false;
     this.gameModelDTO = gameModelDTO;
     _createPeerConnectionController(peerId: this.gameModelDTO!.player.id);
     try {
-      peerConnectionController!.reconnect();
+      peerConnectionController!.reconnectToLastHost();
     } on Exception catch(e) {
-      onFail(e);
+      log("Erro ao tentar carrega um jogo existente: $e");
+      rethrow;
     }
     isLoading = false;
     notifyListeners();
 
   }
 
-  void enterNewGameByIdRequest(
-      {required String destinationPeerId, required BuildContext context, required Function onFail, required Function onSuccess}) async {
+  void enterNewGameByIdRequest({required String destinationPeerId}) async {
     isLoading = true;
     notifyListeners();
 
@@ -299,9 +404,8 @@ class GameProvider extends ChangeNotifier {
 
     try{
       if(userModelController.checkHasGameById(gameId)){
-        throw GameAlreadyInPlayerListException;
+        throw GameAlreadyInPlayerListException();
       }
-      
       _createPeerConnectionController(
           peerId: GameProvider._generatePlayerId(
               usermodelname: userModelController.user!.username,
@@ -309,12 +413,9 @@ class GameProvider extends ChangeNotifier {
               gameId: gameId)
       );
       peerConnectionController!.connectToHost(destinationPeerId);
-      onSuccess;
-    } on GameAlreadyInPlayerListException catch(g) {
-          onFail(g);
-          Navigator.push(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
     } catch (e){
-      onFail("Algo de errado ao criar a conexão.");
+      log("Erro: $e");
+      rethrow;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -322,184 +423,64 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _createPeerConnectionController({required String peerId}){
+    // Destrói o peer anterior se ele já existir, evitando conflitos de socket e stream
+    if (peerConnectionController != null) {
+      peerConnectionController!.destroy();
+      peerConnectionController = null;
+    }
+
     Peer peer = Peer(id: peerId);
-    peerConnectionController = PeerConnectionController(
-        gameModelController: this, peer: peer, myPeerId: peerId);
+    peerConnectionController = PeerConnectionControllerV2(
+      gameModelController: this, 
+      peer: peer, 
+      myPeerId: peerId,
+    );
   }
 
   Future<void> _updateUserModel() async {
-    await userModelController.updateUser().catchError((e) => {
-      throw e
-    });
+    try{
+      await userModelController.updateUser();
+    } on Exception catch(e){
+      log("Erro na tentativa salvar os dados do jogo: $e");
+      rethrow;
+    }
   }
 
   static String _generatePlayerId({required usermodelname, required usermodelId, required gameId}){
     return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
   }
 
-  void _dealHostHandShakeEvent(EventDTO event){
-    if(gameModelDTO == null){
-      gameModelDTO = event.gameData;
+  void _dealHostHandShakeEvent(EventDTO event) {
+    // 1. O Host enviou o estado completo do jogo em event.gameData
+    gameModelDTO = event.gameData;
+
+    final myId = peerConnectionController!.myPeerId;
+
+    // 2. Verifica se o Host já mapeou este jogador na lista (seja por reconexão ou nova entrada)
+    if (gameModelDTO!.othersPlayers.containsKey(myId)) {
+      // Restaura o player exato com todo o saldo, propriedades e histórico guardados
+      gameModelDTO!.player = gameModelDTO!.othersPlayers[myId]!;
     } else {
-      gameModelDTO!.othersPlayers.clear();
+      // Fallback de segurança para um jogador totalmente novo caso não venha no mapa
+      gameModelDTO!.player = Player.ofDefinedId(
+        id: myId,
+        username: userModelController.user!.username,
+      );
+      gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
+      gameModelDTO!.othersPlayers[myId] = gameModelDTO!.player;
     }
 
-    gameModelDTO!.othersPlayers.add(event.sourcePlayer); //add hostplayer as otherplayer
-    gameModelDTO!.player = Player.ofDefinedId(
-        id: peerConnectionController!.myPeerId,
-        username: userModelController.user!.username
-    );
+    // 3. Notifica a mesa que o jogador está ativo / na mesa
     _sendEvent(EventDTO(
-        type: LogMsgType.JOIN_TABLE,
-        destinationPlayer: event.sourcePlayer,
-        sourcePlayer: gameModelDTO!.player,
-        value: 0));
+      referenceRound: 0,
+      type: EventType.joinTable,
+      destinationPlayer: event.sourcePlayer,
+      sourcePlayer: gameModelDTO!.player,
+    ));
+
     isLoading = false;
     notifyListeners();
   }
-
-  //in game methods
-
-  void _updateMortgageCountdown(){
-    for(var mortgage in gameModelDTO!.mortgages){
-      mortgage.deadline -= 1;
-      if(mortgage.deadline <= 0){
-        Auction auction = Auction(
-            id: StringUtils.generateUUID(size: 7),
-            auctionCaller: "BANK",
-            propertyName: mortgage.name,
-            startValue: mortgage.value + ((mortgage.deadline * 10) * mortgage.value / 100).floor(),
-            endValue: 0,
-            currentValue: 0,
-            mortgageId: mortgage.id);
-        eventComposer(type: LogMsgType.AUCTION_START, auction: auction);
-        return;
-      }
-    }
-  }
-
-  void _proccessCloseTurn(int ?installments){
-    if(installments != null){
-      gameModelDTO!.balance.generateInstallments(
-          tax: (installments * gameModelDTO!.levelTax).floor(),
-          type: InstallmentType.ACCOUNT_INSTALLMENT,
-          installments: installments,
-          total: gameModelDTO!.account.getTotal());
-      gameModelDTO!.account.isInInstallment = true;
-    } else {
-      _updateBalance(-(gameModelDTO!.account.getTotal()));
-    }
-    //gameModelDTO!.balance.closeRoundAccount(account: gameModelDTO!.account);
-    gameModelDTO!.balance.setNextRoundAccount();
-    gameModelDTO!.balance.round += 1;
-    gameModelDTO!.account = gameModelDTO!.balance.accounts[gameModelDTO!.balance.round];
-  }
-
-  bool hasEnoughBalance(int value) {
-    if (value <= gameModelDTO!.currentGameBalance) {
-      return true;
-    }
-    return false;
-  }
-
-  void _updateBalance(int value) {
-    gameModelDTO!.currentGameBalance += value;
-    notifyListeners();
-  }
-
-  bool hasAnyLoanRunning() {
-    return gameModelDTO!.balance.accounts
-        .getRange(
-        gameModelDTO!.balance.round, (gameModelDTO!.balance.accounts.isNotEmpty ? gameModelDTO!.balance.accounts.length : 0))
-        .any((a) => a.loanInstallment > 0);
-  }
 }
 
-class GameModelDTO{
-  String id = "";
-  int currentGameBalance = 0;
-  int initalGameBalance = 0;
-  int limitPlayer = 0;
-  int levelTax = 0;
-  int roundBonus = 0;
-  Player player = Player.empty();
-  Account account = Account.empty();
-  Balance balance = Balance.empty();
-  Set<Player> othersPlayers = HashSet<Player>();
-  List<Mortgage> mortgages = [];
-  List<String> logs = [];
-  //List<Investment> investments= List<Investment>();
-  List<Chance> chances = [];
-  List<Auction> auctions = [];
 
-  bool auctionEnabled = false;
-  bool mortgageEnabled = false;
-  bool chancesEnabled = false;
-  bool youWon = false;
-  bool youBankrupt = false;
-
-  GameModelDTO.empty();
-  GameModelDTO({Player ?player, required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.roundBonus,
-    required this.levelTax, required this.limitPlayer, required this.othersPlayers, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
-  GameModelDTO.initAllFields({required this.id, required this.initalGameBalance, required this.currentGameBalance, required this.account,
-    required this.balance, required this.othersPlayers, required this.mortgages, required this.logs, required this.chances, required this.roundBonus,
-    required this.youBankrupt, required this.auctions, required this.auctionEnabled, required this.mortgageEnabled, required this.chancesEnabled});
- 
-  GameModelDTO toInitialTemplate(){
-    return GameModelDTO(
-      id: id,
-      initalGameBalance: initalGameBalance,
-      currentGameBalance: initalGameBalance,
-      roundBonus: roundBonus,
-      player: player,
-      levelTax: levelTax,
-      limitPlayer: limitPlayer,
-      othersPlayers: othersPlayers,
-      auctionEnabled: auctionEnabled,
-      mortgageEnabled: mortgageEnabled,
-      chancesEnabled: chancesEnabled
-    );
-  }
-
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'currentGameBalance': currentGameBalance,
-      'account': account.toMap(),
-      'balance': balance.toMap(),
-      'player' : player.toMap(),
-      'othersPlayers': othersPlayers.map((player) => player.toMap()).toList(),
-      'mortgages': mortgages.map((mortgage) => mortgage.toMap()).toList(),
-      'logs': logs,
-      'chances': chances.map((chance) => chance.toMap()).toList(),
-      'initalGameBalance': initalGameBalance,
-      'youBankrupt': youBankrupt,
-      'auctions': auctions,
-      'auctionEnabled': auctionEnabled,
-      'mortgageEnabled': mortgageEnabled,
-      'chancesEnabled': chancesEnabled,
-      'roundBonus': roundBonus
-    };
-  }
-
-  factory GameModelDTO.fromMap(Map<String, dynamic> map) {
-    return GameModelDTO.initAllFields(
-        id: map['id'] as String,
-        currentGameBalance: map['currentGameBalance'] as int,
-        account: Account.fromMap(map['account']),
-        balance: Balance.fromMap(map['balance']),
-        othersPlayers: (map['othersPlayers'] as List<dynamic>).map((p) => Player.fromMap(p as Map<String, dynamic>)).toSet(),
-        mortgages: (map['mortgages'] as List<dynamic>).map((h) => Mortgage.fromMap(h as Map<String, dynamic>)).toList(),
-        logs: (map['logs'] as List<dynamic>).cast<String>(),
-        chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
-        auctions: (map['auctions'] as List<dynamic>).map((b) => Auction.fromMap(b as Map<String, dynamic>)).toList(),
-        roundBonus:  map['roundBonus'] as int,
-        initalGameBalance: map['initalGameBalance'] as int,
-        youBankrupt: map['youBankrupt'] as bool,
-        auctionEnabled: map['auctionEnabled'] as bool,
-        mortgageEnabled: map['mortgageEnabled'] as bool,
-        chancesEnabled: map['chancesEnabled'] as bool
-    );
-  }
-}

@@ -1,9 +1,10 @@
 
 import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/enums/log_msg_type.dart';
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
 
 
@@ -16,14 +17,14 @@ class WinnerDialog extends StatelessWidget {
     return PopScope(
         canPop: false,
         child: Card(
-          color: Colors.black.withOpacity(0.8),
+          color: Colors.black.withValues(alpha: 0.8),
           child: Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20.0),
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withValues(alpha: 0.8),
               ),
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -78,8 +79,8 @@ class WinnerDialog extends StatelessWidget {
                       ),
                       child: const Text("Sair", style: TextStyle(fontSize: 16.0, color: Colors.white)),
                       onPressed:() {
-                        gameProvider.eventComposer(type: LogMsgType.IWON);
-                        //Navigator.pushReplacement(context, MaterialPageRoute(builder:(context)=>HomeScreen()));
+                        gameProvider.eventComposer(type: EventType.iwon);
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder:(context)=>const HomeScreen()));
                       },
                     )
                   ])

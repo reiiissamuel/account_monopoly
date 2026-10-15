@@ -42,3 +42,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.gradle/
+/android/local.properties
+/android/app/build/
+
+# --- iOS / macOS ---
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.podspec
+/macos/Flutter/ephemeral/
+/macos/Flutter/Generated/
+/macos/Pods/
+/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# --- Windows Desktop ---
+/windows/flutter/ephemeral/
+/windows/flutter/generated_plugins.cmake
+
+# --- Linux Desktop ---
+/linux/flutter/ephemeral/
+/linux/flutter/generated_plugins.cmake
+

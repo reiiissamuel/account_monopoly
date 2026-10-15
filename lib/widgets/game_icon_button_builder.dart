@@ -4,9 +4,12 @@ class GameIconButtonBuilder extends StatelessWidget {
 
   final String imgPath;
   final Function() onPressed;
-  final String title;
+  final String? title;
+  final double? height;
+  final double? width;
+  final double? textFontSize;
 
-  const GameIconButtonBuilder({super.key, required this.imgPath, required this.title, required this.onPressed});
+  const GameIconButtonBuilder({super.key, required this.imgPath, this.title, required this.onPressed, this.height, this.width, this.textFontSize});
 
   @override
   Widget build(BuildContext context) {
@@ -17,12 +20,12 @@ class GameIconButtonBuilder extends StatelessWidget {
         child: Column(
           children: [
             SizedBox(
-              height: 60.0,
-              width: 60.0,
+              height: height ?? 60.0,
+              width: width ?? 60.0,
               child: Image.asset(imgPath,
                   fit: BoxFit.contain),
             ),
-            Text(title, style: const TextStyle(letterSpacing: 2.0, color: Colors.white, fontSize: 15.0))
+            title != null ? Text(title!, style: TextStyle(letterSpacing: 1.0, color: Colors.white, fontSize: textFontSize ?? 15.0)) : const SizedBox(height: 0),
           ],
         ),
       ),

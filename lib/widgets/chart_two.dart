@@ -1,11 +1,10 @@
+import 'package:account_monopoly/domain/model/balance.dart';
+import 'package:account_monopoly/domain/enums/pie_chart_type.dart';
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart'; // Novo pacote de gráficos
 import 'package:provider/provider.dart';
-
-import 'package:account_monopoly/dto/account.dart';
-import 'package:account_monopoly/enums/pie_chart_type.dart';
-import 'package:account_monopoly/provider/game_provider.dart';
 
 /*
 * Esse gráfico dá uma descrição dos gastos, ou lucros, podendo ser por rodada ou geral,
@@ -23,88 +22,81 @@ class ChartTwo extends StatelessWidget {
 
   // Cores adaptadas do MaterialPalette (charts_flutter) para Color (fl_chart/Flutter)
   static final Map<String, Color> _palette = {
-    "Transferencia": Colors.purple.shade500,
-    "Compras": Colors.green.shade500,
-    "Construções": Colors.blue.shade500,
-    "Eventos": Colors.red.shade500,
-    "Parcelamento": Colors.yellow.shade500,
-    "I. Renda": Colors.grey.shade500,
-    "Outros": Colors.lime.shade500,
-    "Bonus": Colors.green.shade500, // Reutilizando cores
-    "Hipotecas": Colors.red.shade500, // Reutilizando cores
-    "Empréstimo": Colors.yellow.shade700,
-    "Restituição": Colors.grey.shade700,
-    "Leilões": Colors.deepOrange.shade500,
+    "transferIn": Colors.blueAccent,
+    "transferOut": Colors.purple.shade500,
+    "buyShares": Colors.orange.shade500,
+    "buildings": Colors.yellow.shade500,
+    "eventIn": Colors.indigo,
+    "eventOut": Colors.pink,
+    "incameTax": Colors.redAccent,
+    "othersOut": Colors.red,
+    "othersIn": Colors.greenAccent,
+    "bonus": Colors.green.shade500,
+    "refund": Colors.lime.shade500,
+    "dividends": Colors.teal,
   };
 
   void _buildChartSources(PieChartType type, GameProvider gameProvider) {
     // 1. Inicializa a lista de fontes (gastos ou lucros)
     if (type == PieChartType.GENERAL_EXPANSES || type == PieChartType.ROUND_EXPANSES) {
       sources = [
-        ChartSource(indice: "Transferencia", value: 0, color: _palette["Transferencia"]!),
-        ChartSource(indice: "Compras", value: 0, color: _palette["Compras"]!),
-        ChartSource(indice: "Construções", value: 0, color: _palette["Construções"]!),
-        ChartSource(indice: "Eventos", value: 0, color: _palette["Eventos"]!),
-        ChartSource(indice: "Parcelamento", value: 0, color: _palette["Parcelamento"]!),
-        ChartSource(indice: "I. Renda", value: 0, color: _palette["I. Renda"]!),
-        ChartSource(indice: "Outros", value: 0, color: _palette["Outros"]!)
+        ChartSource(indice: "Transferencia", value: 0, color: _palette["transferOut"]!),
+        ChartSource(indice: "Compras", value: 0, color: _palette["buyShares"]!),
+        ChartSource(indice: "Construções", value: 0, color: _palette["buildings"]!),
+        ChartSource(indice: "Eventos", value: 0, color: _palette["eventOut"]!),
+        ChartSource(indice: "I. Renda", value: 0, color: _palette["incameTax"]!),
+        ChartSource(indice: "Outros", value: 0, color: _palette["othersOut"]!)
       ];
     } else { // Lucros
       sources = [
-        ChartSource(indice: "Transferencia", value: 0, color: _palette["Transferencia"]!),
-        ChartSource(indice: "Bonus", value: 0, color: _palette["Bonus"]!),
-        ChartSource(indice: "Eventos", value: 0, color: _palette["Eventos"]!),
-        ChartSource(indice: "Hipotecas", value: 0, color: _palette["Hipotecas"]!),
-        ChartSource(indice: "Empréstimo", value: 0, color: _palette["Empréstimo"]!),
-        ChartSource(indice: "Restituição", value: 0, color: _palette["Restituição"]!),
-        ChartSource(indice: "Leilões", value: 0, color: _palette["Leilões"]!),
-        ChartSource(indice: "Outros", value: 0, color: _palette["Outros"]!)
+        ChartSource(indice: "Transferencia", value: 0, color: _palette["transferIn"]!),
+        ChartSource(indice: "Bonus", value: 0, color: _palette["bonus"]!),
+        ChartSource(indice: "Eventos", value: 0, color: _palette["eventIn"]!),
+        ChartSource(indice: "Restituição", value: 0, color: _palette["refund"]!),
+        ChartSource(indice: "Dividendos", value: 0, color: _palette["dividends"]!),
+        ChartSource(indice: "Outros", value: 0, color: _palette["othersIn"]!)
       ];
     }
 
     // 2. Preenche os valores
     switch (type) {
       case PieChartType.GENERAL_EXPANSES:
-        for (Account ac in gameProvider.gameModelDTO!.balance.accounts) {
-          sources[0].value += ac.transferOut;
-          sources[1].value += ac.qtdPurchases;
-          sources[2].value += (ac.qtdHome + ac.qtdHotel);
-          sources[3].value += ac.qtdEventPay;
-          sources[4].value += ac.previousAccountInstallment;
-          sources[5].value += ac.ir;
-          sources[6].value += ac.otherPaymentsOut;
+        for (Balance ba in gameProvider.gameModelDTO!.player.financialReport.historicalBalances.values) {
+          sources[0].value += ba.transferOut;
+          sources[1].value += ba.sharePurchasesOut;
+          sources[2].value += ba.buildingPurchasesOut;
+          sources[3].value += ba.eventOut;
+          sources[4].value += ba.incomeTaxOut;
+          sources[5].value += ba.otherOut;
         }
         break;
       case PieChartType.GENERAL_PROFIT:
-        for (Account ac in gameProvider.gameModelDTO!.balance.accounts) {
-          sources[0].value += ac.transferIn;
-          sources[1].value += ac.bonus;
-          sources[2].value += ac.qtdEventGain;
-          sources[3].value += ac.mortgagesIn;
-          sources[4].value += ac.loanIn;
-          sources[5].value += ac.restituicao;
-          sources[6].value += ac.auctionIn;
-          sources[7].value += ac.otherReceives;
+        for (Balance ba in gameProvider.gameModelDTO!.player.financialReport.historicalBalances.values) {
+          sources[0].value += ba.transferIn;
+          sources[1].value += ba.bonusIn;
+          sources[2].value += ba.eventIn;
+          sources[3].value += ba.refundIn;
+          sources[4].value += ba.dividendsIn;
+          sources[5].value += ba.otherIn;
         }
         break;
       case PieChartType.ROUND_PROFIT:
-        sources[0].value += gameProvider.gameModelDTO!.account.transferIn;
-        sources[1].value += gameProvider.gameModelDTO!.account.bonus;
-        sources[2].value += gameProvider.gameModelDTO!.account.qtdEventGain;
-        sources[3].value += gameProvider.gameModelDTO!.account.mortgagesIn;
-        sources[4].value += gameProvider.gameModelDTO!.account.loanIn;
-        sources[5].value += gameProvider.gameModelDTO!.account.restituicao;
-        sources[6].value += gameProvider.gameModelDTO!.account.auctionIn;
-        sources[7].value += gameProvider.gameModelDTO!.account.otherReceives;
+        Balance ba = gameProvider!.currentPlayer.roundBalance;
+        sources[0].value += ba.transferOut;
+        sources[1].value += ba.sharePurchasesOut;
+        sources[2].value += ba.buildingPurchasesOut;
+        sources[3].value += ba.eventOut;
+        sources[4].value += ba.incomeTaxOut;
+        sources[5].value += ba.otherOut;
         break;
       case PieChartType.ROUND_EXPANSES:
-        sources[0].value += gameProvider.gameModelDTO!.account.transferOut;
-        sources[1].value += gameProvider.gameModelDTO!.account.qtdPurchases;
-        sources[2].value += (gameProvider.gameModelDTO!.account.qtdHome + gameProvider.gameModelDTO!.account.qtdHotel);
-        sources[3].value += gameProvider.gameModelDTO!.account.qtdEventPay;
-        sources[4].value += gameProvider.gameModelDTO!.account.previousAccountInstallment;
-        sources[5].value += gameProvider.gameModelDTO!.account.ir;
-        sources[6].value += gameProvider.gameModelDTO!.account.otherPaymentsOut;
+        Balance ba = gameProvider!.currentPlayer.roundBalance;
+        sources[0].value += ba.transferIn;
+        sources[1].value += ba.bonusIn;
+        sources[2].value += ba.eventIn;
+        sources[3].value += ba.refundIn;
+        sources[4].value += ba.dividendsIn;
+        sources[5].value += ba.otherIn;
         break;
     }
     
@@ -122,7 +114,7 @@ class ChartTwo extends StatelessWidget {
       return PieChartSectionData(
         color: data.color,
         value: data.value.toDouble(),
-        title: StringUtils.currencyFormat(data.value.toString()), // Exibe o valor formatado
+        title: StringUtils.currencyFormat(data.value.toDouble()), // Exibe o valor formatado
         radius: 50, // Tamanho do raio
         titleStyle: const TextStyle(
           fontSize: 12,
@@ -155,7 +147,7 @@ class ChartTwo extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              '${source.indice}: ${StringUtils.currencyFormat(source.value.toString())}',
+              '${source.indice}: ${StringUtils.currencyFormat(source.value.toDouble())}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -245,7 +237,7 @@ class ChartTwo extends StatelessWidget {
 
 class ChartSource {
   String indice;
-  int value;
+  num value;
   Color color; // Cor agora é um objeto Color padrão do Flutter
 
   ChartSource(

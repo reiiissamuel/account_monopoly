@@ -28,12 +28,13 @@ class _SplashScreenState extends State<SplashScreen> {
         color: Colors.black,
         child: Column(
             mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Expanded(
                 flex: 1,
                 child: SizedBox(
-                  height: 70.0,
-                  width: 70.0,
+                  height: 150.0,
+                  width: 150.0,
                   child: Image.asset("icons/apptheme.png",
                       fit: BoxFit.contain),
                 ),
@@ -41,8 +42,8 @@ class _SplashScreenState extends State<SplashScreen> {
               Expanded(
                 flex: 1,
                 child: SizedBox(
-                  height: 100.0,
-                  width: 100.0,
+                  height: 70.0,
+                  width: 70.0,
                   child: Image.asset("icons/mysign.png", fit: BoxFit.contain),
                 ),
               )

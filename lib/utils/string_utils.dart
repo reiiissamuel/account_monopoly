@@ -1,19 +1,9 @@
 import 'dart:math';
 
-class StringUtils {
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
-  static String currencyFormat(String ns){
-    String s = ns.replaceAll(".", "");
-
-    //[1.000 10.000 100.000] [1.000.000 10.000.000 100.000.000]
-    if(s.length == 4 || s.length == 5 || s.length == 6) {
-      return "${s.substring(0, s.length - 3)}.${s.substring(s.length - 3 , s.length)}";
-    } else if(s.length == 7 || s.length == 8 || s.length == 9){
-      return "${s.substring(0, s.length - 6)}.${s.substring(s.length - 6, s.length - 3)}.${s.substring(s.length - 3 , s.length)}";
-    }
-    else {
-      return s;}
-  }
+class StringUtils extends TextInputFormatter{
 
   static String generateUUID({required int size}) {
     final random = Random();
@@ -27,16 +17,122 @@ class StringUtils {
     return result;
   }
 
-  static int setTax(String taxLevel){
-    switch(taxLevel){
-      case "Normal":
-        return 5;
-      case "Alto":
-        return 10;
-      case "Jogo-Rapido":
-        return 15;
-      default:
-        return 5;
+  static final NumberFormat _currencyFormat = NumberFormat.currency(
+    locale: 'pt_BR', // Defina o locale desejado (ex: pt_BR para Real)
+    symbol: '\$', // Símbolo da moeda
+    decimalDigits: 2, // Número de casas decimais
+  );
+
+  static String currencyFormat(double input){
+    return _currencyFormat.format(input);
+  }
+
+  static double currencyAsDouble(String input) {
+  if (input.trim().isEmpty) {
+    return 0.0;
+  }
+  
+  try {
+    // Tenta o parse estrito do NumberFormat
+    return _currencyFormat.parse(input).toDouble();
+  } catch (_) {
+    // Fallback robusto caso venha com espaços extras ou formatação parcial da UI
+    final cleaned = input
+        .replaceAll('\$', '')
+        .replaceAll(' ', '')
+        .replaceAll('.', '') // Remove pontos de milhar, se houver
+        .replaceAll(',', '.'); // Troca a vírgula decimal por ponto para o double.tryParse
+        
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+}
+
+  static String unformatAsString(String input){
+    return input.replaceAll("\$", "").replaceAll(".", "").replaceAll(",", "");
+  }
+  
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.selection.baseOffset == 0) {
+      // Impede a formatação se o campo estiver vazio (edge case)
+      return newValue;
     }
+
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    //dividindo por 100 para pegar os cents
+    double value = double.parse(newValue.text) / 100;
+    String formattedText = currencyFormat(value);
+
+    // Retorna o novo valor do campo, ajustando a posição do cursor para o final
+    return newValue.copyWith(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+
+  static String generateAbrevCodeFromString(String value){
+    if(value.isEmpty) throw Exception("Erro ao gerar codigo de abreviação da propriedade: Valor nulo ou vazio");
+    final StringBuffer codeBuffer = StringBuffer();
+    List<String> parts = value.toUpperCase().split(' ');
+    switch (parts.length){
+      case 1:
+        codeBuffer.write(parts[0].substring(0, 4));
+        break;
+      case 2:
+        codeBuffer.write(parts[0].substring(0,2));
+        codeBuffer.write(parts[1].substring(0,2));
+        break;
+      case 3:
+        codeBuffer.write(parts[0].substring(0,2));
+        codeBuffer.write(parts[1][0]);
+        codeBuffer.write(parts[2][0]);
+        break;
+      default:
+        codeBuffer.write(parts[0][0]);
+        codeBuffer.write(parts[1][0]);
+        codeBuffer.write(parts[2][0]);
+        codeBuffer.write(parts[3][0]);
+    }
+    return replaceDiacriticalMarks(codeBuffer.toString());
+  }
+
+  static String replaceDiacriticalMarks(String input) {
+    const Map<String, String> replacements = {
+      // A
+      'Á': 'A', 'À': 'A', 'Ã': 'A', 'Ä': 'A', 'Â': 'A', 'Å': 'A', 'Ā': 'A',
+      // E
+      'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E', 'Ē': 'E',
+      // I
+      'Í': 'I', 'Ì': 'I', 'Î': 'I', 'Ï': 'I', 'Ī': 'I',
+      // O
+      'Ó': 'O', 'Ò': 'O', 'Õ': 'O', 'Ö': 'O', 'Ô': 'O', 'Ø': 'O', 'Ō': 'O',
+      // U
+      'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'Ü': 'U', 'Ū': 'U',
+      // C
+      'Ç': 'C',
+      // N
+      'Ñ': 'N',
+      //
+      'Ÿ': 'Y',
+      // Símbolos Especiais (Ligaturas, etc.)
+      'Æ': 'AE', 'Œ': 'OE', 'Þ': 'TH', 'Đ': 'D',
+    };
+    final StringBuffer buffer = StringBuffer();
+    for (final rune in input.runes) {
+      final char = String.fromCharCode(rune);
+      final String? replacement = replacements[char];
+      if (replacement != null) {
+        buffer.write(replacement);
+      } else {
+        buffer.write(char);
+      }
+    }
+    return buffer.toString();
   }
 }
