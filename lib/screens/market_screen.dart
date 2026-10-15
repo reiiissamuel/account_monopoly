@@ -403,7 +403,7 @@ class _MarketScreenState extends State<MarketScreen> {
               backgroundColor: Theme.of(context).primaryColor,
               content: offer.source != OfferSource.fundIPO
                   ? Text(
-                "Confirmar compra do lote de ${offer.propertyName} posto à venda por ${offer.sellerPlayerId} no valor de total de ${StringUtils.currencyFormat(offer.totalAskingPrice)};",
+                "Confirmar compra do lote de ${offer.propertyName} posto à venda por ${offer.sellerName} no valor de total de ${StringUtils.currencyFormat(offer.totalAskingPrice)};",
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 15,
