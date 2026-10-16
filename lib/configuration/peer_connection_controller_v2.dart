@@ -17,10 +17,10 @@ class PeerConnectionControllerV2 {
   List<DataConnection> serverActiveConnections = <DataConnection>[];
   bool _isHostListenersInitialized = false; // Impede duplicação de listeners em reconexões
 
-  static const String OPENED_CONNECTION_MSG = "Peer aberto para conexões.";
-  static const String CONNECTION_RECEIVED_MSG = "Nova conexão recebida do peer:";
-  static const String PEER_CONNECTION_CLOSED = "Jogador offline:";
-  static const String HOST_CONNECTION_CLOSED = "Host offline (Cliente):";
+  static const String openedConnectionMsg = "Peer aberto para conexões.";
+  static const String connectionReceivedMsg = "Nova conexão recebida do peer:";
+  static const String peerConnectionClosedMsg = "Jogador offline:";
+  static const String hostConnectionClosedMsg = "Host offline (Cliente):";
 
   PeerConnectionControllerV2({
     required this.gameModelController,
@@ -42,7 +42,7 @@ class PeerConnectionControllerV2 {
     peer.on("open").listen((id) {
       isConnected = true;
       myPeerId = id;
-      log("$OPENED_CONNECTION_MSG ID: $myPeerId");
+      log("$openedConnectionMsg ID: $myPeerId");
     });
 
     peer.on("close").listen((_) {
@@ -54,7 +54,7 @@ class PeerConnectionControllerV2 {
       serverActiveConnections.add(event);
 
       event.on("open").listen((_) {
-        log('$CONNECTION_RECEIVED_MSG ${event.peer}');
+        log('$connectionReceivedMsg ${event.peer}');
         handleIncomingPeerConnection(event.peer);
       });
 
@@ -67,7 +67,7 @@ class PeerConnectionControllerV2 {
 
       event.on("close").listen((_) {
         serverActiveConnections.removeWhere((c) => c.peer == event.peer);
-        log('$PEER_CONNECTION_CLOSED ${event.peer}');
+        log('$peerConnectionClosedMsg ${event.peer}');
 
         final gameModel = gameModelController.gameModelDTO;
         if (gameModel != null && gameModel.othersPlayers.containsKey(event.peer)) {
@@ -105,7 +105,7 @@ class PeerConnectionControllerV2 {
     });
 
     connWithServer!.on("close").listen((event) {
-      log(HOST_CONNECTION_CLOSED);
+      log(hostConnectionClosedMsg);
       closeConnection(); 
 
       final gameModel = gameModelController.gameModelDTO;
