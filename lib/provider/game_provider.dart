@@ -133,6 +133,10 @@ class GameProvider extends ChangeNotifier {
           break;
         case EventType.lostConnection:
           gameModelDTO!.othersPlayers.remove(sourceplayer.id);
+          if (peerConnectionController != null && peerConnectionController!.isServer) {
+            peerConnectionController!.serverActiveConnections.removeWhere((c) => c.peer == sourceplayer.id);
+          }
+          break;
         default:
           break;
       }
@@ -443,6 +447,21 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
+  void leaveGame() {
+    try {
+      // 1. Envia o evento de desconexão para o host/mesa antes de fechar tudo
+      if (peerConnectionController != null && peerConnectionController!.isConnected) {
+        eventComposer(type: EventType.lostConnection);
+      }
+    } catch (e) {
+      log("Erro ao notificar saída do jogo: $e");
+    } finally {
+      // 2. Destrói as conexões e limpa o estado local
+      peerConnectionController?.destroy();
+      reset();
+    }
+  }
+
   void _createPeerConnectionController({required String peerId}){
     // Destrói o peer anterior se ele já existir, evitando conflitos de socket e stream
     if (peerConnectionController != null) {
@@ -490,7 +509,7 @@ class GameProvider extends ChangeNotifier {
       gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
       gameModelDTO!.othersPlayers[myId] = gameModelDTO!.player;
     }
-
+    userModelController.user!.games.add(gameModelDTO!);
     // 3. Notifica a mesa que o jogador está ativo / na mesa
     _sendEvent(EventDTO(
       referenceRound: 0,

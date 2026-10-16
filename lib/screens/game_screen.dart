@@ -81,7 +81,7 @@ class GameScreenState extends State<GameScreen> {
                       fontWeight: FontWeight.bold),
                 ),
                 centerTitle: true,
-                leading: Center(
+                leading: gameProvider.currentPlayer.isHost ? Center(
                   child: IconButton(
                           icon: const Icon(Icons.broadcast_on_personal_rounded,
                               color: Colors.green),
@@ -89,7 +89,7 @@ class GameScreenState extends State<GameScreen> {
                             _dialogCaller(context, const TableInfoDialog());
                           },
                         )
-                ),
+                ) : null,
                 actions: <Widget>[
                   Center(
                     child: Text(
@@ -109,8 +109,8 @@ class GameScreenState extends State<GameScreen> {
                             title: "Quer mesmo sair deste jogo?",
                             textContent: "Você poderá entrar nele novamete\n"
                             "indo até a sessão 'jogos ativos'",
-                            onConfirm: (){
-                              gameProvider.peerConnectionController!.closeConnection();
+                            onConfirm: (){// No botão de sair da UI:
+                              Provider.of<GameProvider>(context, listen: false).leaveGame();
                               Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
                             }
                         );

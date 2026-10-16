@@ -46,7 +46,7 @@ class PeerConnectionControllerV2 {
     });
 
     peer.on("close").listen((_) {
-      closeConnection();
+      _closeConnection();
       reconnectToLastHost(); 
     });
 
@@ -106,7 +106,7 @@ class PeerConnectionControllerV2 {
 
     connWithServer!.on("close").listen((event) {
       log(hostConnectionClosedMsg);
-      closeConnection(); 
+      _closeConnection(); 
 
       final gameModel = gameModelController.gameModelDTO;
 
@@ -154,7 +154,7 @@ class PeerConnectionControllerV2 {
   }
 
   /// Limpa as conexões atuais de forma segura
-  void closeConnection() {
+  void _closeConnection() {
     isConnected = false;
     if (isServer) {
       for (var conn in serverActiveConnections) {
@@ -306,7 +306,7 @@ class PeerConnectionControllerV2 {
 
   /// Desconecta a instância atual do peer de forma segura e limpa as conexões ativas
   void destroy() {
-    closeConnection();
+    _closeConnection();
     try {
       peer.disconnect();
     } catch (e) {
