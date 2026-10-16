@@ -125,24 +125,40 @@ class Player {
       );
     }
   }
-
-  void downgradePortfolio(String propertyId, int sharesAmount, double opCost){
-    if(!portfolio.containsKey(propertyId)) return;
-
-    if(sharesAmount >= portfolio[propertyId]!.sharesOwned){
-      portfolio[propertyId]!.sharesOwned = 0;
-    } else {
-      portfolio[propertyId]!.sharesOwned -= sharesAmount;
-    }
-    portfolio[propertyId]!.saleCapitalGain += opCost;
-  }
   
-  void receiveCredit(double amount, double incomeTaxRate) {
-    if (amount > 0) {
-      currentCredit += amount;
-      incomeTax += amount * incomeTaxRate;
-    }
+void downgradePortfolio(String propertyId, int sharesAmount, double opCost) {
+  if (!portfolio.containsKey(propertyId)) return;
+  final holder = portfolio[propertyId]!;
+  
+  if (sharesAmount >= holder.sharesOwned) {
+    double costOfSoldShares = holder.investmentValue;
+    double capitalGain = opCost - costOfSoldShares;
+    
+    holder.sharesOwned = 0;
+    holder.investmentValue = 0.0;
+    holder.saleCapitalGain += capitalGain;
+  } else {
+    double averageCost = holder.sharesOwned > 0 
+        ? (holder.investmentValue / holder.sharesOwned) 
+        : 0.0;
+    
+    double costOfSoldShares = averageCost * sharesAmount;
+    
+    double capitalGain = opCost - costOfSoldShares;
+
+    holder.sharesOwned -= sharesAmount;
+    holder.investmentValue -= costOfSoldShares;
+    
+    holder.saleCapitalGain += capitalGain;
   }
+}
+
+void receiveCredit(double amount, double incomeTaxRate) {
+  if (amount > 0) {
+    currentCredit += amount;
+    incomeTax += amount * incomeTaxRate;
+  }
+}
 
   void payDebit(double amount) {
     _checkIfEnoughCredit(amount);
