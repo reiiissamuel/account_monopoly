@@ -122,7 +122,7 @@ class GameProvider extends ChangeNotifier {
           break;
         case EventType.bankruptcy:
           if (event.sourcePlayer.isHost) {
-            //todo vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
+            //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
           }
           break;
         case EventType.iwon:
@@ -133,8 +133,9 @@ class GameProvider extends ChangeNotifier {
           break;
         case EventType.lostConnection:
           gameModelDTO!.othersPlayers.remove(sourceplayer.id);
-          if (peerConnectionController != null && peerConnectionController!.isServer) {
+          if (peerConnectionController != null && sourceplayer.isHost) {
             peerConnectionController!.serverActiveConnections.removeWhere((c) => c.peer == sourceplayer.id);
+            peerConnectionController!.reconnectToLastHost();
           }
           break;
         default:

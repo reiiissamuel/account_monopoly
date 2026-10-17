@@ -173,38 +173,39 @@ class PeerConnectionControllerV2 {
   void reconnectToLastHost() {
     final gameModel = gameModelController.gameModelDTO;
 
-    if (gameModel == null || gameModel.othersPlayers.isEmpty) {
-      log("Nenhum dado de jogo ou jogadores disponíveis. Assumindo Host.");
+    if (gameModel == null) {
+      log("Nenhum dado de jogo disponível. Assumindo Host.");
       openConnectionsAsHost();
       return;
     }
 
     try {
+      gameModel.othersPlayers.removeWhere((id, player) => player.isHost);
+
       final activePlayers = gameModel.othersPlayers.values.toList();
 
       if (activePlayers.isEmpty) {
-        log("Nenhum outro jogador restante. Assumindo Host.");
+        log("Nenhum outro jogador restante na mesa. Assumindo Host.");
         openConnectionsAsHost();
         return;
       }
-
-      // 1. ORDENAÇÃO DETERMINÍSTICA: O menor ID alfabético ganha
+      // Adiciona o próprio jogador à lista de elegíveis para a eleição unânime
+      activePlayers.add(gameModel.player);
+      // 2. ORDENAÇÃO DETERMINÍSTICA: O menor ID alfabético ganha por consenso
       activePlayers.sort((a, b) => a.id.compareTo(b.id));
-
-      // 2. O primeiro da lista é o novo líder unânime
+      // 3. O primeiro da lista ordenada é o novo líder unânime da mesa
       final newHostPlayer = activePlayers.first;
 
       log("Eleição concluída. Novo Host eleito por consenso: ${newHostPlayer.id}");
 
-      // 3. ATUALIZAÇÃO DA VARIÁVEL isHost EM TODOS OS JOGADORES DO MODELO
+      // 4. ATUALIZAÇÃO DA VARIÁVEL isHost EM TODOS OS JOGADORES DO MODELO
       gameModel.player.isHost = (gameModel.player.id == newHostPlayer.id);
       for (var player in gameModel.othersPlayers.values) {
         player.isHost = (player.id == newHostPlayer.id);
       }
-
-      // 4. Define o comportamento de rede baseado em quem venceu
+      // 5. Define o comportamento de rede baseado em quem venceu a eleição
       if (newHostPlayer.id == myPeerId) {
-        log("Eu fui eleito o novo Host da mesa. Abrindo conexões...");
+        log("Eu fui eleito o novo Host da mesa. Abrindo conexões como servidor...");
         openConnectionsAsHost();
       } else {
         log("Tentando se conectar automaticamente ao novo Host eleito: ${newHostPlayer.id}");
