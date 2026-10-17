@@ -103,6 +103,15 @@ class PeerConnectionControllerV2 {
     connWithServer!.on("open").listen((event) {
       isConnected = true;
       log("Conectado com sucesso ao Host: $peerSourceId");
+
+      // --- ADIÇÃO: Envia o estado atual do player para o host assim que conecta ---
+      final gameModel = gameModelController.gameModelDTO;
+      if (gameModel != null) {
+        gameModelController.eventComposer(
+          type: EventType.joinTable,
+          sourcePlayer: gameModel.player,
+        );
+      }
     });
 
     connWithServer!.on("close").listen((event) {
@@ -195,7 +204,12 @@ class PeerConnectionControllerV2 {
     }
 
     try {
-      gameModel.othersPlayers.removeWhere((id, player) => player.isHost);
+      for (var player in gameModel.othersPlayers.values) {
+        if (player.isHost) {
+          player.isHost = false;
+          player.isOnline = false;
+        }
+      }
 
       final activePlayers = gameModel.othersPlayers.values.toList();
 
@@ -265,7 +279,6 @@ class PeerConnectionControllerV2 {
     }
   }
 
-  /// Analisa a conexão recebida e trata caso seja uma reconexão ou um novo jogador
   void handleIncomingPeerConnection(String incomingPeerId) {
     final gameModel = gameModelController.gameModelDTO;
     if (gameModel == null) return;
@@ -279,7 +292,7 @@ class PeerConnectionControllerV2 {
       String? existingKey;
       Player? existingPlayer;
 
-      // Procura se já existe um jogador com a mesma base (mesmo usuário que caiu e voltou)
+      // Procura se já existe um jogador com a mesma base na mesa do novo host
       for (var entry in gameModel.othersPlayers.entries) {
         final existingParts = entry.key.split('-');
         if (existingParts.length >= 2) {
@@ -292,17 +305,20 @@ class PeerConnectionControllerV2 {
         }
       }
 
-      // CASO 1: Jogador reconectado após um crash (Usa o copyWith para substituir o ID sem perder o estado)
-      if (existingKey != null && existingPlayer != null && existingKey != incomingPeerId) {
-        log("Jogador reconectado detetado: ${existingPlayer.username}. Atualizando PeerID de $existingKey para $incomingPeerId");
+      // Se encontrou o jogador anterior (mesmo com UUID novo), reaproveita o player inteiro com os 400k e rodada!
+      if (existingKey != null && existingPlayer != null) {
+        log("Reconexão detectada no Novo Host para: ${existingPlayer.username}. Atualizando ID.");
 
         gameModel.othersPlayers.remove(existingKey);
 
-        // Chamada limpa que substitui o Player.ofDefinedId e preserva todo o histórico
-        Player updatedPlayer = existingPlayer.copyWith(id: incomingPeerId);
+        Player updatedPlayer = existingPlayer.copyWith(
+          id: incomingPeerId,
+          isOnline: true,
+        );
 
         gameModel.othersPlayers[incomingPeerId] = updatedPlayer;
 
+        // Responde ao cliente com o estado atualizado da mesa
         gameModelController.eventComposer(
           type: EventType.serverHandShake,
           destinationPlayer: updatedPlayer,
@@ -310,12 +326,15 @@ class PeerConnectionControllerV2 {
         return;
       }
 
-      // CASO 2: Jogador totalmente novo
+      // CASO EXTREMO: Se realmente nunca existiu na partida, aí sim cria como novo jogador
       final newPlayer = Player.ofDefinedId(
         username: extractedUsername,
         id: incomingPeerId,
       );
       newPlayer.currentCredit = gameModel.initalGameCredit;
+      newPlayer.isOnline = true;
+
+      gameModel.othersPlayers[incomingPeerId] = newPlayer;
 
       gameModelController.eventComposer(
         type: EventType.serverHandShake,

@@ -131,10 +131,15 @@ class GameProvider extends ChangeNotifier {
           gameModelDTO!.winner = sourceplayer;
           break;
         case EventType.joinTable:
-          gameModelDTO!.updateOtherPlayers(sourceplayer); //duplicado, sourceplayer já é inserido no incio do metodo
+          gameModelDTO!.updateOtherPlayers(sourceplayer);
+          if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
+            gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = true;
+          }
           break;
         case EventType.lostConnection:
-          gameModelDTO!.othersPlayers.remove(sourceplayer.id);
+          if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
+            gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = false;
+          }
           if (peerConnectionController != null && sourceplayer.isHost) {
             peerConnectionController!.serverActiveConnections.removeWhere((c) => c.peer == sourceplayer.id);
             peerConnectionController!.reconnectToLastHost();
@@ -481,6 +486,10 @@ class GameProvider extends ChangeNotifier {
 
   Future<void> _updateUserModel() async {
     try{
+      // --- CORREÇÃO AQUI: Remove a referência antiga da partida antes de adicionar a atualizada 
+      userModelController.user!.games.removeWhere((g) => g.id == gameModelDTO!.id);
+      // Adiciona a versão atualizada e unificada do jogo
+      userModelController.user!.games.add(gameModelDTO!);
       await userModelController.updateUser();
     } on Exception catch(e){
       log("Erro na tentativa salvar os dados do jogo: $e");
@@ -493,39 +502,32 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _dealHostHandShakeEvent(EventDTO event) {
+    // Guarda o player local atual antes de mexer em qualquer coisa
     final localPlayerBackup = gameModelDTO?.player;
     
-    // 1. O Host enviou as configs dos jogo com a lista de players presentes.
+    // Recebe os dados globais do novo host
     gameModelDTO = event.gameData;
-
     final myId = peerConnectionController!.myPeerId;
 
-    // 2. Verifica se o Host já mapeou este jogador na lista
-    if (gameModelDTO!.othersPlayers.containsKey(myId)) {
-      final hostPlayerVersion = gameModelDTO!.othersPlayers[myId]!;
-      // ORIGEM DA PROTEÇÃO: Mantém a versão local do player se já existir
-      if (localPlayerBackup != null) {
-        gameModelDTO!.player = localPlayerBackup;
-        gameModelDTO!.othersPlayers[myId] = localPlayerBackup;
-      } else {
-        gameModelDTO!.player = hostPlayerVersion;
-      }
+    // BLINDAGEM: Se temos um jogador local válido, mantemos a nossa instância exata
+    if (localPlayerBackup != null) {
+      gameModelDTO!.player = localPlayerBackup;
+    } else if (gameModelDTO!.othersPlayers.containsKey(myId)) {
+      gameModelDTO!.player = gameModelDTO!.othersPlayers[myId]!;
     } else {
-      if (localPlayerBackup != null) {
-        gameModelDTO!.player = localPlayerBackup;
-      } else {
-        gameModelDTO!.player = Player.ofDefinedId(
-          id: myId,
-          username: userModelController.user!.username,
-        );
-        gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
-      }
-      gameModelDTO!.othersPlayers[myId] = gameModelDTO!.player;
+      gameModelDTO!.player = Player.ofDefinedId(
+        id: myId,
+        username: userModelController.user!.username,
+      );
+      gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
     }
+
+    // Garante que o próprio player fica registado corretamente em othersPlayers com o estado online
+    gameModelDTO!.othersPlayers[myId] = gameModelDTO!.player;
     
-    userModelController.user!.games.add(gameModelDTO!);
+    // Persiste o estado unificado localmente[cite: 8]
+    _updateUserModel();
     
-    // 3. Notifica a mesa que o jogador está ativo / na mesa
     _sendEvent(EventDTO(
       referenceRound: currentRound,
       type: EventType.joinTable,
