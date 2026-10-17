@@ -87,8 +87,8 @@ class PeerConnectionControllerV2 {
     });
   }
 
-  /// Conecta o peer atual como um Cliente a um Host
-  Future<void> connectToHost(String peerSourceId) async {
+  /// Conecta o peer atual como um Cliente a um Host com suporte a tentativas automáticas (retry)
+  Future<void> connectToHost(String peerSourceId, {int retries = 3, int delaySeconds = 2}) async {
     isServer = false;
     
     // Fecha conexões anteriores ativas antes de abrir uma nova
@@ -97,15 +97,30 @@ class PeerConnectionControllerV2 {
       connWithServer = null;
     }
 
+    log("Tentando conectar ao Host: $peerSourceId (Tentativas restantes: $retries)");
     connWithServer = peer.connect(peerSourceId);
 
     connWithServer!.on("open").listen((event) {
       isConnected = true;
-      log("Conectado ao Host: $peerSourceId");
+      log("Conectado com sucesso ao Host: $peerSourceId");
     });
 
     connWithServer!.on("close").listen((event) {
       log(hostConnectionClosedMsg);
+      
+      // Se fechou e o cliente nunca chegou a estabelecer o estado 'isConnected' com sucesso,
+      // significa que o host eleito ainda não abriu o servidor PeerJS a tempo. Fazemos o retry.
+      if (retries > 0 && !isConnected) {
+        _closeConnection();
+        log("Host ainda não está pronto. Tentando novamente em ${delaySeconds}s...");
+        
+        Future.delayed(Duration(seconds: delaySeconds), () {
+          connectToHost(peerSourceId, retries: retries - 1, delaySeconds: delaySeconds + 1);
+        });
+        return;
+      }
+
+      // Se já estava conectado e caiu depois, ou esgotou as tentativas, segue o fluxo normal de queda
       _closeConnection(); 
 
       final gameModel = gameModelController.gameModelDTO;
@@ -128,7 +143,7 @@ class PeerConnectionControllerV2 {
         log("Erro: GameModelDTO nulo durante a desconexão do Host.");
       }
 
-      // Dispara a lógica de eleição de novo host
+      // Dispara a lógica de eleição de novo host novamente se esgotar
       reconnectToLastHost();
     });
 
@@ -209,7 +224,11 @@ class PeerConnectionControllerV2 {
         openConnectionsAsHost();
       } else {
         log("Tentando se conectar automaticamente ao novo Host eleito: ${newHostPlayer.id}");
-        connectToHost(newHostPlayer.id);
+        // ADICIONE ESTE ATRASO DE 2 SEGUNDOS:
+        // Dá tempo suficiente para o novo host eleito inicializar o servidor PeerJS antes do cliente tentar o handshake
+        Future.delayed(const Duration(seconds: 2), () {
+          connectToHost(newHostPlayer.id);
+        });
       }
     } catch (e) {
       log("Falha crítica no processo de eleição de Host: ", error: e);
