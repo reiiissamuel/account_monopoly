@@ -42,7 +42,7 @@ class GameProvider extends ChangeNotifier {
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
-  int get currentRound => gameModelDTO!.player.financialReport.getCurrentRound();
+  int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
 
   void notifyChanges(bool isLoading) {
     this.isLoading = isLoading;

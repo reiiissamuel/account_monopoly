@@ -60,11 +60,4 @@ class FinancialReport {
       historicalBalances: deserializedBalances,
     );
   }
-
-  int getCurrentRound() {
-    if (historicalBalances.isEmpty){
-      return 1;
-    }
-    return historicalBalances.keys.reduce((a, b) => a > b ? a : b);
-  }
 }
