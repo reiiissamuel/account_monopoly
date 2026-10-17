@@ -28,6 +28,7 @@ class GameProvider extends ChangeNotifier {
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
   String? any;
+  
 
   void reset(){
     gameModelDTO = null;
@@ -41,6 +42,7 @@ class GameProvider extends ChangeNotifier {
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
+  int get currentRound => gameModelDTO!.player.financialReport.getCurrentRound();
 
   void notifyChanges(bool isLoading) {
     this.isLoading = isLoading;
@@ -150,8 +152,7 @@ class GameProvider extends ChangeNotifier {
     try{
       eventComposer(type: EventType.roundBonus, price: ledger.roundBonus);
       eventComposer(type: EventType.dividendsCalculation);
-      currentPlayer.financialReport.addRoundBalance(gameModelDTO!.currentRound, currentPlayer.roundBalance.copyAndReset());
-      gameModelDTO!.currentRound += 1;
+      currentPlayer.financialReport.addRoundBalance(currentRound, currentPlayer.roundBalance.copyAndReset());
 
       List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
       if(foreclosureLoans.isNotEmpty){
@@ -187,7 +188,7 @@ class GameProvider extends ChangeNotifier {
       notifyChanges(true);
 
       EventDTO event = EventDTO(
-          referenceRound: gameModelDTO!.currentRound,
+          referenceRound: currentRound,
           type: type,
           destinationPlayer: destinationPlayer,
           sourcePlayer: sourcePlayer ?? currentPlayer,
@@ -254,8 +255,8 @@ class GameProvider extends ChangeNotifier {
           ledger.checkForMajorOwner(destinationPlayer!, event.tradeOffer!.propertyId);
           break;
         case EventType.dividendsCalculation:
-          if(ledger.lastPropertiesUpdateRound >= gameModelDTO!.currentRound) throw PropertiesAlreadyUpdateException("");
-          ledger.updatePropertiesValuation(currentPlayer, gameModelDTO!.currentRound);
+          if(ledger.lastPropertiesUpdateRound >= currentRound) throw PropertiesAlreadyUpdateException("");
+          ledger.updatePropertiesValuation(currentPlayer, currentRound);
           event.price = currentPlayer.roundBalance.dividendsIn;
           break;
         case EventType.build:
@@ -492,28 +493,41 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _dealHostHandShakeEvent(EventDTO event) {
-    // 1. O Host enviou o estado completo do jogo em event.gameData
+    final localPlayerBackup = gameModelDTO?.player;
+    
+    // 1. O Host enviou as configs dos jogo com a lista de players presentes.
     gameModelDTO = event.gameData;
 
     final myId = peerConnectionController!.myPeerId;
 
-    // 2. Verifica se o Host já mapeou este jogador na lista (seja por reconexão ou nova entrada)
+    // 2. Verifica se o Host já mapeou este jogador na lista
     if (gameModelDTO!.othersPlayers.containsKey(myId)) {
-      // Restaura o player exato com todo o saldo, propriedades e histórico guardados
-      gameModelDTO!.player = gameModelDTO!.othersPlayers[myId]!;
+      final hostPlayerVersion = gameModelDTO!.othersPlayers[myId]!;
+      // ORIGEM DA PROTEÇÃO: Mantém a versão local do player se já existir
+      if (localPlayerBackup != null) {
+        gameModelDTO!.player = localPlayerBackup;
+        gameModelDTO!.othersPlayers[myId] = localPlayerBackup;
+      } else {
+        gameModelDTO!.player = hostPlayerVersion;
+      }
     } else {
-      // Fallback de segurança para um jogador totalmente novo caso não venha no mapa
-      gameModelDTO!.player = Player.ofDefinedId(
-        id: myId,
-        username: userModelController.user!.username,
-      );
-      gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
+      if (localPlayerBackup != null) {
+        gameModelDTO!.player = localPlayerBackup;
+      } else {
+        gameModelDTO!.player = Player.ofDefinedId(
+          id: myId,
+          username: userModelController.user!.username,
+        );
+        gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
+      }
       gameModelDTO!.othersPlayers[myId] = gameModelDTO!.player;
     }
+    
     userModelController.user!.games.add(gameModelDTO!);
+    
     // 3. Notifica a mesa que o jogador está ativo / na mesa
     _sendEvent(EventDTO(
-      referenceRound: 0,
+      referenceRound: currentRound,
       type: EventType.joinTable,
       destinationPlayer: event.sourcePlayer,
       sourcePlayer: gameModelDTO!.player,

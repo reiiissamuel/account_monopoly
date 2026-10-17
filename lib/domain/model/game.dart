@@ -8,7 +8,6 @@ class GameModelDTO{
  String id = "";
  double initalGameCredit = 0;
  int limitPlayer = 0;
- int currentRound = 1;
  Ledger ledger = Ledger.empty();
  Player player = Player.empty();
  Map<String, Player> othersPlayers;

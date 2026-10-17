@@ -93,7 +93,7 @@ class GameScreenState extends State<GameScreen> {
                 actions: <Widget>[
                   Center(
                     child: Text(
-                      gameProvider.gameModelDTO!.currentRound.toString(),
+                      gameProvider.currentRound.toString(),
                       style: const TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
