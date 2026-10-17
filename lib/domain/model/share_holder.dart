@@ -15,7 +15,7 @@ class ShareHolder {
     required this.saleCapitalGain
   });
 
-  double get averageCostPerShare => sharesOwned == 0 ? 0.0 : (investmentValue - saleCapitalGain) / sharesOwned;
+  double get averageCostPerShare => sharesOwned == 0 ? 0.0 : investmentValue / sharesOwned;
 
    //calcula lucro liquido
   double getNetProfit(double shareCurrentCost){

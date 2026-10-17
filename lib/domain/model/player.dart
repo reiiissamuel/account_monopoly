@@ -12,6 +12,7 @@ class Player {
   final String username;
   
   bool isHost;
+  bool isOnline;
   
   // 2. ATRIBUTOS DE CONTROLE/RELATÓRIO IMUTÁVEIS (O objeto é final, mas o conteúdo é mutável)
   final Map<String, ShareHolder> portfolio; // Chave: propertyId
@@ -22,8 +23,8 @@ class Player {
   double currentCredit;
   double incomeTax;
   double taxRefund;
-  double receivedFrom; //todo variaveis não mais utilizdas
-  double payedTo; //todo variaveis não mais utilizdas
+  double receivedFrom; //TODO variaveis não mais utilizdas
+  double payedTo; //TODO variaveis não mais utilizdas
   Balance roundBalance;
   bool youWon = false;
   bool youBankrupt = false;
@@ -43,7 +44,8 @@ class Player {
     this.incomeTax = 0.0,
     this.taxRefund = 0.0,
     this.youBankrupt = false,
-    this.youWon = false
+    this.youWon = false,
+    this.isOnline = true
   });
 
   Player.newGamePlayer({
@@ -92,6 +94,7 @@ class Player {
     String? id,
     String? username,
     bool? isHost,
+    bool? isOnline,
     double? currentCredit,
     FinancialReport? financialReport,
     Balance? roundBalance,
@@ -102,6 +105,7 @@ class Player {
       id: id ?? this.id,
       username: username ?? this.username,
       isHost: isHost ?? this.isHost,
+      isOnline: isOnline ?? this.isOnline,
       currentCredit: currentCredit ?? this.currentCredit,
       financialReport: financialReport ?? this.financialReport,
       roundBalance: roundBalance ?? this.roundBalance,
@@ -125,24 +129,40 @@ class Player {
       );
     }
   }
-
-  void downgradePortfolio(String propertyId, int sharesAmount, double opCost){
-    if(!portfolio.containsKey(propertyId)) return;
-
-    if(sharesAmount >= portfolio[propertyId]!.sharesOwned){
-      portfolio[propertyId]!.sharesOwned = 0;
-    } else {
-      portfolio[propertyId]!.sharesOwned -= sharesAmount;
-    }
-    portfolio[propertyId]!.saleCapitalGain += opCost;
-  }
   
-  void receiveCredit(double amount, double incomeTaxRate) {
-    if (amount > 0) {
-      currentCredit += amount;
-      incomeTax += amount * incomeTaxRate;
-    }
+void downgradePortfolio(String propertyId, int sharesAmount, double opCost) {
+  if (!portfolio.containsKey(propertyId)) return;
+  final holder = portfolio[propertyId]!;
+  
+  if (sharesAmount >= holder.sharesOwned) {
+    double costOfSoldShares = holder.investmentValue;
+    double capitalGain = opCost - costOfSoldShares;
+    
+    holder.sharesOwned = 0;
+    holder.investmentValue = 0.0;
+    holder.saleCapitalGain += capitalGain;
+  } else {
+    double averageCost = holder.sharesOwned > 0 
+        ? (holder.investmentValue / holder.sharesOwned) 
+        : 0.0;
+    
+    double costOfSoldShares = averageCost * sharesAmount;
+    
+    double capitalGain = opCost - costOfSoldShares;
+
+    holder.sharesOwned -= sharesAmount;
+    holder.investmentValue -= costOfSoldShares;
+    
+    holder.saleCapitalGain += capitalGain;
   }
+}
+
+void receiveCredit(double amount, double incomeTaxRate) {
+  if (amount > 0) {
+    currentCredit += amount;
+    incomeTax += amount * incomeTaxRate;
+  }
+}
 
   void payDebit(double amount) {
     _checkIfEnoughCredit(amount);
@@ -179,6 +199,7 @@ class Player {
       ),
       youBankrupt: map['youBankrupt'] as bool? ?? false,
       youWon: map['youWon'] as bool? ?? false,
+      isOnline: map["isOnline"] as bool? ?? true
     );
   }
 
@@ -197,6 +218,7 @@ class Player {
       'portfolio': portfolio.map((key, value) => MapEntry(key, value.toMap())),
       'youWon': youWon,
       'youBankrupt': youBankrupt,
+      "isOnline": isOnline
     };
   }
 

@@ -17,10 +17,10 @@ class PeerConnectionControllerV2 {
   List<DataConnection> serverActiveConnections = <DataConnection>[];
   bool _isHostListenersInitialized = false; // Impede duplicação de listeners em reconexões
 
-  static const String OPENED_CONNECTION_MSG = "Peer aberto para conexões.";
-  static const String CONNECTION_RECEIVED_MSG = "Nova conexão recebida do peer:";
-  static const String PEER_CONNECTION_CLOSED = "Jogador offline:";
-  static const String HOST_CONNECTION_CLOSED = "Host offline (Cliente):";
+  static const String openedConnectionMsg = "Peer aberto para conexões.";
+  static const String connectionReceivedMsg = "Nova conexão recebida do peer:";
+  static const String peerConnectionClosedMsg = "Jogador offline:";
+  static const String hostConnectionClosedMsg = "Host offline (Cliente):";
 
   PeerConnectionControllerV2({
     required this.gameModelController,
@@ -42,11 +42,11 @@ class PeerConnectionControllerV2 {
     peer.on("open").listen((id) {
       isConnected = true;
       myPeerId = id;
-      log("$OPENED_CONNECTION_MSG ID: $myPeerId");
+      log("$openedConnectionMsg ID: $myPeerId");
     });
 
     peer.on("close").listen((_) {
-      closeConnection();
+      _closeConnection();
       reconnectToLastHost(); 
     });
 
@@ -54,7 +54,7 @@ class PeerConnectionControllerV2 {
       serverActiveConnections.add(event);
 
       event.on("open").listen((_) {
-        log('$CONNECTION_RECEIVED_MSG ${event.peer}');
+        log('$connectionReceivedMsg ${event.peer}');
         handleIncomingPeerConnection(event.peer);
       });
 
@@ -67,7 +67,7 @@ class PeerConnectionControllerV2 {
 
       event.on("close").listen((_) {
         serverActiveConnections.removeWhere((c) => c.peer == event.peer);
-        log('$PEER_CONNECTION_CLOSED ${event.peer}');
+        log('$peerConnectionClosedMsg ${event.peer}');
 
         final gameModel = gameModelController.gameModelDTO;
         if (gameModel != null && gameModel.othersPlayers.containsKey(event.peer)) {
@@ -87,8 +87,8 @@ class PeerConnectionControllerV2 {
     });
   }
 
-  /// Conecta o peer atual como um Cliente a um Host
-  Future<void> connectToHost(String peerSourceId) async {
+  /// Conecta o peer atual como um Cliente a um Host com suporte a tentativas automáticas (retry)
+  Future<void> connectToHost(String peerSourceId, {int retries = 3, int delaySeconds = 2}) async {
     isServer = false;
     
     // Fecha conexões anteriores ativas antes de abrir uma nova
@@ -97,16 +97,40 @@ class PeerConnectionControllerV2 {
       connWithServer = null;
     }
 
+    log("Tentando conectar ao Host: $peerSourceId (Tentativas restantes: $retries)");
     connWithServer = peer.connect(peerSourceId);
 
     connWithServer!.on("open").listen((event) {
       isConnected = true;
-      log("Conectado ao Host: $peerSourceId");
+      log("Conectado com sucesso ao Host: $peerSourceId");
+
+      // --- ADIÇÃO: Envia o estado atual do player para o host assim que conecta ---
+      final gameModel = gameModelController.gameModelDTO;
+      if (gameModel != null) {
+        gameModelController.eventComposer(
+          type: EventType.joinTable,
+          sourcePlayer: gameModel.player,
+        );
+      }
     });
 
     connWithServer!.on("close").listen((event) {
-      log(HOST_CONNECTION_CLOSED);
-      closeConnection(); 
+      log(hostConnectionClosedMsg);
+      
+      // Se fechou e o cliente nunca chegou a estabelecer o estado 'isConnected' com sucesso,
+      // significa que o host eleito ainda não abriu o servidor PeerJS a tempo. Fazemos o retry.
+      if (retries > 0 && !isConnected) {
+        _closeConnection();
+        log("Host ainda não está pronto. Tentando novamente em ${delaySeconds}s...");
+        
+        Future.delayed(Duration(seconds: delaySeconds), () {
+          connectToHost(peerSourceId, retries: retries - 1, delaySeconds: delaySeconds + 1);
+        });
+        return;
+      }
+
+      // Se já estava conectado e caiu depois, ou esgotou as tentativas, segue o fluxo normal de queda
+      _closeConnection(); 
 
       final gameModel = gameModelController.gameModelDTO;
 
@@ -128,7 +152,7 @@ class PeerConnectionControllerV2 {
         log("Erro: GameModelDTO nulo durante a desconexão do Host.");
       }
 
-      // Dispara a lógica de eleição de novo host
+      // Dispara a lógica de eleição de novo host novamente se esgotar
       reconnectToLastHost();
     });
 
@@ -154,7 +178,7 @@ class PeerConnectionControllerV2 {
   }
 
   /// Limpa as conexões atuais de forma segura
-  void closeConnection() {
+  void _closeConnection() {
     isConnected = false;
     if (isServer) {
       for (var conn in serverActiveConnections) {
@@ -173,42 +197,52 @@ class PeerConnectionControllerV2 {
   void reconnectToLastHost() {
     final gameModel = gameModelController.gameModelDTO;
 
-    if (gameModel == null || gameModel.othersPlayers.isEmpty) {
-      log("Nenhum dado de jogo ou jogadores disponíveis. Assumindo Host.");
+    if (gameModel == null) {
+      log("Nenhum dado de jogo disponível. Assumindo Host.");
       openConnectionsAsHost();
       return;
     }
 
     try {
+      for (var player in gameModel.othersPlayers.values) {
+        if (player.isHost) {
+          player.isHost = false;
+          player.isOnline = false;
+        }
+      }
+
       final activePlayers = gameModel.othersPlayers.values.toList();
 
       if (activePlayers.isEmpty) {
-        log("Nenhum outro jogador restante. Assumindo Host.");
+        log("Nenhum outro jogador restante na mesa. Assumindo Host.");
         openConnectionsAsHost();
         return;
       }
-
-      // 1. ORDENAÇÃO DETERMINÍSTICA: O menor ID alfabético ganha
+      // Adiciona o próprio jogador à lista de elegíveis para a eleição unânime
+      activePlayers.add(gameModel.player);
+      // 2. ORDENAÇÃO DETERMINÍSTICA: O menor ID alfabético ganha por consenso
       activePlayers.sort((a, b) => a.id.compareTo(b.id));
-
-      // 2. O primeiro da lista é o novo líder unânime
+      // 3. O primeiro da lista ordenada é o novo líder unânime da mesa
       final newHostPlayer = activePlayers.first;
 
       log("Eleição concluída. Novo Host eleito por consenso: ${newHostPlayer.id}");
 
-      // 3. ATUALIZAÇÃO DA VARIÁVEL isHost EM TODOS OS JOGADORES DO MODELO
+      // 4. ATUALIZAÇÃO DA VARIÁVEL isHost EM TODOS OS JOGADORES DO MODELO
       gameModel.player.isHost = (gameModel.player.id == newHostPlayer.id);
       for (var player in gameModel.othersPlayers.values) {
         player.isHost = (player.id == newHostPlayer.id);
       }
-
-      // 4. Define o comportamento de rede baseado em quem venceu
+      // 5. Define o comportamento de rede baseado em quem venceu a eleição
       if (newHostPlayer.id == myPeerId) {
-        log("Eu fui eleito o novo Host da mesa. Abrindo conexões...");
+        log("Eu fui eleito o novo Host da mesa. Abrindo conexões como servidor...");
         openConnectionsAsHost();
       } else {
         log("Tentando se conectar automaticamente ao novo Host eleito: ${newHostPlayer.id}");
-        connectToHost(newHostPlayer.id);
+        // ADICIONE ESTE ATRASO DE 2 SEGUNDOS:
+        // Dá tempo suficiente para o novo host eleito inicializar o servidor PeerJS antes do cliente tentar o handshake
+        Future.delayed(const Duration(seconds: 2), () {
+          connectToHost(newHostPlayer.id);
+        });
       }
     } catch (e) {
       log("Falha crítica no processo de eleição de Host: ", error: e);
@@ -245,73 +279,77 @@ class PeerConnectionControllerV2 {
     }
   }
 
-  /// Analisa a conexão recebida e trata caso seja uma reconexão ou um novo jogador
   void handleIncomingPeerConnection(String incomingPeerId) {
-    final gameModel = gameModelController.gameModelDTO;
-    if (gameModel == null) return;
+      final gameModel = gameModelController.gameModelDTO;
+      if (gameModel == null) return;
 
-    final incomingParts = incomingPeerId.split('-');
-    
-    if (incomingParts.length >= 2) {
-      final baseIdentifier = '${incomingParts[0]}-${incomingParts[1]}';
-      final extractedUsername = incomingParts[0];
+      final incomingBaseId = _extractBaseIdentifier(incomingPeerId);
+      final extractedUsername = incomingPeerId.split('-').isNotEmpty ? incomingPeerId.split('-')[0] : '';
 
-      String? existingKey;
-      Player? existingPlayer;
+      if (incomingBaseId != null) {
+        String? existingKey;
+        Player? existingPlayer;
 
-      // Procura se já existe um jogador com a mesma base (mesmo usuário que caiu e voltou)
-      for (var entry in gameModel.othersPlayers.entries) {
-        final existingParts = entry.key.split('-');
-        if (existingParts.length >= 2) {
-          final existingBaseId = '${existingParts[0]}-${existingParts[1]}';
-          if (existingBaseId == baseIdentifier) {
+        // Procura se já existe um jogador com a mesma base na mesa do novo host
+        for (var entry in gameModel.othersPlayers.entries) {
+          if (_extractBaseIdentifier(entry.key) == incomingBaseId) {
             existingKey = entry.key;
             existingPlayer = entry.value;
             break;
           }
         }
+
+        // Se encontrou o jogador anterior (mesmo com UUID novo), reaproveita o player inteiro com os 400k e rodada!
+        if (existingKey != null && existingPlayer != null) {
+          log("Reconexão detectada no Novo Host para: ${existingPlayer.username}. Atualizando ID.");
+
+          gameModel.othersPlayers.remove(existingKey);
+
+          Player updatedPlayer = existingPlayer.copyWith(
+            id: incomingPeerId,
+            isOnline: true,
+          );
+
+          gameModel.othersPlayers[incomingPeerId] = updatedPlayer;
+
+          // Responde ao cliente com o estado atualizado da mesa
+          gameModelController.eventComposer(
+            type: EventType.serverHandShake,
+            destinationPlayer: updatedPlayer,
+          );
+          return;
+        }
       }
 
-      // CASO 1: Jogador reconectado após um crash (Usa o copyWith para substituir o ID sem perder o estado)
-      if (existingKey != null && existingPlayer != null && existingKey != incomingPeerId) {
-        log("Jogador reconectado detetado: ${existingPlayer.username}. Atualizando PeerID de $existingKey para $incomingPeerId");
-
-        gameModel.othersPlayers.remove(existingKey);
-
-        // Chamada limpa que substitui o Player.ofDefinedId e preserva todo o histórico
-        Player updatedPlayer = existingPlayer.copyWith(id: incomingPeerId);
-
-        gameModel.othersPlayers[incomingPeerId] = updatedPlayer;
-
-        gameModelController.eventComposer(
-          type: EventType.serverHandShake,
-          destinationPlayer: updatedPlayer,
-        );
-        return;
-      }
-
-      // CASO 2: Jogador totalmente novo
+      // CASO EXTREMO: Se realmente nunca existiu na partida, aí sim cria como novo jogador
       final newPlayer = Player.ofDefinedId(
         username: extractedUsername,
         id: incomingPeerId,
       );
       newPlayer.currentCredit = gameModel.initalGameCredit;
+      newPlayer.isOnline = true;
+
+      gameModel.othersPlayers[incomingPeerId] = newPlayer;
 
       gameModelController.eventComposer(
         type: EventType.serverHandShake,
         destinationPlayer: newPlayer,
       );
     }
-  }
 
   /// Desconecta a instância atual do peer de forma segura e limpa as conexões ativas
   void destroy() {
-    closeConnection();
+    _closeConnection();
     try {
       peer.disconnect();
     } catch (e) {
       log("Erro ao desconectar o peer anterior: $e");
     }
+  }
+
+  String? _extractBaseIdentifier(String peerId) {
+    final parts = peerId.split('-');
+    return parts.length >= 2 ? '${parts[0]}-${parts[1]}' : null;
   }
   
 }

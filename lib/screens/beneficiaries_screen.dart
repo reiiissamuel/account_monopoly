@@ -13,8 +13,10 @@ class BeneficiariesScreen extends StatelessWidget {
 
   
   List<Player> _getOthersPlayersList(GameProvider gameProvider) {
-    return gameProvider.gameModelDTO?.othersPlayers.values.where((p) => p.id != gameProvider.currentPlayer.id).toList() ?? [];
-  }
+    return gameProvider.gameModelDTO!.othersPlayers.values
+    .where((player) => player.isOnline && !player.youBankrupt && player.id != gameProvider.currentPlayer.id)
+    .toList();
+    }
 
   @override
   Widget build(BuildContext context) {

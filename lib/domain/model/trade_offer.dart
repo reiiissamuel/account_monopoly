@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class TradeOffer {
   final String offerId;
   final String sellerPlayerId;
+  final String sellerName;
   final String propertyId;
   final int sharesAmount;
   final double askingPrice;
@@ -17,6 +18,7 @@ class TradeOffer {
     required this.offerId,
     required this.propertyId,
     required this.sellerPlayerId,
+    required this.sellerName,
     required this.sharesAmount,
     required this.askingPrice,
     required this.source, 
@@ -33,6 +35,7 @@ class TradeOffer {
   return {
     'offerId': offerId,
     'sellerPlayerId': sellerPlayerId,
+    'sellerName': sellerName,
     'propertyId': propertyId,
     'sharesAmount': sharesAmount,
     'askingPrice': askingPrice,
@@ -48,6 +51,7 @@ class TradeOffer {
     return TradeOffer(
       offerId: map['offerId'] as String,
       sellerPlayerId: map['sellerPlayerId'] as String,
+      sellerName: map['sellerName'] as String,
       propertyId: map['propertyId'] as String,
       sharesAmount: map['sharesAmount'] as int,
       askingPrice: (map['askingPrice'] as num).toDouble(),

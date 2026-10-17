@@ -306,6 +306,7 @@ class MyPortfolioScreen extends StatelessWidget {
                     offerId: StringUtils.generateUUID(size: 5),
                     propertyId: property.id,
                     sellerPlayerId: gameProvider.currentPlayer.id,
+                    sellerName: gameProvider.currentPlayer.username,
                     sharesAmount: quantity,
                     askingPrice: price,
                     turnsToEnd: turns,
