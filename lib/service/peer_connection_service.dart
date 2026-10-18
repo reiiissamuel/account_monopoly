@@ -11,6 +11,9 @@ abstract class PeerConnectionService {
   bool isServer;
   GameProvider gameProvider;
 
+  // --- TRAVA DE SEGURANÇA CONTRA ELEIÇÕES DUPLICADAS ---
+  bool _isReconnecting = false;
+
   static const String openedConnectionMsg = "Peer aberto para conexões.";
   static const String peerConnectionClosedMsg = "Jogador offline:";
   static const String hostConnectionClosedMsg = "Host offline (Cliente):";
@@ -32,20 +35,23 @@ abstract class PeerConnectionService {
   void destroy();
 
   /// Lógica Determinística para Eleição de um Novo Host
-  /// 
-  /// Pode ser invocada tanto pelo Cliente (ao perder a conexão com o host)
-  /// quanto pelo Host (caso precise forçar re-eleição).
   void reconnectToLastHost() {
+    if (_isReconnecting) {
+      log("Eleição de host já está em andamento. Ignorando chamada redundante.");
+      return;
+    }
+    _isReconnecting = true;
+
     final gameModel = gameProvider.gameModelDTO;
 
     if (gameModel == null) {
       log("Nenhum dado de jogo disponível. Assumindo Host.");
+      _isReconnecting = false;
       gameProvider.switchToHostRole(myPeerId);
       return;
     }
 
     try {
-      // 1. Marca os hosts anteriores como offline/não-host
       for (var player in gameModel.othersPlayers.values) {
         if (player.isHost) {
           player.isHost = false;
@@ -53,40 +59,42 @@ abstract class PeerConnectionService {
         }
       }
 
-      final activePlayers = gameModel.othersPlayers.values.toList();
+      gameModel.player.isOnline = true;
+
+      final activePlayers = gameModel.othersPlayers.values
+          .where((player) => player.isOnline)
+          .toList();
+
+      if (!activePlayers.any((p) => p.id == gameModel.player.id)) {
+        activePlayers.add(gameModel.player);
+      }
 
       if (activePlayers.isEmpty) {
         log("Nenhum outro jogador restante na mesa. Assumindo Host.");
+        _isReconnecting = false;
         gameProvider.switchToHostRole(myPeerId);
         return;
       }
 
-      // 2. Adiciona o próprio jogador à lista de elegíveis para a eleição unânime
-      activePlayers.add(gameModel.player);
-
-      // 3. ORDENAÇÃO DETERMINÍSTICA: O menor ID alfabético ganha por consenso
       activePlayers.sort((a, b) => a.id.compareTo(b.id));
-
-      // 4. O primeiro da lista ordenada é o novo líder unânime da mesa
       final newHostPlayer = activePlayers.first;
 
       log("Eleição concluída. Novo Host eleito por consenso: ${newHostPlayer.id}");
 
-      // 5. ATUALIZAÇÃO DA VARIÁVEL isHost EM TODOS OS JOGADORES DO MODELO
       gameModel.player.isHost = (gameModel.player.id == newHostPlayer.id);
       for (var player in gameModel.othersPlayers.values) {
         player.isHost = (player.id == newHostPlayer.id);
       }
 
-      // 6. Transição de Papel de Rede (Host ou Cliente)
       if (newHostPlayer.id == myPeerId) {
         log("Eu fui eleito o novo Host da mesa. Alternando para modo Host...");
+        _isReconnecting = false; // --- Liberta a trava aqui ---
         gameProvider.switchToHostRole(myPeerId);
       } else {
         log("Tentando se conectar automaticamente ao novo Host eleito: ${newHostPlayer.id}");
         
-        // Dá tempo suficiente para o novo host eleito inicializar o servidor PeerJS
         Future.delayed(const Duration(seconds: 2), () {
+          _isReconnecting = false; // --- Liberta a trava antes de mudar de papel ---
           gameProvider.switchToClientRole(
             myPeerId: myPeerId, 
             hostPeerId: newHostPlayer.id,
@@ -95,6 +103,7 @@ abstract class PeerConnectionService {
       }
     } catch (e) {
       log("Falha crítica no processo de eleição de Host: ", error: e);
+      _isReconnecting = false; // --- Liberta em caso de erro ---
       gameProvider.switchToHostRole(myPeerId);
     }
   }
