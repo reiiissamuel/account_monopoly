@@ -1,7 +1,5 @@
 
 import 'dart:developer';
-
-import 'package:account_monopoly/configuration/peer_connection_controller_v2.dart';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
@@ -13,6 +11,9 @@ import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/domain/model/player.dart';
+import 'package:account_monopoly/service/client_peer_connection.dart';
+import 'package:account_monopoly/service/host_peer_connection_service.dart';
+import 'package:account_monopoly/service/peer_connection_service.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:flutter/material.dart';
@@ -22,20 +23,12 @@ import 'package:account_monopoly/domain/enums/event_type.dart';
 
 class GameProvider extends ChangeNotifier {
   late UserProvider userModelController;
-  PeerConnectionControllerV2? peerConnectionController;
+  PeerConnectionService? peerConnectionService;
   GameModelDTO? gameModelDTO;
   bool isLoading = false;
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
   String? any;
-  
-
-  void reset(){
-    gameModelDTO = null;
-    isLoading = false;
-    events = [];
-    lastEventReceived = null;
-  }
 
   GameProvider({required this.userModelController});
 
@@ -43,10 +36,49 @@ class GameProvider extends ChangeNotifier {
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
   int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
+  
+  void reset(){
+    gameModelDTO = null;
+    isLoading = false;
+    events = [];
+    lastEventReceived = null;
+  }
 
   void notifyChanges(bool isLoading) {
     this.isLoading = isLoading;
     notifyListeners();
+  }
+
+  void switchToHostRole(String peerId) {
+    // Adiciona ao microtask para garantir que qualquer evento de stream 
+    // em processamento termine antes de destruir o controlador atual.
+    Future.microtask(() {
+      peerConnectionService?.destroy();
+      
+      final peer = Peer(id: peerId);
+      final hostService = HostPeerConnectionService(
+        gameProvider: this,
+        peer: peer,
+        myPeerId: peerId,
+      );
+      hostService.openConnectionsAsHost();
+      peerConnectionService = hostService;
+    });
+  }
+
+  void switchToClientRole({required String myPeerId, required String hostPeerId}) {
+    Future.microtask(() {
+      peerConnectionService?.destroy();
+      
+      final peer = Peer(id: myPeerId);
+      final clientService = ClientPeerConnectionService(
+        gameProvider: this,
+        peer: peer,
+        myPeerId: myPeerId,
+      );
+      clientService.connectToHost(hostPeerId);
+      peerConnectionService = clientService;
+    });
   }
 
   void processComingEvent(EventDTO event) {
@@ -140,9 +172,15 @@ class GameProvider extends ChangeNotifier {
           if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
             gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = false;
           }
-          if (peerConnectionController != null && sourceplayer.isHost) {
-            peerConnectionController!.serverActiveConnections.removeWhere((c) => c.peer == sourceplayer.id);
-            peerConnectionController!.reconnectToLastHost();
+          if (peerConnectionService != null) {
+            if (sourceplayer.isHost) {
+              peerConnectionService!.reconnectToLastHost();
+            }
+            if (peerConnectionService is HostPeerConnectionService) {
+              (peerConnectionService as HostPeerConnectionService)
+                  .serverActiveConnections
+                  .removeWhere((c) => c.peer == sourceplayer.id);
+            }
           }
           break;
         default:
@@ -306,7 +344,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _sendEvent(EventDTO event) {
-    peerConnectionController!.send(event);
+    peerConnectionService!.send(event);
   }
 
   List<TradeOffer> getAllMarketListings() {
@@ -398,8 +436,7 @@ class GameProvider extends ChangeNotifier {
           isHost: true
       );
       gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
-      _createPeerConnectionController(peerId: gameModelDTO!.player.id);
-      peerConnectionController!.openConnectionsAsHost();
+      switchToHostRole(gameModelDTO!.player.id);
       userModelController.user!.games.add(gameModelDTO!);
       await _updateUserModel();
     } catch (e) {
@@ -414,18 +451,32 @@ class GameProvider extends ChangeNotifier {
   Future<void> getGameById(GameModelDTO gameModelDTO) async {
     isLoading = true;
     notifyListeners();
+    
     gameModelDTO.player.isHost = false;
     this.gameModelDTO = gameModelDTO;
-    _createPeerConnectionController(peerId: this.gameModelDTO!.player.id);
-    try {
-      peerConnectionController!.reconnectToLastHost();
-    } on Exception catch(e) {
-      log("Erro ao tentar carrega um jogo existente: $e");
-      rethrow;
-    }
-    isLoading = false;
-    notifyListeners();
+    
+    // 1. Destrói qualquer conexão anterior existente de forma segura
+    peerConnectionService?.destroy();
 
+    // 2. Cria a nova instância inicial com o PeerJS
+    final peer = Peer(id: this.gameModelDTO!.player.id);
+    peerConnectionService = ClientPeerConnectionService(
+      gameProvider: this,
+      peer: peer,
+      myPeerId: this.gameModelDTO!.player.id,
+    );
+
+    try {
+      // 3. Dispara a eleição herdada da classe pai. 
+      // Ela irá calcular o nó correto e alternar para Host ou Cliente conforme o consenso da mesa.
+      peerConnectionService!.reconnectToLastHost();
+    } on Exception catch(e) {
+      log("Erro ao tentar carregar um jogo existente: $e");
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   void enterNewGameByIdRequest({required String destinationPeerId}) async {
@@ -433,19 +484,26 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
 
     String gameId = destinationPeerId.split("-").last;
-
-    try{
-      if(userModelController.checkHasGameById(gameId)){
+    try {
+      if (userModelController.checkHasGameById(gameId)) {
         throw GameAlreadyInPlayerListException();
       }
-      _createPeerConnectionController(
-          peerId: GameProvider._generatePlayerId(
-              usermodelname: userModelController.user!.username,
-              usermodelId: userModelController.user!.id,
-              gameId: gameId)
+
+      // Gera o ID único do jogador para esta partida
+      String generatedPeerId = GameProvider._generatePlayerId(
+        usermodelname: userModelController.user!.username,
+        usermodelId: userModelController.user!.id,
+        gameId: gameId,
       );
-      peerConnectionController!.connectToHost(destinationPeerId);
-    } catch (e){
+
+      // Substituição: Em vez das chamadas antigas, utilizamos o helper 
+      // que instancia o ClientPeerConnectionService e liga-se automaticamente ao host.
+      switchToClientRole(
+        myPeerId: generatedPeerId,
+        hostPeerId: destinationPeerId,
+      );
+      
+    } catch (e) {
       log("Erro: $e");
       rethrow;
     } finally {
@@ -457,31 +515,16 @@ class GameProvider extends ChangeNotifier {
   void leaveGame() {
     try {
       // 1. Envia o evento de desconexão para o host/mesa antes de fechar tudo
-      if (peerConnectionController != null && peerConnectionController!.isConnected) {
+      if (peerConnectionService != null && peerConnectionService!.isConnected) {
         eventComposer(type: EventType.lostConnection);
       }
     } catch (e) {
       log("Erro ao notificar saída do jogo: $e");
     } finally {
       // 2. Destrói as conexões e limpa o estado local
-      peerConnectionController?.destroy();
+      peerConnectionService?.destroy();
       reset();
     }
-  }
-
-  void _createPeerConnectionController({required String peerId}){
-    // Destrói o peer anterior se ele já existir, evitando conflitos de socket e stream
-    if (peerConnectionController != null) {
-      peerConnectionController!.destroy();
-      peerConnectionController = null;
-    }
-
-    Peer peer = Peer(id: peerId);
-    peerConnectionController = PeerConnectionControllerV2(
-      gameModelController: this, 
-      peer: peer, 
-      myPeerId: peerId,
-    );
   }
 
   Future<void> _updateUserModel() async {
@@ -507,7 +550,7 @@ class GameProvider extends ChangeNotifier {
     
     // Recebe os dados globais do novo host
     gameModelDTO = event.gameData;
-    final myId = peerConnectionController!.myPeerId;
+    final myId = peerConnectionService!.myPeerId;
 
     // BLINDAGEM: Se temos um jogador local válido, mantemos a nossa instância exata
     if (localPlayerBackup != null) {
@@ -539,5 +582,3 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-
