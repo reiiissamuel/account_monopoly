@@ -6,10 +6,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:account_monopoly/configuration/init_db.dart';
-
+import 'dart:async';
 
 void main() {
-  runApp(const AccountmonopolyApp());
+  // Envolve a execução do app na zona protegida contra erros assíncronos de terceiros
+  runZonedGuarded(() {
+    WidgetsFlutterBinding.ensureInitialized();
+    runApp(const AccountmonopolyApp());
+  }, (error, stackTrace) {
+    // --- FILTRO DO ERRO DO PEERDART ---
+    // Se o erro for o fecho abrupto de stream do WebRTC/Peerdart, ignoramos silenciosamente
+    if (error.toString().contains("Cannot add new events after calling close") &&
+        error.toString().contains("peerdart")) {
+      return; 
+    }
+    // Para qualquer outro erro legítimo da sua aplicação, imprime normalmente no console
+    debugPrint('Erro assíncrono capturado: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  });
 }
 
 class AccountmonopolyApp extends StatefulWidget {
@@ -20,27 +34,13 @@ class AccountmonopolyApp extends StatefulWidget {
 }
 
 class AccountmonopolyAppState extends State<AccountmonopolyApp> {
-
   final Future _init = InitDb.initialize();
 
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      //statusBarColor: Color.fromARGB(255, 70, 130, 180), //or set color with: Color(0xFF0000FF)
       systemNavigationBarColor: Color.fromARGB(255, 70, 130, 180),
-      //systemNavigationBarDividerColor: Colors.white,
     ));
-
-    /*return MaterialApp(
-                          title: 'Account Monopoly',
-                          theme: ThemeData(
-                            primarySwatch: Colors.blue,
-                            primaryColor: const Color.fromARGB(
-                                255, 70, 130, 180),
-                          ),
-                          debugShowCheckedModeBanner: false,
-                          home: ConnectionExample() //SplashScreen(),
-                      );*/
 
     return MultiProvider(
       providers: [
@@ -51,7 +51,7 @@ class AccountmonopolyAppState extends State<AccountmonopolyApp> {
           ),
           update: (context, userProvider, gameProvider) => 
             gameProvider ?? GameProvider(userModelController: userProvider),
-          )
+        )
       ],
       child: MaterialApp(
         title: 'Account Monopoly',
@@ -64,8 +64,7 @@ class AccountmonopolyAppState extends State<AccountmonopolyApp> {
           'gameScreen': (context) => const GameScreen(),
         },
         home: const SplashScreen(),
-      )
+      ),
     );
   }
 }
-

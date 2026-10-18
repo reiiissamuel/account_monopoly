@@ -1,7 +1,7 @@
-import 'package:account_monopoly/service/peer_connection_service.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
-import 'package:peerdart/peerdart.dart';
+import 'package:account_monopoly/service/peer_connection_service.dart';
+import 'package:peer_rtc/peer_rtc.dart';
 import 'dart:developer';
 import 'dart:async';
 
@@ -22,7 +22,6 @@ class ClientPeerConnectionService extends PeerConnectionService {
     int retries = 3,
     int delaySeconds = 2,
   }) async {
-    // Cancela qualquer timer de retry pendente anterior
     _retryTimer?.cancel();
     lastConnectedHostId = peerSourceId;
 
@@ -37,9 +36,10 @@ class ClientPeerConnectionService extends PeerConnectionService {
       log("Erro ao invocar peer.connect: $e");
     }
 
-    connWithServer?.on("open").listen((event) {
+    // --- ADAPTAÇÃO PARA PEER_RTC: Uso de Streams Nativos ---
+    connWithServer?.onOpen.listen((event) {
       isConnected = true;
-      _retryTimer?.cancel(); // Conectou com sucesso, cancela retries pendentes
+      _retryTimer?.cancel();
       log("Conexão estabelecida com sucesso ao Host: $peerSourceId");
 
       final gameModel = gameProvider.gameModelDTO;
@@ -51,14 +51,13 @@ class ClientPeerConnectionService extends PeerConnectionService {
       }
     });
 
-    connWithServer?.on("close").listen((event) {
+    connWithServer?.onClose.listen((event) {
       log(PeerConnectionService.hostConnectionClosedMsg);
 
       if (retries > 0 && !isConnected) {
         closeConnectionKeepingTarget();
         log("Host ainda não está pronto. Tentando novamente em ${delaySeconds}s...");
 
-        // Guarda a referência ao timer para podermos cancelá-lo caso o host morra definitivamente
         _retryTimer = Timer(Duration(seconds: delaySeconds), () {
           connectToHost(
             peerSourceId,
@@ -69,7 +68,6 @@ class ClientPeerConnectionService extends PeerConnectionService {
         return;
       }
 
-      // Se esgotou as tentativas ou o host ativo caiu, cancela tudo e dispara a eleição
       _retryTimer?.cancel();
       final targetPeerId = lastConnectedHostId ?? peerSourceId;
       closeConnection();
@@ -99,28 +97,8 @@ class ClientPeerConnectionService extends PeerConnectionService {
       });
     });
 
-    connWithServer?.on("data").listen((data) {
+    connWithServer?.onData.listen((data) {
       gameProvider.processComingEvent(EventDTO.fromMap(data));
-    });
-
-    connWithServer?.on('disconnected').listen((event) {
-      log("Desconectado temporariamente do Host. Acionando eleição...");
-      _retryTimer?.cancel();
-      
-      final targetPeerId = lastConnectedHostId ?? peerSourceId;
-      closeConnection();
-
-      Future.microtask(() {
-        final gameModel = gameProvider.gameModelDTO;
-        if (gameModel != null) {
-          for (var player in gameModel.othersPlayers.values) {
-            if (player.isHost || player.id == targetPeerId) {
-              player.isOnline = false;
-            }
-          }
-        }
-        reconnectToLastHost();
-      });
     });
   }
 
@@ -156,7 +134,7 @@ class ClientPeerConnectionService extends PeerConnectionService {
   @override
   void closeConnection() {
     isConnected = false;
-    _retryTimer?.cancel(); // Cancela o timer se fechar a conexão
+    _retryTimer?.cancel();
     final localConn = connWithServer;
     connWithServer = null;
     lastConnectedHostId = null;

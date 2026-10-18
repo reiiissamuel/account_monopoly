@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:peerdart/peerdart.dart';
+import 'package:peer_rtc/peer_rtc.dart';
 
 class DataConnectionExample extends StatefulWidget {
   const DataConnectionExample({super.key});

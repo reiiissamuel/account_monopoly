@@ -17,12 +17,12 @@ class TableInfoDialog extends StatelessWidget {
         icon: const Icon(Icons.copy, color: Colors.white, size: 20),
         onPressed: () {
           Navigator.of(context).pop();
-          Clipboard.setData(ClipboardData(text: Provider.of<GameProvider>(context, listen: false).peerConnectionService!.myPeerId));
+          Clipboard.setData(ClipboardData(text: Provider.of<GameProvider>(context, listen: false).peerService!.myPeerId));
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Id Copiado"), backgroundColor: Colors.blueAccent));
         }
       ),
-      content: SelectableText(Provider.of<GameProvider>(context, listen: false).peerConnectionService!.myPeerId,
+      content: SelectableText(Provider.of<GameProvider>(context, listen: false).peerService!.myPeerId,
           textAlign: TextAlign.center,
           style: const TextStyle(
               color: Colors.black,

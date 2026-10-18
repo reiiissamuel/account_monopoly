@@ -2,7 +2,7 @@ import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
 import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/service/peer_connection_service.dart';
-import 'package:peerdart/peerdart.dart';
+import 'package:peer_rtc/peer_rtc.dart';
 import 'dart:developer';
 
 class HostPeerConnectionService extends PeerConnectionService {
@@ -22,31 +22,32 @@ class HostPeerConnectionService extends PeerConnectionService {
     }
     _isHostListenersInitialized = true;
 
-    peer.on("open").listen((id) {
+    // --- ADAPTAÇÃO PARA PEER_RTC ---
+    peer.onOpen.listen((id) {
       isConnected = true;
-      myPeerId = id;
+      myPeerId = id ?? myPeerId;
       log("${PeerConnectionService.openedConnectionMsg} ID: $myPeerId");
     });
 
-    peer.on("close").listen((_) {
+    peer.onClose.listen((_) {
       closeConnection();
-      reconnectToLastHost(); // Chama o método herdado da classe pai
+      reconnectToLastHost();
     });
 
-    peer.on<DataConnection>("connection").listen((event) {
+    peer.onConnection.listen((event) {
       serverActiveConnections.add(event);
 
-      event.on("open").listen((_) {
+      event.onOpen.listen((_) {
         log('Nova conexão recebida do peer: ${event.peer}');
         handleIncomingPeerConnection(event.peer);
       });
 
-      event.on("data").listen((data) {
+      event.onData.listen((data) {
         gameProvider.processComingEvent(EventDTO.fromMap(data));
         sendToAll(EventDTO.fromMap(data));
       });
 
-      event.on("close").listen((_) {
+      event.onClose.listen((_) {
         serverActiveConnections.removeWhere((c) => c.peer == event.peer);
         log('${PeerConnectionService.peerConnectionClosedMsg} ${event.peer}');
 
@@ -57,11 +58,6 @@ class HostPeerConnectionService extends PeerConnectionService {
             sourcePlayer: gameModel.othersPlayers[event.peer],
           );
         }
-      });
-
-      event.on('disconnected').listen((_) {
-        log("Peer ${event.peer} desconectado temporariamente (em Host)");
-        serverActiveConnections.removeWhere((c) => c.peer == event.peer);
       });
 
       isConnected = true;

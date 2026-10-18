@@ -1,7 +1,6 @@
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:peerdart/peerdart.dart';
-
+import 'package:peer_rtc/peer_rtc.dart';
 class ConnectionExample extends StatefulWidget {
   const ConnectionExample({super.key});
   @override
