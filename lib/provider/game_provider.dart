@@ -50,27 +50,35 @@ class GameProvider extends ChangeNotifier {
   }
 
   void switchToHostRole(String peerId) {
-    peerConnectionService?.destroy();
-    final peer = Peer(id: peerId);
-    final hostController = HostPeerConnectionService(
-      gameProvider: this,
-      peer: peer,
-      myPeerId: peerId,
-    );
-    hostController.openConnectionsAsHost();
-    peerConnectionService = hostController;
+    // Adiciona ao microtask para garantir que qualquer evento de stream 
+    // em processamento termine antes de destruir o controlador atual.
+    Future.microtask(() {
+      peerConnectionService?.destroy();
+      
+      final peer = Peer(id: peerId);
+      final hostService = HostPeerConnectionService(
+        gameProvider: this,
+        peer: peer,
+        myPeerId: peerId,
+      );
+      hostService.openConnectionsAsHost();
+      peerConnectionService = hostService;
+    });
   }
 
   void switchToClientRole({required String myPeerId, required String hostPeerId}) {
-    peerConnectionService?.destroy();
-    final peer = Peer(id: myPeerId);
-    final clientController = ClientPeerConnectionService(
-      gameProvider: this,
-      peer: peer,
-      myPeerId: myPeerId,
-    );
-    clientController.connectToHost(hostPeerId);
-    peerConnectionService = clientController;
+    Future.microtask(() {
+      peerConnectionService?.destroy();
+      
+      final peer = Peer(id: myPeerId);
+      final clientService = ClientPeerConnectionService(
+        gameProvider: this,
+        peer: peer,
+        myPeerId: myPeerId,
+      );
+      clientService.connectToHost(hostPeerId);
+      peerConnectionService = clientService;
+    });
   }
 
   void processComingEvent(EventDTO event) {
