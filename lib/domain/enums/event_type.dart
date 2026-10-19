@@ -22,7 +22,7 @@ enum EventType{
   iwon(messageScope: '{SOURCE} venceu o jogo.'),
   lostConnection(messageScope: '{SOURCE} está desconectado.'),
   joinTable(messageScope: '{SOURCE} juntou-se ao jogo.'),
-  serverHandShake(messageScope: "recebendo nova conexão"),
+  serverHandShake(messageScope: "recebendo nova conexão..."),
   saveGame(messageScope: "💾Salvando progresso..."),
   CHANCE_USED(messageScope: "{SOURCE}  usou um benefício.");
 

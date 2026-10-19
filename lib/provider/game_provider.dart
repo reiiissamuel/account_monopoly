@@ -49,39 +49,24 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-void switchToHostRole(String peerId) {
-  Future.microtask(() async {
-    peerService?.destroy();
-    
-    final peer = Peer(id: peerId);
-    peerService = GamePeerService(
-      gameProvider: this,
-      peer: peer,
-      myPeerId: peerId,
-      isServer: true,
-    );
-    await peerService!.startAsHost();
-  });
-}
+  void _initHostTunnel(String peerId) {
+    Future.microtask(() async {
+      peerService?.destroy();
+      
+      final peer = Peer(id: peerId);
+      peerService = GamePeerService(
+        gameProvider: this,
+        peer: peer,
+        myPeerId: peerId,
+        isServer: true,
+      );
+      await peerService!.startAsHost();
+    });
+  }
 
-void switchToClientRole({required String myPeerId, required String hostPeerId}) {
-  Future.microtask(() async {
-    peerService?.destroy();
-    
-    final peer = Peer(id: myPeerId);
-    peerService = GamePeerService(
-      gameProvider: this,
-      peer: peer,
-      myPeerId: myPeerId,
-      isServer: false,
-    );
-    await peerService!.joinAsClient(hostPeerId);
-  });
-}
-
-void _sendEvent(EventDTO event) {
-  peerService?.send(event);
-}
+  void _sendEvent(EventDTO event) {
+    peerService?.send(event);
+  }
 
   void processComingEvent(EventDTO event) {
     isLoading = true;
@@ -99,7 +84,7 @@ void _sendEvent(EventDTO event) {
   void _eventEntranceManager(EventDTO event) {
 
     Player sourceplayer = event.sourcePlayer;
-    if(event.type == EventType.serverHandShake) {
+    if(event.type == EventType.serverHandShake && !currentPlayer.isHost) {
       _dealHostHandShakeEvent(event);
     } else {
       double? price = event.price;
@@ -165,9 +150,16 @@ void _sendEvent(EventDTO event) {
           gameModelDTO!.winner = sourceplayer;
           break;
         case EventType.joinTable:
-          gameModelDTO!.updateOtherPlayers(sourceplayer);
           if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
             gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = true;
+          }
+          // Se eu sou o Host e recebi o aviso de que um cliente entrou na mesa,
+          // eu respondo enviando o estado completo do jogo (serverHandShake) para ele.
+          if (currentPlayer.isHost && sourceplayer.id != currentPlayer.id) {
+            eventComposer(
+              type: EventType.serverHandShake,
+              destinationPlayer: sourceplayer,
+            );
           }
           break;
         case EventType.lostConnection:
@@ -424,7 +416,7 @@ void _sendEvent(EventDTO event) {
           isHost: true
       );
       gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
-      switchToHostRole(gameModelDTO!.player.id);
+      _initHostTunnel(gameModelDTO!.player.id);
       userModelController.user!.games.add(gameModelDTO!);
       await _updateUserModel();
     } catch (e) {
@@ -476,7 +468,7 @@ void _sendEvent(EventDTO event) {
         await peerService!.startAsHost();
       } else {
         log("Consenso: Conectando ao Host eleito: ${currentHost.id}");
-        await peerService!.joinAsClient(currentHost.id);
+        await peerService!.joinAsClient(currentHost.id, gameModelDTO.player);
       }
     } on Exception catch(e) {
       log("Erro ao tentar carregar um jogo existente: $e");
@@ -496,19 +488,29 @@ void _sendEvent(EventDTO event) {
       if (userModelController.checkHasGameById(gameId)) {
         throw GameAlreadyInPlayerListException();
       }
-
-      // Gera o ID único do jogador para esta partida
       String generatedPeerId = GameProvider._generatePlayerId(
         usermodelname: userModelController.user!.username,
         usermodelId: userModelController.user!.id,
         gameId: gameId,
       );
+      Future.microtask(() async {
+        peerService?.destroy();
+        
+        final peer = Peer(id: generatedPeerId);
+        peerService = GamePeerService(
+          gameProvider: this,
+          peer: peer,
+          myPeerId: generatedPeerId,
+          isServer: false,
+        );
+        
+        final localPlayer = Player.ofDefinedId(
+          id: generatedPeerId,
+          username: userModelController.user!.username,
+        );
 
-      // Instancia o serviço e entra diretamente na sala do Host via StarHub
-      switchToClientRole(
-        myPeerId: generatedPeerId,
-        hostPeerId: destinationPeerId,
-      );
+        await peerService!.joinAsClient(destinationPeerId, localPlayer);
+      });
       
     } catch (e) {
       log("Erro: $e");
@@ -518,7 +520,6 @@ void _sendEvent(EventDTO event) {
       notifyListeners();
     }
   }
-
   void leaveGame() {
     try {
       // 1. Envia o evento de desconexão para a mesa antes de fechar tudo

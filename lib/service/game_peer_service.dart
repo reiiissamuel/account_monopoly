@@ -1,4 +1,6 @@
+import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
+import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:peer_rtc/peer_rtc.dart';
 import 'dart:developer';
@@ -24,13 +26,10 @@ class GamePeerService {
 
   void _initListeners() {
     // Escuta dados recebidos de qualquer nó na rede StarHub
-    starHub.onData.listen((eventData) {
+    starHub.onData.listen((e) {
+      log("Dados recebidos do StarHub: $e");
       try {
-        // O StarHub costuma estruturar o payload. Ajuste conforme o formato emitido pela lib.
-        final mapData = eventData['data'] ?? eventData;
-        if (mapData is Map<String, dynamic>) {
-          gameProvider.processComingEvent(EventDTO.fromMap(mapData));
-        }
+        gameProvider.processComingEvent(EventDTO.fromMap(e['data']));
       } catch (e) {
         log("Erro ao processar dados recebidos no StarHub: $e");
       }
@@ -38,13 +37,13 @@ class GamePeerService {
 
     // Evento nativo de mudança/migração de host fornecido pela biblioteca!
     starHub.onHostChanged.listen((newHostId) {
-      log("Migração de Host detectada pelo StarHub. Novo host: $newHostId");
+      log("Aviso do StarHub - Host atualizado na rede: $newHostId");
       
       final gameModel = gameProvider.gameModelDTO;
       if (gameModel != null) {
-        gameModel.player.isHost = (newHostId == myPeerId);
+        final bool isNowHost = (newHostId == myPeerId);
+        gameModel.player.isHost = isNowHost;
         
-        // Atualiza o status online/host dos outros jogadores na mesa
         for (var player in gameModel.othersPlayers.values) {
           player.isHost = (player.id == newHostId);
         }
@@ -55,29 +54,44 @@ class GamePeerService {
       log("Jogador conectado à rede StarHub: ${entry.peerId}");
     });
 
-    starHub.onPeerLeft.listen((peerId) {
-      log("Jogador desconectado da rede StarHub: $peerId");
+    starHub.onPeerLeft.listen((entry) {
+      log("Jogador desconectado da rede StarHub: ${entry.peerId}"); // Usando .peerId
     });
   }
 
   /// Inicializa como Host da mesa
   Future<void> startAsHost() async {
-    try {
-      await starHub.create();
-      isConnected = true;
-      log("StarHub Host iniciado com sucesso. ID: $myPeerId");
-    } catch (e) {
-      log("Erro ao iniciar StarHub como Host: $e");
-      rethrow;
-    }
+    // Inicializa o StarHub como servidor
+    await starHub.create();
+
+    // Escuta quando novos peers entram na estrela
+    starHub.onPeerJoined.listen((peerId) {
+      log("Novo peer conectado ao StarHub Host: $peerId");
+    });
+
+    // CRUCIAL: Certifique-se de que o onData global do StarHub está ativo
+    starHub.onData.listen((incomingData) {
+      log("Dados recebidos no Host: $incomingData");
+      final event = EventDTO.fromMap(incomingData);
+      gameProvider.processComingEvent(event);
+    });
   }
 
   /// Inicializa entrando como Cliente em um Host existente
-  Future<void> joinAsClient(String hostPeerId) async {
+  Future<void> joinAsClient(String hostPeerId, Player localPlayer) async {
     try {
       await starHub.join(hostPeerId);
       isConnected = true;
       log("Conectado com sucesso ao StarHub do Host: $hostPeerId");
+
+      final joinEvent = EventDTO(
+        referenceRound: 1,
+        type: EventType.joinTable,
+        sourcePlayer: localPlayer,
+      );
+      
+      send(joinEvent);
+      log("Evento joinTable disparado pelo cliente para o host.");
     } catch (e) {
       log("Erro ao entrar no StarHub do Host: $e");
       rethrow;
