@@ -53,11 +53,31 @@ class GameProvider extends ChangeNotifier {
       
       final peer = Peer(id: peerId);
       peerService = GamePeerService(
-        gameProvider: this,
         peer: peer,
         myPeerId: peerId
       );
+      
+      // CRUCIAL: Assina as streams para o Host também processar os eventos recebidos
+      _listenToPeerService();
       await peerService!.startAsHost();
+    });
+  }
+
+  // Método auxiliar para escutar os fluxos vindos da rede de forma limpa
+  void _listenToPeerService() {
+    peerService?.onData.listen((incomingData) {
+      try {
+        processComingEvent(EventDTO.fromMap(incomingData['data']));
+      } catch (e) {
+        log("Erro ao processar dados da stream no provider: $e");
+      }
+    });
+
+    peerService?.onPeerLeft.listen((peerId) {
+      eventComposer(
+        type: EventType.lostConnection, 
+        sourcePlayer: gameModelDTO?.othersPlayers[peerId]
+      );
     });
   }
 
@@ -440,11 +460,10 @@ class GameProvider extends ChangeNotifier {
       
       peerService?.destroy();
       peerService = GamePeerService(
-        gameProvider: this,
         peer: Peer(id: player.id),
         myPeerId: player.id
       );
-
+      _listenToPeerService(); // Assina as streams antes de conectar
       await peerService!.connectToHost(
         player: player,
         destinationPeerId: destinationPeerId,

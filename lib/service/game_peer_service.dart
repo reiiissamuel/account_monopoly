@@ -1,14 +1,11 @@
 import 'dart:async';
-
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
 import 'package:account_monopoly/domain/model/player.dart';
-import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:peer_rtc/peer_rtc.dart';
 import 'dart:developer';
 
 class GamePeerService {
-  final GameProvider gameProvider;
   final Peer peer;
   late StarHub starHub;
   
@@ -16,20 +13,25 @@ class GamePeerService {
   String myPeerId;
   bool isServer = false;
 
+  // Streams públicas para notificar o Provider sem acoplamento
+  final _dataController = StreamController<Map<String, dynamic>>.broadcast();
+  Stream<Map<String, dynamic>> get onData => _dataController.stream;
+
+  final _peerLeftController = StreamController<String>.broadcast();
+  Stream<String> get onPeerLeft => _peerLeftController.stream;
+
   static const hostReceivedMessage = "[HOST] Dados recebidos do StarHub do peer";
   static const clientReceivedMessage = "[CLIENT] Dados recebidos do StarHub do peer";
 
   GamePeerService({
-    required this.gameProvider,
     required this.peer,
-    required this.myPeerId
+    required this.myPeerId,
   }) {
     starHub = StarHub(peer: peer);
     _initListeners();
   }
 
   void _initListeners() {
-    // Escuta dados recebidos de qualquer nó na rede StarHub
     starHub.onData.listen((incomingData) {
       final emitterPeerId = incomingData['from'];
       if(emitterPeerId == myPeerId) return;
@@ -40,45 +42,39 @@ class GamePeerService {
           log("$clientReceivedMessage $emitterPeerId");
         }
         
-        gameProvider.processComingEvent(EventDTO.fromMap(incomingData['data']));
+        // Emite o dado bruto para quem estiver ouvindo a Stream
+        _dataController.add(incomingData);
       } catch (e) {
         log("Erro ao processar dados recebidos no StarHub: $e");
       }
     });
 
-    // Evento nativo de mudança/migração de host fornecido pela biblioteca!
     starHub.onHostChanged.listen((newHostId) {
       log("Aviso do StarHub - Host atualizado na rede: $newHostId");
       isServer = (newHostId == myPeerId);
     });
 
-    // os listeners abaixo são interpretados apenas pelo
     starHub.onPeerJoined.listen((entry) {
       log("Novo peer conectado ao StarHub Host: ${entry.peerId}");
     });
 
     starHub.onPeerLeft.listen((entry) {
       log("Peer desconectado da rede StarHub: ${entry.peerId}");
-      gameProvider.eventComposer(
-        type: EventType.lostConnection, 
-        sourcePlayer: gameProvider.gameModelDTO?.othersPlayers[entry.peerId]
-      );
+      // Emite o ID do peer que saiu
+      _peerLeftController.add(entry.peerId);
     });
   }
 
-  /// Inicializa como Host da mesa
   Future<void> startAsHost() async {
-    // Inicializa o StarHub como servidor
     await starHub.create();
     log("Criação do StarHub como Host concluída.");
     isPeerConnected = true;
     isServer = true;
   }
 
-  /// Inicializa entrando como Cliente em um Host existente
   Future<void> _joinAsClient(String hostPeerId, Player localPlayer) async {
     try {
-      final hostReady = starHub.onPeerConnected.firstWhere((peerId) => peerId == hostPeerId);
+      final hostReady = starHub.onPeerConnected.firstWhere((connectedPeerId) => connectedPeerId == hostPeerId);
       await starHub.join(hostPeerId);
       await hostReady.timeout(const Duration(seconds: 5));
       isPeerConnected = true;
@@ -122,7 +118,6 @@ class GamePeerService {
     }
   }
 
-  /// Envia/Faz o broadcast de eventos para toda a mesa através do StarHub
   void send(EventDTO event) {
     if (!isPeerConnected) {
       log("Erro ao enviar dados: StarHub não está conectado.");
@@ -135,8 +130,9 @@ class GamePeerService {
     }
   }
 
-  /// Encerra as conexões e limpa os recursos
   void destroy() {
+    _dataController.close();
+    _peerLeftController.close();
     try {
       starHub.close();
       peer.disconnect();
