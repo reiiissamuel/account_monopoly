@@ -38,6 +38,8 @@ class GameModelDTO{
   );
  }
 
+ bool get isEmpty => id.isEmpty;
+
  void updateOtherPlayers(Player? player){
   if(player == null) return;
   othersPlayers[player.id] = player;

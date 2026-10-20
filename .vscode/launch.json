@@ -20,9 +20,18 @@
             "name": "Jogador 3 (Edge)",
             "request": "launch",
             "type": "dart",
-            "deviceId": "edge",
+            "deviceId": "chrome",
             "args": [
                 "--web-port=8082"
+            ]
+        },
+        {
+            "name": "Jogador 4",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome",
+            "args": [
+                "--web-port=8083"
             ]
         }
     ]

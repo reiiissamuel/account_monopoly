@@ -57,8 +57,7 @@ class GameProvider extends ChangeNotifier {
       peerService = GamePeerService(
         gameProvider: this,
         peer: peer,
-        myPeerId: peerId,
-        isServer: true,
+        myPeerId: peerId
       );
       await peerService!.startAsHost();
     });
@@ -84,94 +83,94 @@ class GameProvider extends ChangeNotifier {
   void _eventEntranceManager(EventDTO event) {
 
     Player sourceplayer = event.sourcePlayer;
-    if(event.type == EventType.serverHandShake && !currentPlayer.isHost) {
-      _dealHostHandShakeEvent(event);
-    } else {
-      double? price = event.price;
-      int? quantity = event.quantity;
-      Player ?destinationPlayer = event.destinationPlayer;
+    
+    double? price = event.price;
+    int? quantity = event.quantity;
+    Player? destinationPlayer = event.destinationPlayer;
 
-      if(sourceplayer.id == currentPlayer.id) return;
-      gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
-      gameModelDTO!.updateOtherPlayers(destinationPlayer); //atualiza o estado do jogador que recebeu o evento
-      switch (event.type) {
-        case EventType.removeTradeOffer:
-          ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
-          break;
-        case EventType.transfer:
-          if(destinationPlayer!.id == currentPlayer.id){
-            currentPlayer.roundBalance.transferIn += price!;
-            currentPlayer.receiveCredit(price, ledger.incomeTaxRate);
-          } 
-          break;
-        case EventType.build || EventType.propertyUpdatePayout || EventType.payRent:
-          ledger.properties[event.property!.id] = event.property!;
-          break;
-        case EventType.setTradeOffer:
-          ledger.tradeOffers[event.tradeOffer!.offerId] = event.tradeOffer!;
-          break;
-        case  EventType.buyFromIPO:
-          ledger.properties[event.property!.id] = event.property!;
-          ledger.checkForMajorOwner(sourceplayer, event.property!.id);
-          break;
-        case EventType.buyFromTrade:
-          if(destinationPlayer!.id == currentPlayer.id){
-            currentPlayer.receiveCredit(event.tradeOffer!.totalAskingPrice, ledger.incomeTaxRate);
-            currentPlayer.roundBalance.shareSalesIn += event.tradeOffer!.totalAskingPrice;
-            currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount, event.tradeOffer!.totalAskingPrice);
-          } 
-          ledger.checkForMajorOwner(sourceplayer, event.tradeOffer!.propertyId);
-          ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
-          ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
-          break;
-        case EventType.mortgageForeclosure:
-          ledger.bankPortfolio[event.property!.id] = ShareHolder(
-              playerId: sourceplayer.id,
-              propertyId: event.property!.id,
-              sharesOwned: quantity!,
-              investmentValue: 0,
-              saleCapitalGain: 0);
-          ledger.properties[event.property!.id] = event.property!;
-          break;
-        case EventType.dividendsCalculation:
-          if(ledger.lastPropertiesUpdateRound >= event.referenceRound) return;
-          ledger.updatePropertiesValuation(currentPlayer, event.referenceRound);
-          event.price = currentPlayer.roundBalance.dividendsIn;
-          break;
-        case EventType.saveGame:
-          _updateUserModel();
-          break;
-        case EventType.bankruptcy:
-          if (event.sourcePlayer.isHost) {
-            //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
-          }
-          break;
-        case EventType.iwon:
-          gameModelDTO!.winner = sourceplayer;
-          break;
-        case EventType.joinTable:
-          if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
-            gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = true;
-          }
-          // Se eu sou o Host e recebi o aviso de que um cliente entrou na mesa,
-          // eu respondo enviando o estado completo do jogo (serverHandShake) para ele.
-          if (currentPlayer.isHost && sourceplayer.id != currentPlayer.id) {
-            eventComposer(
-              type: EventType.serverHandShake,
-              destinationPlayer: sourceplayer,
-            );
-          }
-          break;
-        case EventType.lostConnection:
-          if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
-            gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = false;
-          }
-          break;
-        default:
-          break;
-      }
+    switch (event.type) {
+      case EventType.removeTradeOffer:
+        ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
+        break;
+      case EventType.transfer:
+        if(destinationPlayer!.id == currentPlayer.id){
+          currentPlayer.roundBalance.transferIn += price!;
+          currentPlayer.receiveCredit(price, ledger.incomeTaxRate);
+        } 
+        break;
+      case EventType.build || EventType.propertyUpdatePayout || EventType.payRent:
+        ledger.properties[event.property!.id] = event.property!;
+        break;
+      case EventType.setTradeOffer:
+        ledger.tradeOffers[event.tradeOffer!.offerId] = event.tradeOffer!;
+        break;
+      case  EventType.buyFromIPO:
+        ledger.properties[event.property!.id] = event.property!;
+        ledger.checkForMajorOwner(sourceplayer, event.property!.id);
+        break;
+      case EventType.buyFromTrade:
+        if(destinationPlayer!.id == currentPlayer.id){
+          currentPlayer.receiveCredit(event.tradeOffer!.totalAskingPrice, ledger.incomeTaxRate);
+          currentPlayer.roundBalance.shareSalesIn += event.tradeOffer!.totalAskingPrice;
+          currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount, event.tradeOffer!.totalAskingPrice);
+        } 
+        ledger.checkForMajorOwner(sourceplayer, event.tradeOffer!.propertyId);
+        ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
+        ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
+        break;
+      case EventType.mortgageForeclosure:
+        ledger.bankPortfolio[event.property!.id] = ShareHolder(
+            playerId: sourceplayer.id,
+            propertyId: event.property!.id,
+            sharesOwned: quantity!,
+            investmentValue: 0,
+            saleCapitalGain: 0);
+        ledger.properties[event.property!.id] = event.property!;
+        break;
+      case EventType.dividendsCalculation:
+        if(ledger.lastPropertiesUpdateRound >= event.referenceRound) return;
+        ledger.updatePropertiesValuation(currentPlayer, event.referenceRound);
+        event.price = currentPlayer.roundBalance.dividendsIn;
+        break;
+      case EventType.saveGame:
+        _updateUserModel();
+        break;
+      case EventType.bankruptcy:
+        if (event.sourcePlayer.isHost) {
+          //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
+        }
+        break;
+      case EventType.iwon:
+        gameModelDTO!.winner = sourceplayer;
+        break;
+      case EventType.joinTable:
+        sourceplayer.isOnline = true;
+        // Se eu sou o Host e recebi o aviso de que um cliente entrou na mesa,
+        // eu respondo enviando o estado completo do jogo (serverHandShake) para ele.
+        // Envolve o envio em microtask para evitar conflito no Stream Controller da lib de peer_rtc
+        if (currentPlayer.isHost && sourceplayer.id != currentPlayer.id) {
+          Future.microtask(() {
+            eventComposer(type: EventType.serverHandShake, destinationPlayer: sourceplayer);
+          });
+        }
+      case EventType.serverHandShake:
+        final bool isNewPlayerAtTable = gameModelDTO == null || gameModelDTO!.isEmpty;
+        final bool isExistingPlayerBackAtTable = (!isNewPlayerAtTable && (!currentPlayer.isHost && destinationPlayer?.id == currentPlayer.id));
+        if(isNewPlayerAtTable || isExistingPlayerBackAtTable) {
+          _dealHostHandShakeEvent(event);
+        }
+        break;
+      case EventType.lostConnection:
+        if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
+          gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = false;
+        }
+        break;
+      default:
+        break;
     }
-
+    
+    gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
+    gameModelDTO!.updateOtherPlayers(destinationPlayer); //atualiza o estado do jogador que recebeu o evento
     gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
   }
 
@@ -299,24 +298,21 @@ class GameProvider extends ChangeNotifier {
           gameModelDTO!.winner = currentPlayer;
           break;
         case EventType.serverHandShake:
-          currentPlayer.isHost = true;
-          gameModelDTO!.othersPlayers[gameModelDTO!.player.id] = gameModelDTO!.player;
-          //gameModelDTO!.othersPlayers[destinationPlayer!.id] = destinationPlayer; ja salva na linha 274
           event.gameData = gameModelDTO;
           _updateUserModel();
           break;
         case EventType.lostConnection:
-          gameModelDTO!.othersPlayers.remove(currentPlayer.id);
-          //todo salvar jogo e sair;
+          event.sourcePlayer.isOnline = false;
+          //gameModelDTO!.othersPlayers.remove(currentPlayer.id);
           break;
         default:
           break;
       }
+      
+      gameModelDTO!.updateOtherPlayers(destinationPlayer);
+      gameModelDTO!.updateOtherPlayers(sourcePlayer);
+       _sendEvent(event);
 
-      if(destinationPlayer != null){
-        gameModelDTO!.updateOtherPlayers(destinationPlayer);
-      } 
-      _sendEvent(event);
       gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
       notifyChanges(false);
     } on PropertiesAlreadyUpdateException{
@@ -451,14 +447,13 @@ class GameProvider extends ChangeNotifier {
     final currentHost = allPlayers.isNotEmpty ? allPlayers.first : gameModelDTO.player;
 
     bool amIHost = (currentHost.id == myId);
-    gameModelDTO.player.isHost = amIHost;
+    gameModelDTO.player.isHost = (currentHost.id == myId);
 
     // Instancia o novo serviço unificado com StarHub
     peerService = GamePeerService(
       gameProvider: this,
       peer: peer,
-      myPeerId: myId,
-      isServer: amIHost,
+      myPeerId: myId
     );
 
     try {
@@ -493,6 +488,12 @@ class GameProvider extends ChangeNotifier {
         usermodelId: userModelController.user!.id,
         gameId: gameId,
       );
+      final gameModelDTO = userModelController.user!.games.firstWhere((g) => g.id == gameId, orElse: () => GameModelDTO.empty());
+      final player = gameModelDTO.isEmpty ? Player.ofDefinedId(
+          id: generatedPeerId,
+          username: userModelController.user!.username,
+        ) : gameModelDTO.player;
+
       Future.microtask(() async {
         peerService?.destroy();
         
@@ -500,14 +501,10 @@ class GameProvider extends ChangeNotifier {
         peerService = GamePeerService(
           gameProvider: this,
           peer: peer,
-          myPeerId: generatedPeerId,
-          isServer: false,
+          myPeerId: generatedPeerId
         );
         
-        final localPlayer = Player.ofDefinedId(
-          id: generatedPeerId,
-          username: userModelController.user!.username,
-        );
+        final localPlayer = player;
 
         await peerService!.joinAsClient(destinationPeerId, localPlayer);
       });
@@ -520,10 +517,11 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   void leaveGame() {
     try {
       // 1. Envia o evento de desconexão para a mesa antes de fechar tudo
-      if (peerService != null && peerService!.isConnected) {
+      if (peerService != null && peerService!.isPeerConnected) {
         eventComposer(type: EventType.lostConnection);
       }
     } catch (e) {
@@ -553,38 +551,12 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _dealHostHandShakeEvent(EventDTO event) {
-    // Guarda o player local atual antes de mexer em qualquer coisa
-    final localPlayerBackup = gameModelDTO?.player;
     
     // Recebe os dados globais do novo host
     gameModelDTO = event.gameData;
-    final myId = peerService!.myPeerId;
-
-    // BLINDAGEM: Se temos um jogador local válido, mantemos a nossa instância exata
-    if (localPlayerBackup != null) {
-      gameModelDTO!.player = localPlayerBackup;
-    } else if (gameModelDTO!.othersPlayers.containsKey(myId)) {
-      gameModelDTO!.player = gameModelDTO!.othersPlayers[myId]!;
-    } else {
-      gameModelDTO!.player = Player.ofDefinedId(
-        id: myId,
-        username: userModelController.user!.username,
-      );
-      gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
-    }
-
-    // Garante que o próprio player fica registado corretamente em othersPlayers com o estado online
-    gameModelDTO!.othersPlayers[myId] = gameModelDTO!.player;
     
     // Persiste o estado unificado localmente[cite: 8]
     _updateUserModel();
-    
-    _sendEvent(EventDTO(
-      referenceRound: currentRound,
-      type: EventType.joinTable,
-      destinationPlayer: event.sourcePlayer,
-      sourcePlayer: gameModelDTO!.player,
-    ));
 
     isLoading = false;
     notifyListeners();

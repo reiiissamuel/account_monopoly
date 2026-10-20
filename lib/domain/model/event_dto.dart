@@ -26,11 +26,13 @@ class EventDTO{
   }
 
   String getEventLog(Player currentPlayer){
+    final String sourcePlayerName =  sourcePlayer.username;
+    final String destinationPlayerName =  destinationPlayer?.username ?? "";
     String message = type.messageScope
-          !.replaceAll('{SOURCE}', sourcePlayer.username == currentPlayer.username ? 'Sua empresa' : sourcePlayer.username)
+          !.replaceAll('{SOURCE}', sourcePlayerName == currentPlayer.username ? 'Sua empresa' : sourcePlayerName)
             .replaceAll('{PRICE}', (price != null ? StringUtils.currencyFormat(price!) : ""))
             .replaceAll('{QUANTITY}', (quantity != null ? quantity.toString() : ""))
-              .replaceAll('{DEST}', (destinationPlayer != null && destinationPlayer?.username == currentPlayer.username) ? 'Sua empresa' : sourcePlayer.username)
+              .replaceAll('{DEST}', (destinationPlayerName == currentPlayer.username) ? 'Sua empresa' : destinationPlayerName)
               .replaceAll('{PROPERTY}', (property != null ? property!.name : ""))
               .replaceAll('{TRADEOFFER}', tradeOffer != null ? "\n\t${tradeOffer?.sharesAmount} ações de ${tradeOffer!.propertyId} no valor total de ${StringUtils.currencyFormat(tradeOffer!.totalAskingPrice)}" : "")
               .replaceAll('{ROUND}', referenceRound.toString());

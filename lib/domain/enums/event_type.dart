@@ -21,10 +21,10 @@ enum EventType{
   bankruptcy(messageScope: '{SOURCE} declarou falência'),
   iwon(messageScope: '{SOURCE} venceu o jogo.'),
   lostConnection(messageScope: '{SOURCE} está desconectado.'),
-  joinTable(messageScope: '{SOURCE} juntou-se ao jogo.'),
-  serverHandShake(messageScope: "recebendo nova conexão..."),
+  serverHandShake(messageScope: "{DEST} entrou no jogo."),
   saveGame(messageScope: "💾Salvando progresso..."),
-  CHANCE_USED(messageScope: "{SOURCE}  usou um benefício.");
+  CHANCE_USED(messageScope: "{SOURCE}  usou um benefício."),
+  joinTable(messageScope: '{SOURCE} está se conectando à mesa...'),;
 
   final String? messageScope;
 
