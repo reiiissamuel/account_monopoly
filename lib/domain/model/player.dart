@@ -52,13 +52,13 @@ class Player {
     required String username, 
     required int userModelId, 
     required String gameId,
-    required bool isHost,
-    required double currentCredit,
+    bool? isHost,
+    double? currentCredit,
   }) : this(
     id: "$username-$userModelId-${StringUtils.generateUUID(size: 5)}-$gameId",
     username: username,
-    isHost: isHost,
-    currentCredit: currentCredit,
+    isHost: isHost ?? false,
+    currentCredit: currentCredit ?? 00,
     financialReport: FinancialReport.empty(),
     roundBalance: Balance.empty(),
     loans: [],
@@ -76,18 +76,6 @@ class Player {
     roundBalance: Balance.empty(),
     loans: [],
     portfolio: {},
-  );
-
-  Player.ofDefinedId({required String username, required id}) : this(
-    id: id,
-    username: username,
-    isHost: false,
-    currentCredit: 0.0,
-    incomeTax: 0.0,
-    financialReport: FinancialReport.empty(),
-    roundBalance: Balance.empty(),
-    loans: [],
-    portfolio: {}
   );
 
   Player copyWith({
