@@ -14,6 +14,7 @@ class GamePeerService {
   
   bool isPeerConnected = false;
   String myPeerId;
+  bool isServer = false;
 
   static const hostReceivedMessage = "[HOST] Dados recebidos do StarHub do peer";
   static const clientReceivedMessage = "[CLIENT] Dados recebidos do StarHub do peer";
@@ -26,8 +27,6 @@ class GamePeerService {
     starHub = StarHub(peer: peer);
     _initListeners();
   }
-
-  bool get isServer => gameProvider.gameModelDTO?.player.isHost ?? false;
 
   void _initListeners() {
     // Escuta dados recebidos de qualquer nó na rede StarHub
@@ -50,16 +49,7 @@ class GamePeerService {
     // Evento nativo de mudança/migração de host fornecido pela biblioteca!
     starHub.onHostChanged.listen((newHostId) {
       log("Aviso do StarHub - Host atualizado na rede: $newHostId");
-      
-      final gameModel = gameProvider.gameModelDTO;
-      if (gameModel != null) {
-        final bool isNowHost = (newHostId == myPeerId);
-        gameModel.player.isHost = isNowHost;
-        
-        for (var player in gameModel.othersPlayers.values) {
-          player.isHost = (player.id == newHostId);
-        }
-      }
+      isServer = (newHostId == myPeerId);
     });
 
     // os listeners abaixo são interpretados apenas pelo
@@ -82,14 +72,15 @@ class GamePeerService {
     await starHub.create();
     log("Criação do StarHub como Host concluída.");
     isPeerConnected = true;
+    isServer = true;
   }
 
   /// Inicializa entrando como Cliente em um Host existente
-  Future<void> joinAsClient(String hostPeerId, Player localPlayer) async {
+  Future<void> _joinAsClient(String hostPeerId, Player localPlayer) async {
     try {
       final hostReady = starHub.onPeerConnected.firstWhere((peerId) => peerId == hostPeerId);
       await starHub.join(hostPeerId);
-      await hostReady.timeout(const Duration(seconds: 8));
+      await hostReady.timeout(const Duration(seconds: 5));
       isPeerConnected = true;
       log("Conectado com sucesso ao StarHub do Host: $hostPeerId");
 
@@ -101,9 +92,32 @@ class GamePeerService {
       
       send(joinEvent);
       log("Evento joinTable disparado pelo cliente para o host.");
+    } on TimeoutException {
+      isPeerConnected = false;
+      log("Timeout ao tentar conexão com o host candidate: $hostPeerId");
     } catch (e) {
       isPeerConnected = false;
       log("Erro ao entrar no StarHub do Host: $e");
+    } finally {
+      isServer = false;
+    }
+  }
+
+  Future<void> connectToHost({required Player player, String? destinationPeerId, List<String>? canditadesPeersId}) async {
+    try {
+      if (destinationPeerId != null && destinationPeerId.isNotEmpty) {
+        await _joinAsClient(destinationPeerId, player);
+        if(isPeerConnected) return;
+      }
+      for (var peerId in canditadesPeersId ?? []){
+          if (peerId != destinationPeerId) {
+            await _joinAsClient(peerId, player);
+            if(isPeerConnected) return;
+          }
+      }
+      throw TimeoutException("Não há host disponível.");
+    } catch (e) {
+      log("Erro ao entrar no StarHub: $e");
       rethrow;
     }
   }

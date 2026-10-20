@@ -33,6 +33,7 @@ class GameProvider extends ChangeNotifier {
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
   int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
+  bool get isServer => peerService?.isServer ?? false;
   
   void reset(){
     gameModelDTO = GameModelDTO.empty();
@@ -133,9 +134,7 @@ class GameProvider extends ChangeNotifier {
         _updateUserModel();
         break;
       case EventType.bankruptcy:
-        if (event.sourcePlayer.isHost) {
-          //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
-        }
+        //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
         break;
       case EventType.iwon:
         gameModelDTO!.winner = sourceplayer;
@@ -145,7 +144,7 @@ class GameProvider extends ChangeNotifier {
         // Se eu sou o Host e recebi o aviso de que um cliente entrou na mesa,
         // eu respondo enviando o estado completo do jogo (serverHandShake) para ele.
         // Envolve o envio em microtask para evitar conflito no Stream Controller da lib de peer_rtc
-        if (currentPlayer.isHost && sourceplayer.id != currentPlayer.id) {
+        if (isServer && sourceplayer.id != currentPlayer.id) {
           Future.microtask(() {
             eventComposer(type: EventType.serverHandShake, destinationPlayer: sourceplayer);
           });
@@ -406,8 +405,7 @@ class GameProvider extends ChangeNotifier {
           currentCredit: game.initalGameCredit,
           userModelId: usermodelId,
           gameId: game.id,
-          username: usermodelname,
-          isHost: true
+          username: usermodelname
       );
       gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
       _initHostTunnel(gameModelDTO!.player.id);
@@ -422,67 +420,18 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> getGameById(GameModelDTO gameModelDTO) async {
-    isLoading = true;
-    notifyListeners();
-    
-    this.gameModelDTO = gameModelDTO;
-    
-    // 1. Destrói qualquer conexão anterior existente de forma segura
-    peerService?.destroy();
-
-    final myId = gameModelDTO.player.id;
-    final peer = Peer(id: myId);
-
-    // 2. Aplica o consenso determinístico para descobrir quem é o Host atual
-    final allPlayers = gameModelDTO.othersPlayers.values.toList();
-    if (!allPlayers.any((p) => p.id == myId)) {
-      allPlayers.add(gameModelDTO.player);
-    }
-    
-    // Ordena alfabeticamente pelos IDs para garantir o mesmo resultado em todos os clientes
-    allPlayers.sort((a, b) => a.id.compareTo(b.id));
-    final currentHost = allPlayers.isNotEmpty ? allPlayers.first : gameModelDTO.player;
-
-    bool amIHost = (currentHost.id == myId);
-    gameModelDTO.player.isHost = (currentHost.id == myId);
-
-    // Instancia o novo serviço unificado com StarHub
-    peerService = GamePeerService(
-      gameProvider: this,
-      peer: peer,
-      myPeerId: myId
-    );
-
+  Future<void> enterGameRequest({GameModelDTO? game, String? destinationPeerId}) async {
     try {
-      // 3. Inicializa como Host ou conecta-se como Cliente baseado no consenso
-      if (amIHost) {
-        log("Consenso: Eu sou o Host. Iniciando StarHub...");
-        await peerService!.startAsHost();
-      } else {
-        log("Consenso: Conectando ao Host eleito: ${currentHost.id}");
-        await peerService!.joinAsClient(currentHost.id, gameModelDTO.player);
-      }
-    } on Exception catch(e) {
-      log("Erro ao tentar carregar um jogo existente: $e");
-      rethrow;
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> enterNewGameByIdRequest({required String destinationPeerId}) async {
-    userModelController.notifyChanges(true);
-    
-    final Player player;
-    final String gameId = destinationPeerId.split("-").last;
-    try {
-      gameModelDTO = userModelController.getGameById(gameId);
+      userModelController.notifyChanges(true);
+      final Player player;
+      
+      final resolvedGameId = destinationPeerId?.split("-").last;
+      gameModelDTO = game ?? userModelController.getGameById(resolvedGameId!);
+      
       if(gameModelDTO!.isEmpty){
-        player =Player.newGamePlayer(
+        player = Player.newGamePlayer(
           userModelId: userModelController.user!.id!,
-          gameId: gameId,
+          gameId: resolvedGameId!,
           username: userModelController.user!.username
         );
       } else {
@@ -490,15 +439,17 @@ class GameProvider extends ChangeNotifier {
       }
       
       peerService?.destroy();
-      
-      final peer = Peer(id: player.id);
       peerService = GamePeerService(
         gameProvider: this,
-        peer: peer,
+        peer: Peer(id: player.id),
         myPeerId: player.id
       );
-      
-      await peerService!.joinAsClient(destinationPeerId, player);
+
+      await peerService!.connectToHost(
+        player: player,
+        destinationPeerId: destinationPeerId,
+        canditadesPeersId: gameModelDTO!.othersPlayers.keys.toList()
+      );
 
       notifyChanges(false);
     } on TimeoutException {
@@ -511,7 +462,7 @@ class GameProvider extends ChangeNotifier {
       log("Erro: $e");
       rethrow;
     } finally {
-      userModelController.notifyChanges(isLoading);
+      userModelController.notifyChanges(false);
     }
   }
 

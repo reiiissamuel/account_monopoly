@@ -75,7 +75,7 @@ class GameScreenState extends State<GameScreen> {
                       fontWeight: FontWeight.bold),
                 ),
                 centerTitle: true,
-                leading: gameProvider.currentPlayer.isHost ? Center(
+                leading: gameProvider.isServer ? Center(
                   child: IconButton(
                           icon: const Icon(Icons.broadcast_on_personal_rounded,
                               color: Colors.green),

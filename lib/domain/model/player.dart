@@ -10,8 +10,7 @@ class Player {
   // 1. ATRIBUTOS IMUTÁVEIS (Definidos uma vez)
   final String id;
   final String username;
-  
-  bool isHost;
+
   bool isOnline;
   
   // 2. ATRIBUTOS DE CONTROLE/RELATÓRIO IMUTÁVEIS (O objeto é final, mas o conteúdo é mutável)
@@ -33,7 +32,6 @@ class Player {
   Player({
     required this.id, 
     required this.username, 
-    required this.isHost,
     required this.currentCredit,
     required this.financialReport,
     required this.roundBalance,
@@ -52,12 +50,10 @@ class Player {
     required String username, 
     required int userModelId, 
     required String gameId,
-    bool? isHost,
     double? currentCredit,
   }) : this(
     id: "$username-$userModelId-${StringUtils.generateUUID(size: 5)}-$gameId",
     username: username,
-    isHost: isHost ?? false,
     currentCredit: currentCredit ?? 00,
     financialReport: FinancialReport.empty(),
     roundBalance: Balance.empty(),
@@ -69,7 +65,6 @@ class Player {
   Player.empty() : this(
     id: "",
     username: "",
-    isHost: false,
     currentCredit: 0.0,
     incomeTax: 0.0,
     financialReport: FinancialReport.empty(),
@@ -81,7 +76,6 @@ class Player {
   Player copyWith({
     String? id,
     String? username,
-    bool? isHost,
     bool? isOnline,
     double? currentCredit,
     FinancialReport? financialReport,
@@ -92,7 +86,6 @@ class Player {
     return Player(
       id: id ?? this.id,
       username: username ?? this.username,
-      isHost: isHost ?? this.isHost,
       isOnline: isOnline ?? this.isOnline,
       currentCredit: currentCredit ?? this.currentCredit,
       financialReport: financialReport ?? this.financialReport,
@@ -173,7 +166,6 @@ void receiveCredit(double amount, double incomeTaxRate) {
     return Player(
       id: map["id"] as String,
       username: map["username"] as String,
-      isHost: map["isHost"] as bool,
       currentCredit: credit,
       incomeTax: incomeTax,
       taxRefund: taxRefund,
@@ -195,7 +187,6 @@ void receiveCredit(double amount, double incomeTaxRate) {
     return {
       "id": id,
       "username": username,
-      "isHost": isHost,
       'currentCredit': currentCredit,
       'incomeTax': incomeTax,
       'receivedFrom': receivedFrom,

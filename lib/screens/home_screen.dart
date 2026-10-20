@@ -297,7 +297,7 @@ class HomeScreenState extends State<HomeScreen> {
                   try {
                     var gameProvider = Provider.of<GameProvider>(context, listen: false);
                     gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                    await gameProvider.enterNewGameByIdRequest(destinationPeerId: controller.text);
+                    await gameProvider.enterGameRequest(destinationPeerId: controller.text);
                     navigator.pushReplacement(MaterialPageRoute(builder: (context) => const GameScreen()));
                     
                   } on GameNotExistsException catch (g) {
