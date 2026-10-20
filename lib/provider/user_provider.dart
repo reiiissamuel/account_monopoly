@@ -279,8 +279,7 @@ class UserProvider extends ChangeNotifier{
   }
 
   GameModelDTO getGameById(String gameId) {
-    GameModelDTO game = user!.games.firstWhere((g) => g.id == gameId, orElse: () => GameModelDTO.empty());
-    return game;
+    return user!.games.firstWhere((g) => g.id == gameId, orElse: () => GameModelDTO.empty());
   }
 
 }

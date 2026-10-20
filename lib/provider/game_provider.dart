@@ -13,11 +13,7 @@ import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/exception/game_not_exists_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/domain/model/player.dart';
-import 'package:account_monopoly/service/client_peer_connection.dart';
 import 'package:account_monopoly/service/game_peer_service.dart';
-import 'package:account_monopoly/service/host_peer_connection_service.dart';
-import 'package:account_monopoly/service/peer_connection_service.dart';
-import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:peer_rtc/peer_rtc.dart';
@@ -39,7 +35,7 @@ class GameProvider extends ChangeNotifier {
   int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
   
   void reset(){
-    gameModelDTO = null;
+    gameModelDTO = GameModelDTO.empty();
     isLoading = false;
     events = [];
     lastEventReceived = null;
@@ -156,8 +152,9 @@ class GameProvider extends ChangeNotifier {
         }
       case EventType.serverHandShake:
         final bool isNewPlayerAtTable = gameModelDTO == null || gameModelDTO!.isEmpty;
-        if((!isNewPlayerAtTable && destinationPlayer?.id == currentPlayer.id)) {
-          _dealHostHandShakeEvent(event, destinationPlayer!, isNewPlayerAtTable);
+        if((isNewPlayerAtTable || destinationPlayer?.id == currentPlayer.id)) {
+            sourceplayer.isOnline = true;
+            _dealHostHandShakeEvent(event, destinationPlayer!, isNewPlayerAtTable);
         }
         break;
       case EventType.lostConnection:
@@ -403,13 +400,12 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
       String usermodelname = userModelController.user!.username;
       int usermodelId = userModelController.user!.id!;
-      String generatedGameId = StringUtils.generateUUID(size: 8);
 
       gameModelDTO = game;
       gameModelDTO!.player = Player.newGamePlayer(
-          currentCredit: gameModelDTO!.initalGameCredit,
+          currentCredit: game.initalGameCredit,
           userModelId: usermodelId,
-          gameId: generatedGameId,
+          gameId: game.id,
           username: usermodelname,
           isHost: true
       );
@@ -478,33 +474,32 @@ class GameProvider extends ChangeNotifier {
 
   Future<void> enterNewGameByIdRequest({required String destinationPeerId}) async {
     userModelController.notifyChanges(true);
-
-    String gameId = destinationPeerId.split("-").last;
+    
+    final Player player;
+    final String gameId = destinationPeerId.split("-").last;
     try {
-      String generatedPeerId = GameProvider._generatePlayerId(
-        usermodelname: userModelController.user!.username,
-        usermodelId: userModelController.user!.id,
-        gameId: gameId,
-      );
       gameModelDTO = userModelController.getGameById(gameId);
-      final player = gameModelDTO!.isEmpty ? Player.ofDefinedId(
-          id: generatedPeerId,
-          username: userModelController.user!.username,
-        ) : gameModelDTO!.player;
-
-      // Execução direta sem Future.microtask redundante
+      if(gameModelDTO!.isEmpty){
+        player =Player.newGamePlayer(
+          userModelId: userModelController.user!.id!,
+          gameId: gameId,
+          username: userModelController.user!.username
+        );
+      } else {
+        player = gameModelDTO!.player;
+      }
+      
       peerService?.destroy();
       
-      final peer = Peer(id: generatedPeerId);
+      final peer = Peer(id: player.id);
       peerService = GamePeerService(
         gameProvider: this,
         peer: peer,
-        myPeerId: generatedPeerId
+        myPeerId: player.id
       );
       
       await peerService!.joinAsClient(destinationPeerId, player);
 
-      log("MERDA");
       notifyChanges(false);
     } on TimeoutException {
       if(gameModelDTO != null && !gameModelDTO!.isEmpty){
@@ -513,7 +508,7 @@ class GameProvider extends ChangeNotifier {
         throw GameNotExistsException();
       }
     } catch(e) {
-      log("Erro capturado no catch genérico: $e");
+      log("Erro: $e");
       rethrow;
     } finally {
       userModelController.notifyChanges(isLoading);
@@ -546,10 +541,6 @@ class GameProvider extends ChangeNotifier {
       log("Erro na tentativa salvar os dados do jogo: $e");
       rethrow;
     }
-  }
-
-  static String _generatePlayerId({required usermodelname, required usermodelId, required gameId}){
-    return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
   }
 
   void _dealHostHandShakeEvent(EventDTO event, Player localPlayer, bool isNewPlayerAtTable) {
