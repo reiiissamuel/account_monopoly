@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
@@ -28,9 +29,6 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<UserProvider>(
         builder: (context, userProvider, child){
-          if(userProvider.isLoading){
-            return CircularProgressIndicator(color: Theme.of(context).primaryColor);
-          }
           return PopScope(
               canPop: false,
               child: Scaffold(
@@ -215,9 +213,18 @@ class HomeScreenState extends State<HomeScreen> {
                                         }
                                         Navigator.push(context, MaterialPageRoute(builder: (context) => AllPropertiesVesionsScreen()));
                                       },
-                                    ))
+                                    )),
                               ],
-                            )))
+                            ))),
+                    if (userProvider.isLoading)
+                      Container(
+                        color: Colors.black54,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ));
@@ -283,20 +290,26 @@ class HomeScreenState extends State<HomeScreen> {
               TextButton(
                 child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0, color: Colors.white)),
                 onPressed: () async {
-                  try{
+                  final navigator = Navigator.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  navigator.pop(); 
+
+                  try {
                     var gameProvider = Provider.of<GameProvider>(context, listen: false);
                     gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
                     await gameProvider.enterNewGameByIdRequest(destinationPeerId: controller.text);
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
-                  } on GameNotExistsException catch(g){
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    navigator.pushReplacement(MaterialPageRoute(builder: (context) => const GameScreen()));
+                    
+                  } on GameNotExistsException catch (g) {
+                    scaffoldMessenger.showSnackBar(
                         SnackBar(content: Text(g.toString()), backgroundColor: Colors.red));
-                    Navigator.pop(context);
-                  } on Exception catch(e){
-                    log(e.toString());
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  } on TimeoutException catch(e) {
+                    scaffoldMessenger.showSnackBar(
                         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
-                    Navigator.pop(context);
+                  } catch (e) {
+                    log(e.toString());
+                    scaffoldMessenger.showSnackBar(
+                        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
                   }
                 },
               ),
