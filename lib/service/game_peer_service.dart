@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
 import 'package:account_monopoly/domain/model/player.dart';
@@ -87,7 +89,7 @@ class GamePeerService {
     try {
       final hostReady = starHub.onPeerConnected.firstWhere((peerId) => peerId == hostPeerId);
       await starHub.join(hostPeerId);
-      await hostReady.timeout(const Duration(seconds: 15));
+      await hostReady.timeout(const Duration(seconds: 8));
       isPeerConnected = true;
       log("Conectado com sucesso ao StarHub do Host: $hostPeerId");
 

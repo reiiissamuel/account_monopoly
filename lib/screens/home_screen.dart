@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
 import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
-import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
+import 'package:account_monopoly/exception/game_not_exists_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
@@ -282,20 +282,21 @@ class HomeScreenState extends State<HomeScreen> {
               ),
               TextButton(
                 child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0, color: Colors.white)),
-                onPressed: () {
+                onPressed: () async {
                   try{
                     var gameProvider = Provider.of<GameProvider>(context, listen: false);
                     gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                    gameProvider.enterNewGameByIdRequest(destinationPeerId: controller.text);
+                    await gameProvider.enterNewGameByIdRequest(destinationPeerId: controller.text);
                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
-                  } on GameAlreadyInPlayerListException catch(g){
+                  } on GameNotExistsException catch(g){
                     ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(g.toString()), backgroundColor: Colors.red));
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
+                    Navigator.pop(context);
                   } on Exception catch(e){
                     log(e.toString());
                     ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                    Navigator.pop(context);
                   }
                 },
               ),

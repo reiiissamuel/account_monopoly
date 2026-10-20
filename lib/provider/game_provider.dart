@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:developer';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
@@ -9,6 +10,7 @@ import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
+import 'package:account_monopoly/exception/game_not_exists_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/service/client_peer_connection.dart';
@@ -16,7 +18,6 @@ import 'package:account_monopoly/service/game_peer_service.dart';
 import 'package:account_monopoly/service/host_peer_connection_service.dart';
 import 'package:account_monopoly/service/peer_connection_service.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
-import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:peer_rtc/peer_rtc.dart';
@@ -155,15 +156,15 @@ class GameProvider extends ChangeNotifier {
         }
       case EventType.serverHandShake:
         final bool isNewPlayerAtTable = gameModelDTO == null || gameModelDTO!.isEmpty;
-        final bool isExistingPlayerBackAtTable = (!isNewPlayerAtTable && (!currentPlayer.isHost && destinationPlayer?.id == currentPlayer.id));
-        if(isNewPlayerAtTable || isExistingPlayerBackAtTable) {
-          _dealHostHandShakeEvent(event);
+        if((!isNewPlayerAtTable && destinationPlayer?.id == currentPlayer.id)) {
+          _dealHostHandShakeEvent(event, destinationPlayer!, isNewPlayerAtTable);
         }
         break;
       case EventType.lostConnection:
         if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
           gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = false;
         }
+        _updateUserModel();
         break;
       default:
         break;
@@ -303,6 +304,7 @@ class GameProvider extends ChangeNotifier {
           break;
         case EventType.lostConnection:
           event.sourcePlayer.isOnline = false;
+          _updateUserModel();
           //gameModelDTO!.othersPlayers.remove(currentPlayer.id);
           break;
         default:
@@ -474,47 +476,47 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  void enterNewGameByIdRequest({required String destinationPeerId}) async {
-    isLoading = true;
-    notifyListeners();
+  Future<void> enterNewGameByIdRequest({required String destinationPeerId}) async {
+    userModelController.notifyChanges(true);
 
     String gameId = destinationPeerId.split("-").last;
     try {
-      if (userModelController.checkHasGameById(gameId)) {
-        throw GameAlreadyInPlayerListException();
-      }
       String generatedPeerId = GameProvider._generatePlayerId(
         usermodelname: userModelController.user!.username,
         usermodelId: userModelController.user!.id,
         gameId: gameId,
       );
-      final gameModelDTO = userModelController.user!.games.firstWhere((g) => g.id == gameId, orElse: () => GameModelDTO.empty());
-      final player = gameModelDTO.isEmpty ? Player.ofDefinedId(
+      gameModelDTO = userModelController.getGameById(gameId);
+      final player = gameModelDTO!.isEmpty ? Player.ofDefinedId(
           id: generatedPeerId,
           username: userModelController.user!.username,
-        ) : gameModelDTO.player;
+        ) : gameModelDTO!.player;
 
-      Future.microtask(() async {
-        peerService?.destroy();
-        
-        final peer = Peer(id: generatedPeerId);
-        peerService = GamePeerService(
-          gameProvider: this,
-          peer: peer,
-          myPeerId: generatedPeerId
-        );
-        
-        final localPlayer = player;
-
-        await peerService!.joinAsClient(destinationPeerId, localPlayer);
-      });
+      // Execução direta sem Future.microtask redundante
+      peerService?.destroy();
       
-    } catch (e) {
-      log("Erro: $e");
+      final peer = Peer(id: generatedPeerId);
+      peerService = GamePeerService(
+        gameProvider: this,
+        peer: peer,
+        myPeerId: generatedPeerId
+      );
+      
+      await peerService!.joinAsClient(destinationPeerId, player);
+
+      log("MERDA");
+      notifyChanges(false);
+    } on TimeoutException {
+      if(gameModelDTO != null && !gameModelDTO!.isEmpty){
+        _initHostTunnel(gameModelDTO!.player.id);
+      } else {
+        throw GameNotExistsException();
+      }
+    } catch(e) {
+      log("Erro capturado no catch genérico: $e");
       rethrow;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      userModelController.notifyChanges(isLoading);
     }
   }
 
@@ -550,12 +552,17 @@ class GameProvider extends ChangeNotifier {
     return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
   }
 
-  void _dealHostHandShakeEvent(EventDTO event) {
+  void _dealHostHandShakeEvent(EventDTO event, Player localPlayer, bool isNewPlayerAtTable) {
     
     // Recebe os dados globais do novo host
     gameModelDTO = event.gameData;
+
+    gameModelDTO!.player = localPlayer;
+    if(isNewPlayerAtTable){
+      gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
+    }
     
-    // Persiste o estado unificado localmente[cite: 8]
+    // Persiste o estado unificado localmente
     _updateUserModel();
 
     isLoading = false;

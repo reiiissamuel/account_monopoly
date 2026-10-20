@@ -102,7 +102,8 @@ class UserProvider extends ChangeNotifier{
     _loadCurrentUser();
   }
 
-  void notify(){
+   void notifyChanges(bool isLoading) {
+    this.isLoading = isLoading;
     notifyListeners();
   }
 
@@ -277,18 +278,9 @@ class UserProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  bool checkHasGameById(String gameId) {
-    if (user!.games.isNotEmpty) {
-      try {
-        // Tenta encontrar o jogo. Se encontrar, retorna true.
-        user!.games.firstWhere((game) => game.id == gameId);
-        return true;
-      } on StateError {
-        // Se não encontrar (StateError), retorna false.
-        return false;
-      }
-    }
-    return false; 
+  GameModelDTO getGameById(String gameId) {
+    GameModelDTO game = user!.games.firstWhere((g) => g.id == gameId, orElse: () => GameModelDTO.empty());
+    return game;
   }
 
 }
