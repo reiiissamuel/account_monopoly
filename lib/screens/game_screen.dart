@@ -75,7 +75,7 @@ class GameScreenState extends State<GameScreen> {
                       fontWeight: FontWeight.bold),
                 ),
                 centerTitle: true,
-                leading: gameProvider.isServer ? Center(
+                leading: gameProvider.isHost ? Center(
                   child: IconButton(
                           icon: const Icon(Icons.broadcast_on_personal_rounded,
                               color: Colors.green),
@@ -103,8 +103,8 @@ class GameScreenState extends State<GameScreen> {
                             title: "Quer mesmo sair deste jogo?",
                             textContent: "Você poderá entrar nele novamete\n"
                             "indo até a sessão 'jogos ativos'",
-                            onConfirm: (){// No botão de sair da UI:
-                              Provider.of<GameProvider>(context, listen: false).leaveGame();
+                            onConfirm: () async {// No botão de sair da UI:
+                              await Provider.of<GameProvider>(context, listen: false).leaveGame();
                               Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
                             }
                         );

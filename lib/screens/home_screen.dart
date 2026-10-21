@@ -245,7 +245,7 @@ class HomeScreenState extends State<HomeScreen> {
   void _showEnterCodeDialog(BuildContext context) {
     final controller = TextEditingController();
     if(Provider.of<GameProvider>(context, listen: false).gameModelDTO != null){
-      Provider.of<GameProvider>(context, listen: false).reset();
+      Provider.of<GameProvider>(context, listen: false).cleanGameData();
     }
 
     showDialog(

@@ -8,68 +8,95 @@ import 'dart:developer';
 class GamePeerService {
   final Peer peer;
   late StarHub starHub;
-  
+
   bool isPeerConnected = false;
   String myPeerId;
-  bool isServer = false;
 
-  // Streams públicas para notificar o Provider sem acoplamento
+  /// Disponibilidade do host vista pelo cliente.
+  /// NÃO derivamos de starHub.table: em cliente, o host morto permanece
+  /// na tabela com status `connected`. Rastreamos por evento.
+  bool _hostAvailable = false;
+
   final _dataController = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get onData => _dataController.stream;
 
   final _peerLeftController = StreamController<String>.broadcast();
   Stream<String> get onPeerLeft => _peerLeftController.stream;
 
+  final _newHostController = StreamController<String>.broadcast();
+  Stream<String> get onNewHost => _newHostController.stream;
+
+  final _hostAbruptLoss = StreamController<String>.broadcast();
+  Stream<String> get onHostAbruptLoss => _hostAbruptLoss.stream;
+
+  bool _destroyed = false;
+
   static const hostReceivedMessage = "[HOST] Dados recebidos do StarHub do peer";
   static const clientReceivedMessage = "[CLIENT] Dados recebidos do StarHub do peer";
 
-  GamePeerService({
-    required this.peer,
-    required this.myPeerId,
-  }) {
+  GamePeerService({required this.peer, required this.myPeerId}) {
     starHub = StarHub(peer: peer);
     _initListeners();
   }
 
+  bool get isHost => starHub.isHost;
+
+  /// O que o cliente consulta antes de enviar.
+  bool get isHostAvailable => isHost || _hostAvailable;
+
+  /// Guard único contra callback tardio escrevendo em controller fechado.
+  void _emit<T>(StreamController<T> c, T value) {
+    if (_destroyed || c.isClosed) return;
+    c.add(value);
+  }
+
   void _initListeners() {
-    starHub.onData.listen((incomingData) {
-      final emitterPeerId = incomingData['from'];
-      if(emitterPeerId == myPeerId) return;
-      try {
-        if (isServer) {
-          log("$hostReceivedMessage $emitterPeerId");
-        } else {
-          log("$clientReceivedMessage $emitterPeerId");
-        }
-        
-        // Emite o dado bruto para quem estiver ouvindo a Stream
-        _dataController.add(incomingData);
-      } catch (e) {
-        log("Erro ao processar dados recebidos no StarHub: $e");
-      }
+    // Sinal de queda/CONTUDO abrupta do host, no cliente.
+    starHub.onHostDisconnected.listen((hostId) {
+      _hostAvailable = false;
+      _emit(_hostAbruptLoss, hostId);
     });
 
     starHub.onHostChanged.listen((newHostId) {
       log("Aviso do StarHub - Host atualizado na rede: $newHostId");
-      isServer = (newHostId == myPeerId);
+      _hostAvailable = true;
+      _emit(_newHostController, newHostId);
+    });
+
+    starHub.onPeerConnected.listen((peerId) {
+      if (peerId == starHub.hostPeerId) _hostAvailable = true;
+    });
+
+    starHub.onPeerDisconnected.listen((peerId) {
+      if (peerId == starHub.hostPeerId) _hostAvailable = false;
+    });
+
+    starHub.onData.listen((incomingData) {
+      if (_destroyed) return;
+      final emitterPeerId = incomingData['from'];
+      if (emitterPeerId == myPeerId) return;
+      if (isHost) {
+        log("$hostReceivedMessage $emitterPeerId");
+      } else {
+        log("$clientReceivedMessage $emitterPeerId");
+      }
+      _emit(_dataController, incomingData);
+    });
+
+    starHub.onPeerLeft.listen((entry) {
+      log("Peer desconectado da rede StarHub: ${entry.peerId}");
+      _emit(_peerLeftController, entry.peerId);
     });
 
     starHub.onPeerJoined.listen((entry) {
       log("Novo peer conectado ao StarHub Host: ${entry.peerId}");
     });
-
-    starHub.onPeerLeft.listen((entry) {
-      log("Peer desconectado da rede StarHub: ${entry.peerId}");
-      // Emite o ID do peer que saiu
-      _peerLeftController.add(entry.peerId);
-    });
   }
 
   Future<void> startAsHost() async {
     await starHub.create();
-    log("Criação do StarHub como Host concluída.");
+    log("[HOST] Criação do StarHub como Host concluída.");
     isPeerConnected = true;
-    isServer = true;
   }
 
   Future<void> _joinAsClient(String hostPeerId, Player localPlayer) async {
@@ -78,24 +105,22 @@ class GamePeerService {
       await starHub.join(hostPeerId);
       await hostReady.timeout(const Duration(seconds: 5));
       isPeerConnected = true;
-      log("Conectado com sucesso ao StarHub do Host: $hostPeerId");
+      _hostAvailable = true;
+      log("[CLIENT] Conectado com sucesso ao StarHub do Host: $hostPeerId");
 
-      final joinEvent = EventDTO(
+      send(EventDTO(
         referenceRound: 1,
         type: EventType.joinTable,
         sourcePlayer: localPlayer,
-      );
-      
-      send(joinEvent);
-      log("Evento joinTable disparado pelo cliente para o host.");
+      ));
     } on TimeoutException {
       isPeerConnected = false;
-      log("Timeout ao tentar conexão com o host candidate: $hostPeerId");
+      _hostAvailable = false;
+      log("[CLIENT] Timeout ao tentar conexão com o host candidate: $hostPeerId");
     } catch (e) {
       isPeerConnected = false;
-      log("Erro ao entrar no StarHub do Host: $e");
-    } finally {
-      isServer = false;
+      _hostAvailable = false;
+      log("[CLIENT] Erro ao entrar no StarHub do Host: $e");
     }
   }
 
@@ -103,17 +128,17 @@ class GamePeerService {
     try {
       if (destinationPeerId != null && destinationPeerId.isNotEmpty) {
         await _joinAsClient(destinationPeerId, player);
-        if(isPeerConnected) return;
+        if (isPeerConnected) return;
       }
-      for (var peerId in canditadesPeersId ?? []){
-          if (peerId != destinationPeerId) {
-            await _joinAsClient(peerId, player);
-            if(isPeerConnected) return;
-          }
+      for (var peerId in canditadesPeersId ?? []) {
+        if (peerId != destinationPeerId) {
+          await _joinAsClient(peerId, player);
+          if (isPeerConnected) return;
+        }
       }
-      throw TimeoutException("Não há host disponível.");
+      throw TimeoutException("[CLIENT] Não há host disponível.");
     } catch (e) {
-      log("Erro ao entrar no StarHub: $e");
+      log("[CLIENT]Erro ao entrar no StarHub: $e");
       rethrow;
     }
   }
@@ -123,6 +148,10 @@ class GamePeerService {
       log("Erro ao enviar dados: StarHub não está conectado.");
       return;
     }
+    if (!isHostAvailable) {
+      log("Host indisponível — envio descartado.");
+      return;
+    }
     try {
       starHub.broadcast(event.toMap());
     } catch (e) {
@@ -130,16 +159,64 @@ class GamePeerService {
     }
   }
 
-  void destroy() {
-    _dataController.close();
-    _peerLeftController.close();
+  /// [survivors] = peerIds vivos (SEM o host morto), na MESMA ordem em
+  /// todos os clientes (ordem de entrada na mesa).
+  Future<void> handleAbruptHostLoss(List<String> survivors) async {
+  if (isHost) return;
+  final vivos = survivors.where((id) => id != myPeerId).toList();
+  if (vivos.isEmpty) return;             // fiquei sozinho: nada a eleger
+  if (survivors.first != myPeerId) return; // não sou o líder
+
+  // 1. Registrar conexões de saída em _connections. join() é a única API
+  //    pública que chama _setupConnection (:559).
+  for (final peerId in vivos) {
+    if (starHub.hostPeerId == peerId) continue;
+    final opened = starHub.onPeerConnected.firstWhere((id) => id == peerId);
     try {
-      starHub.close();
-      peer.disconnect();
+      await starHub.join(peerId);
+      await opened.timeout(const Duration(seconds: 5));
     } catch (e) {
-      log("Erro ao destruir o serviço StarHub: $e");
-    } finally {
-      isPeerConnected = false;
+      log("Falha ao reconectar com $peerId: $e");
     }
+  }
+
+  // 2. Só agora assumir: o announce precisa de conexões ABERTAS (:397).
+  await starHub.create();
+}
+
+  /// Sai da rede. A ordem é o que faz funcionar.
+  Future<void> destroy() async {
+    if (_destroyed) return;
+    _destroyed = true;
+
+    // 1. leave(): se sou host, dispara a migração; depois fecha as conexões.
+    //    O guard fica AQUI, e não no topo, pra não vazar os controllers.
+    try {
+      if (isPeerConnected) await starHub.leave();
+    } catch (e) {
+      log("Erro no leave do StarHub: $e");
+    }
+
+    // 2. dispose() — não close(). close() fecha só o emitter e deixa os
+    //    canais abertos; é a origem do "Cannot add new events after calling close".
+    try {
+      starHub.dispose();
+    } catch (e) {
+      log("Erro no dispose do StarHub: $e");
+    }
+
+    // 3. dispose() do peer — não disconnect(). Este fecha os RTCPeerConnection.
+    try {
+      peer.dispose();
+    } catch (e) {
+      log("Erro no dispose do Peer: $e");
+    }
+
+    isPeerConnected = false;
+    _hostAvailable = false;
+
+    await _dataController.close();
+    await _peerLeftController.close();
+    await _newHostController.close();
   }
 }

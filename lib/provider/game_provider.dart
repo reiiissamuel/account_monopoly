@@ -33,13 +33,14 @@ class GameProvider extends ChangeNotifier {
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
   int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
-  bool get isServer => peerService?.isServer ?? false;
+  bool get isHost => peerService?.isHost ?? false;
   
-  void reset(){
+  void cleanGameData(){
     gameModelDTO = GameModelDTO.empty();
     isLoading = false;
     events = [];
     lastEventReceived = null;
+    peerService?.destroy();
   }
 
   void notifyChanges(bool isLoading) {
@@ -78,6 +79,15 @@ class GameProvider extends ChangeNotifier {
         type: EventType.lostConnection, 
         sourcePlayer: gameModelDTO?.othersPlayers[peerId]
       );
+    });
+
+    peerService?.onNewHost.listen((newHostId) {
+      notifyListeners();
+    });
+
+    peerService?.onHostAbruptLoss.listen((hostId) {
+      List<String> survivors = gameModelDTO?.othersPlayers.values.where((player) => player.id != hostId && player.isOnline).map((player) => player.id).toList() ?? [];
+      peerService?.handleAbruptHostLoss(survivors);
     });
   }
 
@@ -164,7 +174,7 @@ class GameProvider extends ChangeNotifier {
         // Se eu sou o Host e recebi o aviso de que um cliente entrou na mesa,
         // eu respondo enviando o estado completo do jogo (serverHandShake) para ele.
         // Envolve o envio em microtask para evitar conflito no Stream Controller da lib de peer_rtc
-        if (isServer && sourceplayer.id != currentPlayer.id) {
+        if (isHost && sourceplayer.id != currentPlayer.id) {
           Future.microtask(() {
             eventComposer(type: EventType.serverHandShake, destinationPlayer: sourceplayer);
           });
@@ -177,9 +187,7 @@ class GameProvider extends ChangeNotifier {
         }
         break;
       case EventType.lostConnection:
-        if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
-          gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = false;
-        }
+        sourceplayer.isOnline = false;
         _updateUserModel();
         break;
       default:
@@ -321,7 +329,6 @@ class GameProvider extends ChangeNotifier {
         case EventType.lostConnection:
           event.sourcePlayer.isOnline = false;
           _updateUserModel();
-          //gameModelDTO!.othersPlayers.remove(currentPlayer.id);
           break;
         default:
           break;
@@ -485,18 +492,17 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  void leaveGame() {
+  Future<void> leaveGame() async {
+    notifyChanges(isLoading);
     try {
-      // 1. Envia o evento de desconexão para a mesa antes de fechar tudo
       if (peerService != null && peerService!.isPeerConnected) {
         eventComposer(type: EventType.lostConnection);
+        await Future.delayed(const Duration(milliseconds: 300)); 
       }
     } catch (e) {
-      log("Erro ao notificar saída do jogo: $e");
+      log("Erro ao enviar aviso de saída: $e");
     } finally {
-      // 2. Destrói o StarHub/Peer e limpa o estado local
-      peerService?.destroy();
-      reset();
+      cleanGameData();
     }
   }
 
