@@ -16,6 +16,8 @@ class GamePeerService {
   /// NÃO derivamos de starHub.table: em cliente, o host morto permanece
   /// na tabela com status `connected`. Rastreamos por evento.
   bool _hostAvailable = false;
+  
+  final Map<String, Completer<void>> _pendingAcks = {};
 
   final _dataController = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get onData => _dataController.stream;
@@ -26,8 +28,8 @@ class GamePeerService {
   final _newHostController = StreamController<String>.broadcast();
   Stream<String> get onNewHost => _newHostController.stream;
 
-  final _hostAbruptLoss = StreamController<String>.broadcast();
-  Stream<String> get onHostAbruptLoss => _hostAbruptLoss.stream;
+  final _hostDeadController = StreamController<String?>.broadcast();
+  Stream<String?> get onHostDead => _hostDeadController.stream;
 
   bool _destroyed = false;
 
@@ -44,6 +46,8 @@ class GamePeerService {
   /// O que o cliente consulta antes de enviar.
   bool get isHostAvailable => isHost || _hostAvailable;
 
+  String? get hostPeerId => starHub.hostPeerId;
+
   /// Guard único contra callback tardio escrevendo em controller fechado.
   void _emit<T>(StreamController<T> c, T value) {
     if (_destroyed || c.isClosed) return;
@@ -54,7 +58,7 @@ class GamePeerService {
     // Sinal de queda/CONTUDO abrupta do host, no cliente.
     starHub.onHostDisconnected.listen((hostId) {
       _hostAvailable = false;
-      _emit(_hostAbruptLoss, hostId);
+      _emit(_hostDeadController, hostId);
     });
 
     starHub.onHostChanged.listen((newHostId) {
@@ -75,6 +79,14 @@ class GamePeerService {
       if (_destroyed) return;
       final emitterPeerId = incomingData['from'];
       if (emitterPeerId == myPeerId) return;
+
+      if(incomingData['data']?['data']?['ackOf'] != null){
+        final eventId = incomingData['data']?['data']?['ackOf'];
+       _pendingAcks.remove(eventId)?.complete();
+       log("Recebido ack para: ${incomingData["data"]["data"]["ackOf"]}");
+       return;
+      }
+
       if (isHost) {
         log("$hostReceivedMessage $emitterPeerId");
       } else {
@@ -108,11 +120,13 @@ class GamePeerService {
       _hostAvailable = true;
       log("[CLIENT] Conectado com sucesso ao StarHub do Host: $hostPeerId");
 
-      send(EventDTO(
+      final EventDTO event = EventDTO(
         referenceRound: 1,
         type: EventType.joinTable,
         sourcePlayer: localPlayer,
-      ));
+      );
+      starHub.broadcast(event.toMap());
+      _sendWithNoCallback(event);
     } on TimeoutException {
       isPeerConnected = false;
       _hostAvailable = false;
@@ -143,15 +157,58 @@ class GamePeerService {
     }
   }
 
-  void send(EventDTO event) {
-    if (!isPeerConnected) {
+  /// [survivors] = peerIds vivos (SEM o host morto), na MESMA ordem em
+  /// todos os clientes (ordem de entrada na mesa).
+  Future<void> handleAbruptHostLoss(List<String> survivors) async {
+    log("Iniciando processo de recuperação após perda abrupta do host. Cadidatos: $survivors");
+    if (isHost) return;
+    final survivorsButMe = survivors.where((id) => id != myPeerId).toList();
+    if (survivorsButMe.isEmpty) return;             // fiquei sozinho: nada a eleger
+    if (survivors.first != myPeerId) return; // não sou o líder
+
+    // 1. Registrar conexões de saída em _connections. join() é a única API
+    //    pública que chama _setupConnection (:559).
+    for (final peerId in survivorsButMe) {
+      if (starHub.hostPeerId == peerId) continue;
+      final opened = starHub.onPeerConnected.firstWhere((id) => id == peerId);
+      try {
+        await starHub.join(peerId);
+        await opened.timeout(const Duration(seconds: 3));
+      } catch (e) {
+        log("Falha ao reconectar com $peerId: $e");
+      }
+    }
+
+    // 2. Só agora assumir: o announce precisa de conexões ABERTAS (:397).
+    await startAsHost();
+  }
+
+  /// Host: confirma direto para o [peerId] que recebeu e processou o evento [eventId].
+  void sendAckToEventEmissor(String peerId, String eventId){
+    if (!isPeerConnected || _destroyed) return;
+    
+    log("[HOST] Enviando ack para $peerId");
+    try{
+      starHub.sendTo(peerId, {'ackOf': eventId});
+    } catch (e) {
+      log("[HOST] Erro ao enviar ack para $peerId: $e");
+    }
+  }
+
+  void send(EventDTO event){
+    if (!isPeerConnected || _destroyed) {
       log("Erro ao enviar dados: StarHub não está conectado.");
       return;
     }
-    if (!isHostAvailable) {
-      log("Host indisponível — envio descartado.");
-      return;
+    if (isHost || event.type == EventType.lostConnection) {
+      _sendWithNoCallback(event);
+    } else {
+      _sendWithCallback(event);
     }
+
+  }
+
+  void _sendWithNoCallback(EventDTO event) {
     try {
       starHub.broadcast(event.toMap());
     } catch (e) {
@@ -159,35 +216,41 @@ class GamePeerService {
     }
   }
 
-  /// [survivors] = peerIds vivos (SEM o host morto), na MESMA ordem em
-  /// todos os clientes (ordem de entrada na mesa).
-  Future<void> handleAbruptHostLoss(List<String> survivors) async {
-  if (isHost) return;
-  final vivos = survivors.where((id) => id != myPeerId).toList();
-  if (vivos.isEmpty) return;             // fiquei sozinho: nada a eleger
-  if (survivors.first != myPeerId) return; // não sou o líder
+  void _sendWithCallback(EventDTO event) {
+    if(hostPeerId == null) return;
+    Future.microtask(() async {
+      for (var i = 0; i < 2; i++){
+        if (_destroyed) return;
+        final c = Completer<void>();
+        _pendingAcks[event.eventId] = c;
 
-  // 1. Registrar conexões de saída em _connections. join() é a única API
-  //    pública que chama _setupConnection (:559).
-  for (final peerId in vivos) {
-    if (starHub.hostPeerId == peerId) continue;
-    final opened = starHub.onPeerConnected.firstWhere((id) => id == peerId);
-    try {
-      await starHub.join(peerId);
-      await opened.timeout(const Duration(seconds: 5));
-    } catch (e) {
-      log("Falha ao reconectar com $peerId: $e");
-    }
+        try {
+          starHub.broadcast(event.toMap());
+        } catch (_){}
+
+        try {
+          await c.future.timeout(const Duration(seconds: 5));
+          _pendingAcks.remove(event.eventId);
+          return;
+        } on TimeoutException {
+          _pendingAcks.remove(event.eventId);
+          log("ack não recebido (${i + 1}/2)");
+        }
+      }
+      if (!_destroyed) _emit(_hostDeadController, hostPeerId);
+    });
   }
-
-  // 2. Só agora assumir: o announce precisa de conexões ABERTAS (:397).
-  await starHub.create();
-}
 
   /// Sai da rede. A ordem é o que faz funcionar.
   Future<void> destroy() async {
     if (_destroyed) return;
     _destroyed = true;
+
+    // acorda quem está esperando ack, completando os completers pendentes
+    for (final c in _pendingAcks.values){
+      if (isPeerConnected) c.complete();
+    }
+    _pendingAcks.clear();
 
     // 1. leave(): se sou host, dispara a migração; depois fecha as conexões.
     //    O guard fica AQUI, e não no topo, pra não vazar os controllers.
@@ -218,5 +281,6 @@ class GamePeerService {
     await _dataController.close();
     await _peerLeftController.close();
     await _newHostController.close();
+    await _hostDeadController.close();
   }
 }

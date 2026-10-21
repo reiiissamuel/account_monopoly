@@ -85,8 +85,10 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
     });
 
-    peerService?.onHostAbruptLoss.listen((hostId) {
-      List<String> survivors = gameModelDTO?.othersPlayers.values.where((player) => player.id != hostId && player.isOnline).map((player) => player.id).toList() ?? [];
+    peerService?.onHostDead.listen((hostId) {
+      log("So pra ver se funfa $hostId");
+      List<String> survivors = gameModelDTO?.othersPlayers.values.where(
+        (player) => player.id != hostId && player.isOnline).map((player) => player.id).toList() ?? [];
       peerService?.handleAbruptHostLoss(survivors);
     });
   }
@@ -96,16 +98,18 @@ class GameProvider extends ChangeNotifier {
   }
 
   void processComingEvent(EventDTO event) {
-    isLoading = true;
-    notifyListeners();
+    notifyChanges(true);
     if(events.isEmpty || event.eventId != lastEventReceived?.eventId){
       lastEventReceived = event;
       events.add(event);
       _eventEntranceManager(event);
     }
 
-    isLoading = false;
-    notifyListeners();
+    if (isHost && event.sourcePlayer.id != currentPlayer.id){
+      peerService!.sendAckToEventEmissor(event.sourcePlayer.id, event.eventId);
+    }
+
+    notifyChanges(false); 
   }
 
   void _eventEntranceManager(EventDTO event) {
@@ -471,6 +475,7 @@ class GameProvider extends ChangeNotifier {
         myPeerId: player.id
       );
       _listenToPeerService(); // Assina as streams antes de conectar
+
       await peerService!.connectToHost(
         player: player,
         destinationPeerId: destinationPeerId,
