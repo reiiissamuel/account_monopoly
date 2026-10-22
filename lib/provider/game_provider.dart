@@ -85,11 +85,13 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
     });
 
-    peerService?.onHostDead.listen((hostId) {
-      log("So pra ver se funfa $hostId");
+    peerService?.onHostDead.listen((hostId) async {
+      notifyChanges(true);
       List<String> survivors = gameModelDTO?.othersPlayers.values.where(
         (player) => player.id != hostId && player.isOnline).map((player) => player.id).toList() ?? [];
-      peerService?.handleAbruptHostLoss(survivors);
+      await peerService?.handleAbruptHostLoss(survivors);
+      
+      notifyChanges(false);
     });
   }
 

@@ -152,7 +152,7 @@ class GamePeerService {
       }
       throw TimeoutException("[CLIENT] Não há host disponível.");
     } catch (e) {
-      log("[CLIENT]Erro ao entrar no StarHub: $e");
+      log("[CLIENT] Erro ao entrar no StarHub: $e");
       rethrow;
     }
   }
@@ -160,7 +160,7 @@ class GamePeerService {
   /// [survivors] = peerIds vivos (SEM o host morto), na MESMA ordem em
   /// todos os clientes (ordem de entrada na mesa).
   Future<void> handleAbruptHostLoss(List<String> survivors) async {
-    log("Iniciando processo de recuperação após perda abrupta do host. Cadidatos: $survivors");
+    log("[CLIENT] Iniciando processo de recuperação após perda abrupta do host. Cadidatos: $survivors");
     if (isHost) return;
     final survivorsButMe = survivors.where((id) => id != myPeerId).toList();
     if (survivorsButMe.isEmpty) return;             // fiquei sozinho: nada a eleger
@@ -179,7 +179,6 @@ class GamePeerService {
       }
     }
 
-    // 2. Só agora assumir: o announce precisa de conexões ABERTAS (:397).
     await startAsHost();
   }
 
