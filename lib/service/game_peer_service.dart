@@ -125,7 +125,6 @@ class GamePeerService {
         type: EventType.joinTable,
         sourcePlayer: localPlayer,
       );
-      starHub.broadcast(event.toMap());
       _sendWithNoCallback(event);
     } on TimeoutException {
       isPeerConnected = false;
