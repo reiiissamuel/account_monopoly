@@ -296,13 +296,16 @@ class HomeScreenState extends State<HomeScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children:
-                                [
-                                  Colors.blue, const Color(ConfigsConstants.defaultPrimaryColorValue),
-                                  Colors.indigo,
-                                  Colors.teal,
-                                  Colors.white,
-                                  Colors.redAccent,
-                                  Colors.grey,
+                                const [
+                                  Color(0xFF5f7887), // Azul acinzentado original
+                                  Color(0xFFB71C1C), // Vermelho Pastel Escuro (ou Color(0xFFC62828))
+                                  Color(0xFF2E7D32), // Verde Pastel Escuro (ou Color(0xFF388E3C))
+                                  Color(0xFFF57F17), // Amarelo/Dourado Pastel Escuro
+                                  Color(0xFF6A1B9A), // Roxo Pastel Escuro (ou Color(0xFF7B1FA2))
+                                  Color(0xFFE65100), // Laranja Pastel Escuro (ou Color(0xFFEF6C00))
+                                  Color(0xFF558B2F), // Outro Verde Pastel Escuro (Tom Oliva)
+                                  Color(0xFF4527A0), // Outro Roxo Pastel Escuro (Tom Índigo/Lavanda profunda)
+                                  Color(0xFF37474F), // Cinza Pastel Escuro (Slate escuro)
                                 ].map((color) {
                                   final bool isSelected =
                                       userProvider.user?.primaryColorValue ==

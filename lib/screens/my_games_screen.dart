@@ -25,6 +25,7 @@ class MyGamesScreen extends StatelessWidget {
         key: _scafoldKey,
         appBar: AppBar(
           backgroundColor: Theme.of(context).primaryColor,
+          foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
           title: const Text("Jogos Ativos", style: TextStyle(
             color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -45,14 +46,14 @@ class MyGamesScreen extends StatelessWidget {
                   itemCount: userProvider.user!.games.length,
                   itemBuilder: (context, index) {
                     return _gameTile(context, userProvider.user!.games[index]);
-                  }) : const Center(
+                  }) : Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32.0),
+                      padding: const EdgeInsets.all(32.0),
                       child: Text(
                         "Você não tem jogos ativos no momento. Crie um novo jogo para começar!", 
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white70, // Cor clara para contraste no fundo preto
+                          color: Theme.of(context).colorScheme.onInverseSurface, // Cor clara para contraste no fundo preto
                           fontSize: 18.0,
                           fontWeight: FontWeight.w500
                         ),
@@ -85,7 +86,7 @@ class MyGamesScreen extends StatelessWidget {
             Text(
               'Id: ${game.id}',
               style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onInverseSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -93,7 +94,7 @@ class MyGamesScreen extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 "Saldo atual: ${StringUtils.currencyFormat(game.player.currentCredit)} R\$",
-                style: const TextStyle(color: Colors.white, fontSize: 20.0),
+                style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 20.0),
               ),
             ),
             Align(
@@ -117,11 +118,11 @@ class MyGamesScreen extends StatelessWidget {
                               const SnackBar(content: Text("Houve um erro interno na tentativa de carregar um jogo"), backgroundColor: Colors.red));
                         }
                       },
-                      child: const Padding(
-                        padding: EdgeInsets.all(2),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
                         child: Icon(
                           Icons.arrow_forward,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onInverseSurface,
                           size: 40.0,
                         ),
                       ),
@@ -140,11 +141,11 @@ class MyGamesScreen extends StatelessWidget {
                           });
                         });
                       },
-                      child: const Padding(
-                        padding: EdgeInsets.all(2),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
                         child: Icon(
                           Icons.delete,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onInverseSurface,
                           size: 40.0,
                         ),
                       ),

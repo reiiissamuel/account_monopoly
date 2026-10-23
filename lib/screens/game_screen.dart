@@ -69,16 +69,16 @@ class GameScreenState extends State<GameScreen> {
                   "Painel ${gameProvider.currentPlayer.username}",
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  style: const TextStyle(
+                  style: TextStyle(
                       letterSpacing: 2,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onInverseSurface,
                       fontWeight: FontWeight.bold),
                 ),
                 centerTitle: true,
                 leading: gameProvider.isHost ? Center(
                   child: IconButton(
-                          icon: const Icon(Icons.broadcast_on_personal_rounded,
-                              color: Colors.green),
+                          icon: Icon(Icons.broadcast_on_personal_rounded,
+                              color: Theme.of(context).colorScheme.onInverseSurface),
                           onPressed: () {
                             _dialogCaller(context, const TableInfoDialog());
                           },
@@ -88,15 +88,15 @@ class GameScreenState extends State<GameScreen> {
                   Center(
                     child: Text(
                       gameProvider.currentRound.toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                          color: Theme.of(context).colorScheme.onInverseSurface),
                     ),
                   ),
                   const SizedBox(width: 8.0),
                   IconButton(
-                    icon: const Icon(Icons.exit_to_app),
+                    icon: Icon(Icons.exit_to_app, color: Theme.of(context).colorScheme.onInverseSurface),
                     onPressed: () {
                       showDialog(context: context, builder:(BuildContext context){
                         return ConfirmActionDialog(
@@ -179,7 +179,7 @@ class GameScreenState extends State<GameScreen> {
                                       StringUtils.currencyFormat(gameProvider.currentPlayer.currentCredit),
                                       maxLines: 1, // Garantindo que não quebre linha
                                       style: TextStyle(
-                                          fontSize: 27.0, // O FittedBox usará este tamanho como máximo
+                                          fontSize: 27.0,
                                           color: _creditSituationColor(gameProvider.currentPlayer.currentCredit, gameProvider.gameModelDTO!.initalGameCredit),
                                           fontWeight: FontWeight.w500),
                                     ),
@@ -211,9 +211,9 @@ class GameScreenState extends State<GameScreen> {
                                       onPressed: (){
                                         Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
                                       },
-                                      child: const Text(
+                                      child: Text(
                                         "Gráficos",
-                                        style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500),
+                                        style: TextStyle(fontSize: 17.0, color: Theme.of(context).colorScheme.onInverseSurface, letterSpacing: 2.0, fontWeight: FontWeight.w500),
                                       ),
                                     ),
                                     ElevatedButton(
@@ -223,9 +223,9 @@ class GameScreenState extends State<GameScreen> {
                                         ),
                                         backgroundColor: Theme.of(context).primaryColor
                                       ),
-                                      child: const Text(
+                                      child: Text(
                                           "Manual de utilidade", textAlign: TextAlign.center,
-                                          style: TextStyle(fontSize: 17.0, color: Colors.white, letterSpacing: 2.0, fontWeight: FontWeight.w500)
+                                          style: TextStyle(fontSize: 17.0, color: Theme.of(context).colorScheme.onInverseSurface, letterSpacing: 2.0, fontWeight: FontWeight.w500)
                                       ),
                                       onPressed: () async {
                                         _dialogCaller(context, const GameScreenTutorialDialog());

@@ -23,14 +23,15 @@ class PropertiesScreen extends StatelessWidget {
         key: _scafoldKey,
         appBar: AppBar(
           backgroundColor: Theme.of(context).primaryColor,
-          title: const Text("Propriedades cadastradas", style: TextStyle(
-              color: Colors.white,
+          title: Text("Propriedades cadastradas", style: TextStyle(
+              color: Theme.of(context).colorScheme.onInverseSurface,
               fontWeight: FontWeight.bold,
               letterSpacing: 2),
               maxLines: 2,
               textAlign: TextAlign.center,
           ),
           centerTitle: true,
+          foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
           actions: [
             const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
           ],
@@ -64,12 +65,12 @@ class PropertiesScreen extends StatelessWidget {
                         shape: const CircleBorder(),
                         padding: const EdgeInsets.all(15),
                         backgroundColor: Theme.of(context).primaryColor,
-                        shadowColor: Theme.of(context).primaryColor,
+                        shadowColor: Colors.black87,
                         elevation: 10,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.add,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onInverseSurface,
                         size: 40.0,
                       ),
                     ),
@@ -113,16 +114,17 @@ class PropertiesScreen extends StatelessWidget {
             Row(
               spacing: 5,
               children: [
-                Icon(property.iconSignature.icon),
+                Icon(property.iconSignature.icon, color: Theme.of(context).colorScheme.onInverseSurface),
                 Text( property.name,
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 21
+                    fontSize: 21,
+                    color: Theme.of(context).colorScheme.onInverseSurface
                   ) ,
                 )
               ],
             ),
-            const Divider(color: Colors.white70),
+            Divider(color: Theme.of(context).colorScheme.onInverseSurface),
             Column(
               spacing: 2,
               mainAxisSize: MainAxisSize.max,
@@ -131,21 +133,21 @@ class PropertiesScreen extends StatelessWidget {
                 Text(
                   // Informações adicionais
                   "Código: ${property.id}",
-                  style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
                 ),
                 Text(
                   // Informações adicionais
                   "Valor: ${StringUtils.currencyFormat(property.basePrice)}",
-                  style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
                 ),
                 Text(
                   // Informações adicionais
                   "Aluguel: ${StringUtils.currencyFormat(property.currentRent)}",
-                  style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
                 )
               ],
             ),
-            const Divider(color: Colors.white70),
+            Divider(color: Theme.of(context).colorScheme.onInverseSurface),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -158,11 +160,11 @@ class PropertiesScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewPropertyScreen(property: property, versionId: versionId)));
                   },
-                  child: const Padding(
-                    padding: EdgeInsets.all(2),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
                     child: Icon(
                       Icons.edit,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onInverseSurface,
                       size: 38.0,
                     ),
                   )

@@ -21,7 +21,7 @@ class TipIconButton extends StatelessWidget {
         child: SizedBox(
           height: height ?? 20.0,
           width: width ?? 20.0,
-          child: const Icon(Icons.question_mark_rounded, color: Colors.white)
+          child: Icon(Icons.question_mark_rounded, color: Theme.of(context).colorScheme.onInverseSurface)
         ),
         onTap: (){
           showDialog(context: context, builder: (BuildContext contexct){

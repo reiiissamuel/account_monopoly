@@ -40,9 +40,10 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
         key: _scafoldKey,
         appBar: AppBar(
           backgroundColor: Theme.of(context).primaryColor,
-          title: const Text("Versões Cadastradas",
+          foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+          title: Text("Versões Cadastradas",
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onInverseSurface,
               fontWeight: FontWeight.bold,
               letterSpacing: 2
             ),
@@ -77,12 +78,12 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                         shape: const CircleBorder(),
                         padding: const EdgeInsets.all(15),
                         backgroundColor: Theme.of(context).primaryColor,
-                        shadowColor: Theme.of(context).primaryColor,
+                        shadowColor: Colors.black87,
                         elevation: 10,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.add,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onInverseSurface,
                         size: 40.0,
                       ),
                     ),
@@ -133,7 +134,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
             Text(
               'Versão: ${summary["version"]}',
               style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onInverseSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -143,7 +144,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                 // Informações adicionais
                 "${summary["size"]} propriedades cadastradas\n"
                 "${summary["stocks"]} Ações | ${summary["reits"]} FIIs",
-                style: const TextStyle(color: Colors.white, fontSize: 18.0),
+                style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18.0),
               ),
             ),
             Align(

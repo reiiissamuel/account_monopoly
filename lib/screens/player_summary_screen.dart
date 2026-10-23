@@ -41,11 +41,13 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
           return Scaffold(
             appBar: AppBar(
               backgroundColor: primaryColor,
-              title: const Text(
+              foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+              title: Center(
+                child: Text(
                 // Você pode querer usar o nome do jogador se ele estiver disponível
                 "Resumo Financeiro",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
+                style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold),
+              ) ),
               iconTheme: const IconThemeData(color: Colors.white),
             ),
 
@@ -59,8 +61,9 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                   // 1. Destaque do Crédito Atual
                   _buildCreditCard(context, player, primaryColor),
                   const SizedBox(height: 20),
+                  Divider(color: Theme.of(context).colorScheme.onInverseSurface),
 
-                  _buildSectionTitle("Ações", primaryColor),
+                  _buildSectionTitle("Ações", Theme.of(context).colorScheme.onInverseSurface),
                   const SizedBox(height: 10),
                   Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -91,10 +94,10 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                         )
                       ]
                   ),
-                  const SizedBox(height: 20),
-
+                  const SizedBox(height: 10),
+                  Divider(color: Theme.of(context).colorScheme.onInverseSurface),
                   // 2. Títulos Financeiros
-                  _buildSectionTitle("Transações e Impostos", primaryColor),
+                  _buildSectionTitle("Transações e Impostos", Theme.of(context).colorScheme.onInverseSurface),
                   const SizedBox(height: 10),
                   // 3. Totais Recebidos e Pagos
                   _buildTransactionRow(
@@ -111,9 +114,10 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                     color: Colors.redAccent,
                   ),
                   const SizedBox(height: 20),
+                  Divider(color: Theme.of(context).colorScheme.onInverseSurface),
 
                   // 4. Seção de Impostos
-                  _buildSectionTitle("Situação Fiscal", primaryColor),
+                  _buildSectionTitle("Situação Fiscal", Theme.of(context).colorScheme.onInverseSurface),
                   const SizedBox(height: 10),
 
                   _buildTaxRow(
@@ -130,7 +134,8 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                     color: Colors.blueAccent,
                   ),
                   const SizedBox(height: 20),
-                  _buildSectionTitle("Empréstimos Ativos", primaryColor),
+                  Divider(color: Theme.of(context).colorScheme.onInverseSurface),
+                  _buildSectionTitle("Empréstimos Ativos", Theme.of(context).colorScheme.onInverseSurface),
                   const SizedBox(height: 10),
                   _buildLoansList(context, player.loans.where((l) => !l.isPaidOff).toList(), gameProvider),
                 ],
@@ -268,24 +273,24 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Valor emprestado:", style: TextStyle(color: Colors.white70)),
-                    Text(StringUtils.currencyFormat(loan.principalBorrowed), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    Text("Valor emprestado:", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface)),
+                    Text(StringUtils.currencyFormat(loan.principalBorrowed), style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.w600)),
                   ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Rodadas restantes:", style: TextStyle(color: Colors.white70)),
-                    Text("${loan.roundsToPayOff}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    Text("Rodadas restantes:", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface)),
+                    Text("${loan.roundsToPayOff}", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.w600)),
                   ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Garantia:", style: TextStyle(color: Colors.white70)),
+                    Text("Garantia:", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface)),
                     Text(
                       isMortgageLoan ? "${loan.collateralAmountShares} ações de ${loan.collateralId!}" : "Bônus de Turno", // Adapte loan.collateralName
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -336,7 +341,7 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text("Pagar ${paymentPercentage.toInt()}% do Empréstimo",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
               textAlign: TextAlign.center
           ),
           backgroundColor: loanColor,

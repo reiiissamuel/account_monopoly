@@ -30,7 +30,8 @@ class MyPortfolioScreen extends StatelessWidget {
           backgroundColor: Colors.black,
           appBar: AppBar(
             backgroundColor: Theme.of(context).primaryColor,
-            title: const Text("Minha Carteira", style: TextStyle(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.bold)),
+            foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+            title: Text("Minha Carteira", style: TextStyle(letterSpacing: 2, color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
             centerTitle: true,
           ),
           body: Column(
@@ -88,7 +89,7 @@ class MyPortfolioScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 13)),
           Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: valueColor)),
         ],
       ),
@@ -115,11 +116,11 @@ class MyPortfolioScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(property.name, style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-              Text("${item.sharesOwned} Ações", style: const TextStyle(color: Colors.white70, fontSize: 18)),
+              Text(property.name, style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
+              Text("${item.sharesOwned} Ações", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18)),
             ],
           ),
-          const Divider(color: Colors.white70),
+          Divider(color: Theme.of(context).colorScheme.onInverseSurface),
 
           // P&L
           Row(
@@ -137,8 +138,8 @@ class MyPortfolioScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Colors.white70),
-              _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Colors.white70),
+              _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Theme.of(context).colorScheme.onInverseSurface),
+              _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Theme.of(context).colorScheme.onInverseSurface),
               _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(property.sharePrice), Colors.yellow),
             ],
           ),
@@ -150,7 +151,7 @@ class MyPortfolioScreen extends StatelessWidget {
             children: [
               _buildInfoColumn(
                   "Última distribuição",
-                  "Rodada ${property.lastDividendRound}", Colors.white70),
+                  "Rodada ${property.lastDividendRound}", Theme.of(context).colorScheme.onInverseSurface),
 
               if(property.checkMajorOwnerById(gameProvider.currentPlayer.id)) ...[
                 const SizedBox(
@@ -180,7 +181,7 @@ class MyPortfolioScreen extends StatelessWidget {
               OutlinedButton.icon(
                 icon: const Icon(Icons.info_outline, color: Colors.white),
                 label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white70)),
+                style: OutlinedButton.styleFrom(side: BorderSide(color: Theme.of(context).colorScheme.onInverseSurface)),
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -226,7 +227,7 @@ class MyPortfolioScreen extends StatelessWidget {
         children: [
           Icon(Icons.pie_chart_outline, size: 80.0, color: Theme.of(context).primaryColor),
           const SizedBox(height: 20),
-          const Text("Sua carteira está vazia!", style: TextStyle(color: Colors.white70, fontSize: 18)),
+          Text("Sua carteira está vazia!", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18)),
           const Text("Compre ações no Mercado para começar a investir.", style: TextStyle(color: Colors.white54, fontSize: 14)),
         ],
       ),
@@ -252,15 +253,15 @@ class MyPortfolioScreen extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Ações disponíveis: ${item.sharesOwned}"),
+              Text("Ações disponíveis: ${item.sharesOwned}", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface)),
               Text("Custo Médio: ${StringUtils.currencyFormat(item.averageCostPerShare)}",
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface)
               ),
               const SizedBox(height: 15),
               TextField(
                 controller: quantityController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Quantidade de Ações", "Ex:10"),
+                decoration: _getInputDecoration("Quantidade de Ações", "Ex:10", context),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly
                 ]
@@ -269,7 +270,7 @@ class MyPortfolioScreen extends StatelessWidget {
               TextField(
                 controller: priceController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Preço por ação", "Ex:100,00"),
+                decoration: _getInputDecoration("Preço por ação", "Ex:100,00", context),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   StringUtils()
@@ -279,7 +280,7 @@ class MyPortfolioScreen extends StatelessWidget {
               TextField(
                 controller: turnController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Duração da oferta (Rodadas)", "5"),
+                decoration: _getInputDecoration("Duração da oferta (Rodadas)", "5", context),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly
                 ]
@@ -288,11 +289,12 @@ class MyPortfolioScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
+              child: Text("Cancelar", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
-              child: Text("Criar Oferta", style: TextStyle(color: Theme.of(context).primaryColor)),
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.onInverseSurface),
+              child: Text("Criar Oferta", style: TextStyle(color: Theme.of(context).colorScheme.outline)),
               onPressed: () {
                 try {
                   final int? quantity = int.tryParse(quantityController.text);
@@ -330,28 +332,28 @@ class MyPortfolioScreen extends StatelessWidget {
     );
   }
 
-  InputDecoration _getInputDecoration(String labelText, String hintText){
+  InputDecoration _getInputDecoration(String labelText, String hintText, BuildContext context){
     return InputDecoration(
         labelText: labelText,
         hintText: hintText,
-        labelStyle: const TextStyle(color: Colors.white54),
+        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
         hoverColor: Colors.white,
-        focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(20.0)),
             borderSide: BorderSide(
-                color: Colors.white, width: 5.0
+                color: Theme.of(context).colorScheme.onInverseSurface, width: 5.0
             )
         ),
-        disabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+        disabledBorder: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(20.0)),
             borderSide: BorderSide(
-                color: Colors.blueGrey, width: 3.0
+                color: Theme.of(context).colorScheme.outlineVariant, width: 3.0
             )
         ),
-        border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+        border: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(20.0)),
             borderSide: BorderSide(
-                color: Colors.blueGrey, width: 3.0
+                color: Theme.of(context).colorScheme.outline, width: 3.0
             )
         )
     );
