@@ -13,5 +13,6 @@ class ConfigsConstants {
   static const String maxBuildingsErrorMsg = "Você não pode passar o limite de construções da propriedade";
   static const int maxBonnusLoans = 1;
   static const String maxBonnusLoansErrorMsg = "O limite de empréstimos simultâneos nessa modalidade foi atingindo";
+  static const int defaultPrimaryColorValue = 0xFF5f7887;
 
 }
