@@ -14,10 +14,10 @@ class NewUserDialog extends StatefulWidget {
 class NewUserDialogState extends State<NewUserDialog> {
   late UserProvider userProvider;
 
-  static const String NAME_HINT_TEXT = "Me diga seu nome.";
-  static const String USERNAME_HINT_TEXT = "Defina um apelido.";
-  static const String VALIDATION_NAME_ERROR_MSG = "Você precisa definir um nome com mais de 1 caractere.";
-  static const String VALIDATION_USERNAME_ERROR_MSG = "Você precisa definir um nome de usuário sem espaço.";
+  static const String nameHIntText = "Me diga seu nome.";
+  static const String userNameHintText = "Defina um apelido.";
+  static const String validationNameErrorMsg = "Você precisa definir um nome com mais de 1 caractere.";
+  static const String validationUsernameErrorMsg = "Você precisa definir um nome de usuário sem espaço.";
 
   final _nameController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -49,7 +49,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    hintText: NAME_HINT_TEXT,
+                    hintText: nameHIntText,
                     enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.white10, width: 3.0),
                         borderRadius: BorderRadius.all(Radius.circular(20))
@@ -65,7 +65,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                   ),
                   keyboardType: TextInputType.text,
                   validator: (text) {
-                    if(text == null || text.isEmpty || text.length < 2) return VALIDATION_NAME_ERROR_MSG;
+                    if(text == null || text.isEmpty || text.length < 2) return validationNameErrorMsg;
                     return null;
                   },
                 ),
@@ -73,7 +73,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                 TextFormField(
                   controller: _usernameController,
                   decoration: const InputDecoration(
-                      hintText: USERNAME_HINT_TEXT,
+                      hintText: userNameHintText,
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.white10, width: 3.0),
                         borderRadius: BorderRadius.all(Radius.circular(20))
@@ -88,7 +88,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                         borderRadius: BorderRadius.all(Radius.circular(20.0))),
                   ),
                   validator: (text) {
-                    if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return VALIDATION_USERNAME_ERROR_MSG;
+                    if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return validationUsernameErrorMsg;
                     try{
                       userProvider.checkUserExists(text);
                     } on UserExistsException catch(e){

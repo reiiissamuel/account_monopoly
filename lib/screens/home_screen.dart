@@ -8,7 +8,6 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/screens/all_properties_versions_screen.dart';
-import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -309,7 +308,7 @@ class HomeScreenState extends State<HomeScreen> {
                                 ].map((color) {
                                   final bool isSelected =
                                       userProvider.user?.primaryColorValue ==
-                                      color.value;
+                                      color.toARGB32();
                                   return GestureDetector(
                                     onTap: () {
                                       userProvider.updatePrimaryColor(color);

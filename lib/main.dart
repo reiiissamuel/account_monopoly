@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:account_monopoly/configuration/init_db.dart';
 import 'dart:async';
-import 'package:get_it/get_it.dart'; // Certifique-se de importar o get_it se necessário
 
 void main() {
   runZonedGuarded(() async {
