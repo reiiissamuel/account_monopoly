@@ -108,7 +108,7 @@ class MyGamesScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         try{
-                          Provider.of<GameProvider>(context, listen: false).getGameById(game);
+                          Provider.of<GameProvider>(context, listen: false).enterGameRequest(game: game);
                           Navigator.of(_scafoldKey.currentState!.context).pop();
                           Navigator.pushReplacement(_scafoldKey.currentState!.context, MaterialPageRoute(builder: (context) => const GameScreen()));
                           //.then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());

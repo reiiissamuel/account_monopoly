@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:developer';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
@@ -9,14 +10,10 @@ import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
+import 'package:account_monopoly/exception/game_not_exists_exception.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/domain/model/player.dart';
-import 'package:account_monopoly/service/client_peer_connection.dart';
 import 'package:account_monopoly/service/game_peer_service.dart';
-import 'package:account_monopoly/service/host_peer_connection_service.dart';
-import 'package:account_monopoly/service/peer_connection_service.dart';
-import 'package:account_monopoly/utils/string_utils.dart';
-import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:peer_rtc/peer_rtc.dart';
@@ -36,12 +33,14 @@ class GameProvider extends ChangeNotifier {
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
   int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
+  bool get isHost => peerService?.isHost ?? false;
   
-  void reset(){
-    gameModelDTO = null;
+  void cleanGameData(){
+    gameModelDTO = GameModelDTO.empty();
     isLoading = false;
     events = [];
     lastEventReceived = null;
+    peerService?.destroy();
   }
 
   void notifyChanges(bool isLoading) {
@@ -55,11 +54,44 @@ class GameProvider extends ChangeNotifier {
       
       final peer = Peer(id: peerId);
       peerService = GamePeerService(
-        gameProvider: this,
         peer: peer,
         myPeerId: peerId
       );
+      
+      // CRUCIAL: Assina as streams para o Host também processar os eventos recebidos
+      _listenToPeerService();
       await peerService!.startAsHost();
+    });
+  }
+
+  // Método auxiliar para escutar os fluxos vindos da rede de forma limpa
+  void _listenToPeerService() {
+    peerService?.onData.listen((incomingData) {
+      try {
+        processComingEvent(EventDTO.fromMap(incomingData['data']));
+      } catch (e) {
+        log("Erro ao processar dados da stream no provider: $e");
+      }
+    });
+
+    peerService?.onPeerLeft.listen((peerId) {
+      eventComposer(
+        type: EventType.lostConnection, 
+        sourcePlayer: gameModelDTO?.othersPlayers[peerId]
+      );
+    });
+
+    peerService?.onNewHost.listen((newHostId) {
+      notifyListeners();
+    });
+
+    peerService?.onHostDead.listen((hostId) async {
+      notifyChanges(true);
+      List<String> survivors = gameModelDTO?.othersPlayers.values.where(
+        (player) => player.id != hostId && player.isOnline).map((player) => player.id).toList() ?? [];
+      await peerService?.handleAbruptHostLoss(survivors);
+      
+      notifyChanges(false);
     });
   }
 
@@ -68,16 +100,18 @@ class GameProvider extends ChangeNotifier {
   }
 
   void processComingEvent(EventDTO event) {
-    isLoading = true;
-    notifyListeners();
+    notifyChanges(true);
     if(events.isEmpty || event.eventId != lastEventReceived?.eventId){
       lastEventReceived = event;
       events.add(event);
       _eventEntranceManager(event);
     }
 
-    isLoading = false;
-    notifyListeners();
+    if (isHost && event.sourcePlayer.id != currentPlayer.id){
+      peerService!.sendAckToEventEmissor(event.sourcePlayer.id, event.eventId);
+    }
+
+    notifyChanges(false); 
   }
 
   void _eventEntranceManager(EventDTO event) {
@@ -109,13 +143,15 @@ class GameProvider extends ChangeNotifier {
         ledger.checkForMajorOwner(sourceplayer, event.property!.id);
         break;
       case EventType.buyFromTrade:
-        if(destinationPlayer!.id == currentPlayer.id){
+        if(destinationPlayer != null &&destinationPlayer.id == currentPlayer.id){
           currentPlayer.receiveCredit(event.tradeOffer!.totalAskingPrice, ledger.incomeTaxRate);
           currentPlayer.roundBalance.shareSalesIn += event.tradeOffer!.totalAskingPrice;
           currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount, event.tradeOffer!.totalAskingPrice);
         } 
         ledger.checkForMajorOwner(sourceplayer, event.tradeOffer!.propertyId);
-        ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
+        if(destinationPlayer != null){
+          ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
+        }
         ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
         break;
       case EventType.mortgageForeclosure:
@@ -136,9 +172,7 @@ class GameProvider extends ChangeNotifier {
         _updateUserModel();
         break;
       case EventType.bankruptcy:
-        if (event.sourcePlayer.isHost) {
-          //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
-        }
+        //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
         break;
       case EventType.iwon:
         gameModelDTO!.winner = sourceplayer;
@@ -148,22 +182,21 @@ class GameProvider extends ChangeNotifier {
         // Se eu sou o Host e recebi o aviso de que um cliente entrou na mesa,
         // eu respondo enviando o estado completo do jogo (serverHandShake) para ele.
         // Envolve o envio em microtask para evitar conflito no Stream Controller da lib de peer_rtc
-        if (currentPlayer.isHost && sourceplayer.id != currentPlayer.id) {
+        if (isHost && sourceplayer.id != currentPlayer.id) {
           Future.microtask(() {
             eventComposer(type: EventType.serverHandShake, destinationPlayer: sourceplayer);
           });
         }
       case EventType.serverHandShake:
         final bool isNewPlayerAtTable = gameModelDTO == null || gameModelDTO!.isEmpty;
-        final bool isExistingPlayerBackAtTable = (!isNewPlayerAtTable && (!currentPlayer.isHost && destinationPlayer?.id == currentPlayer.id));
-        if(isNewPlayerAtTable || isExistingPlayerBackAtTable) {
-          _dealHostHandShakeEvent(event);
+        if((isNewPlayerAtTable || destinationPlayer?.id == currentPlayer.id)) {
+            sourceplayer.isOnline = true;
+            _dealHostHandShakeEvent(event, destinationPlayer!, isNewPlayerAtTable);
         }
         break;
       case EventType.lostConnection:
-        if (gameModelDTO!.othersPlayers.containsKey(sourceplayer.id)) {
-          gameModelDTO!.othersPlayers[sourceplayer.id]!.isOnline = false;
-        }
+        sourceplayer.isOnline = false;
+        _updateUserModel();
         break;
       default:
         break;
@@ -187,7 +220,7 @@ class GameProvider extends ChangeNotifier {
             eventComposer(type: EventType.loanForeclosure, price: loan.totalDue);
           }
           else if(loan.type == LoanType.mortgage){
-            eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId);
+            eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId, quantity: loan.collateralAmountShares);
           }
         }
       }
@@ -278,7 +311,9 @@ class GameProvider extends ChangeNotifier {
         case EventType.buyFromTrade:
           ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);
           ledger.checkForMajorOwner(currentPlayer, event.tradeOffer!.propertyId);
-          ledger.checkForMajorOwner(destinationPlayer!, event.tradeOffer!.propertyId);
+          if(destinationPlayer != null){
+            ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
+          }
           break;
         case EventType.dividendsCalculation:
           if(ledger.lastPropertiesUpdateRound >= currentRound) throw PropertiesAlreadyUpdateException("");
@@ -303,7 +338,7 @@ class GameProvider extends ChangeNotifier {
           break;
         case EventType.lostConnection:
           event.sourcePlayer.isOnline = false;
-          //gameModelDTO!.othersPlayers.remove(currentPlayer.id);
+          _updateUserModel();
           break;
         default:
           break;
@@ -401,15 +436,13 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
       String usermodelname = userModelController.user!.username;
       int usermodelId = userModelController.user!.id!;
-      String generatedGameId = StringUtils.generateUUID(size: 8);
 
       gameModelDTO = game;
       gameModelDTO!.player = Player.newGamePlayer(
-          currentCredit: gameModelDTO!.initalGameCredit,
+          currentCredit: game.initalGameCredit,
           userModelId: usermodelId,
-          gameId: generatedGameId,
-          username: usermodelname,
-          isHost: true
+          gameId: game.id,
+          username: usermodelname
       );
       gameModelDTO!.updateOtherPlayers(gameModelDTO!.player);
       _initHostTunnel(gameModelDTO!.player.id);
@@ -424,112 +457,63 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> getGameById(GameModelDTO gameModelDTO) async {
-    isLoading = true;
-    notifyListeners();
-    
-    this.gameModelDTO = gameModelDTO;
-    
-    // 1. Destrói qualquer conexão anterior existente de forma segura
-    peerService?.destroy();
-
-    final myId = gameModelDTO.player.id;
-    final peer = Peer(id: myId);
-
-    // 2. Aplica o consenso determinístico para descobrir quem é o Host atual
-    final allPlayers = gameModelDTO.othersPlayers.values.toList();
-    if (!allPlayers.any((p) => p.id == myId)) {
-      allPlayers.add(gameModelDTO.player);
-    }
-    
-    // Ordena alfabeticamente pelos IDs para garantir o mesmo resultado em todos os clientes
-    allPlayers.sort((a, b) => a.id.compareTo(b.id));
-    final currentHost = allPlayers.isNotEmpty ? allPlayers.first : gameModelDTO.player;
-
-    bool amIHost = (currentHost.id == myId);
-    gameModelDTO.player.isHost = (currentHost.id == myId);
-
-    // Instancia o novo serviço unificado com StarHub
-    peerService = GamePeerService(
-      gameProvider: this,
-      peer: peer,
-      myPeerId: myId
-    );
-
+  Future<void> enterGameRequest({GameModelDTO? game, String? destinationPeerId}) async {
     try {
-      // 3. Inicializa como Host ou conecta-se como Cliente baseado no consenso
-      if (amIHost) {
-        log("Consenso: Eu sou o Host. Iniciando StarHub...");
-        await peerService!.startAsHost();
-      } else {
-        log("Consenso: Conectando ao Host eleito: ${currentHost.id}");
-        await peerService!.joinAsClient(currentHost.id, gameModelDTO.player);
-      }
-    } on Exception catch(e) {
-      log("Erro ao tentar carregar um jogo existente: $e");
-      rethrow;
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  void enterNewGameByIdRequest({required String destinationPeerId}) async {
-    isLoading = true;
-    notifyListeners();
-
-    String gameId = destinationPeerId.split("-").last;
-    try {
-      if (userModelController.checkHasGameById(gameId)) {
-        throw GameAlreadyInPlayerListException();
-      }
-      String generatedPeerId = GameProvider._generatePlayerId(
-        usermodelname: userModelController.user!.username,
-        usermodelId: userModelController.user!.id,
-        gameId: gameId,
-      );
-      final gameModelDTO = userModelController.user!.games.firstWhere((g) => g.id == gameId, orElse: () => GameModelDTO.empty());
-      final player = gameModelDTO.isEmpty ? Player.ofDefinedId(
-          id: generatedPeerId,
-          username: userModelController.user!.username,
-        ) : gameModelDTO.player;
-
-      Future.microtask(() async {
-        peerService?.destroy();
-        
-        final peer = Peer(id: generatedPeerId);
-        peerService = GamePeerService(
-          gameProvider: this,
-          peer: peer,
-          myPeerId: generatedPeerId
-        );
-        
-        final localPlayer = player;
-
-        await peerService!.joinAsClient(destinationPeerId, localPlayer);
-      });
+      userModelController.notifyChanges(true);
+      final Player player;
       
-    } catch (e) {
+      final resolvedGameId = destinationPeerId?.split("-").last;
+      gameModelDTO = game ?? userModelController.getGameById(resolvedGameId!);
+      
+      if(gameModelDTO!.isEmpty){
+        player = Player.newGamePlayer(
+          userModelId: userModelController.user!.id!,
+          gameId: resolvedGameId!,
+          username: userModelController.user!.username
+        );
+      } else {
+        player = gameModelDTO!.player;
+      }
+      
+      peerService?.destroy();
+      peerService = GamePeerService(
+        peer: Peer(id: player.id),
+        myPeerId: player.id
+      );
+      _listenToPeerService(); // Assina as streams antes de conectar
+
+      await peerService!.connectToHost(
+        player: player,
+        destinationPeerId: destinationPeerId,
+        canditadesPeersId: gameModelDTO!.othersPlayers.keys.toList()
+      );
+
+      notifyChanges(false);
+    } on TimeoutException {
+      if(gameModelDTO != null && !gameModelDTO!.isEmpty){
+        _initHostTunnel(gameModelDTO!.player.id);
+      } else {
+        throw GameNotExistsException();
+      }
+    } catch(e) {
       log("Erro: $e");
       rethrow;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      userModelController.notifyChanges(false);
     }
   }
 
-  void leaveGame() {
+  Future<void> leaveGame() async {
+    notifyChanges(isLoading);
     try {
-      // 1. Envia o evento de desconexão para a mesa antes de fechar tudo
       if (peerService != null && peerService!.isPeerConnected) {
         eventComposer(type: EventType.lostConnection);
+        await Future.delayed(const Duration(milliseconds: 300)); 
       }
     } catch (e) {
-      log("Erro ao notificar saída do jogo: $e");
+      log("Erro ao enviar aviso de saída: $e");
     } finally {
-      // 2. Destrói o StarHub/Peer e limpa o estado local
-      peerService?.destroy();
-      reset();
+      cleanGameData();
     }
   }
 
@@ -546,16 +530,17 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  static String _generatePlayerId({required usermodelname, required usermodelId, required gameId}){
-    return "$usermodelname-$usermodelId-${StringUtils.generateUUID(size: 5)}-$gameId";
-  }
-
-  void _dealHostHandShakeEvent(EventDTO event) {
+  void _dealHostHandShakeEvent(EventDTO event, Player localPlayer, bool isNewPlayerAtTable) {
     
     // Recebe os dados globais do novo host
     gameModelDTO = event.gameData;
+
+    gameModelDTO!.player = localPlayer;
+    if(isNewPlayerAtTable){
+      gameModelDTO!.player.currentCredit = gameModelDTO!.initalGameCredit;
+    }
     
-    // Persiste o estado unificado localmente[cite: 8]
+    // Persiste o estado unificado localmente
     _updateUserModel();
 
     isLoading = false;

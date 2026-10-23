@@ -336,7 +336,6 @@ class NewGameScreenState extends State<NewGameScreen> {
             TextButton(
               onPressed: !_enableConfirmButton ? null : () async {
                 try{
-                  String generatedGameId = StringUtils.generateUUID(size: 8);
                   Map<String, Property> propertiesMap = {};
                   final properties = userProvider.user!.propertiesVersion![_selectedPropertyVersion];
 
@@ -369,7 +368,7 @@ class NewGameScreenState extends State<NewGameScreen> {
 
                   GameModelDTO gameData = GameModelDTO(
                       ledger: ledger,
-                      id: generatedGameId,
+                      id: StringUtils.generateUUID(size: 8),
                       limitPlayer: dropdownValue,
                       initalGameCredit: StringUtils.currencyAsDouble(_initialCreditController.text),
                       chancesEnabled: isChanceSwitchEnabled,

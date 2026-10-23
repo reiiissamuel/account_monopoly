@@ -39,7 +39,7 @@ class LoanDialogState extends State<LoanDialog> {
 
   static const double assetLiquidationFactor = 0.80; // porcentagem do ativo hipotecado para emprestimo
   static const double assetInteresPerTurn = 0.05;  // 5% de juros por roundo
-  static const int bonusFixedTurns = 3;              // 3 roundos fixos para bônus
+  static const int bonusFixedTurns = 3;              // 3 rounds fixos para bônus
   static const double bonusFixedInterest = 0.15;      // 15% de juros fixos para bônus
 
   // --- GETTERS DE VALOR CALCULADO ---
@@ -301,7 +301,7 @@ class LoanDialogState extends State<LoanDialog> {
 
     final Color indicatorColor = _selectedLoanType == LoanType.bankLoan ? Colors.lightBlueAccent : Colors.yellow;
     final String rateText = _selectedLoanType == LoanType.bankLoan
-        ? "15% total (Fixo em $bonusFixedTurns roundos)"
+        ? "15% total (Fixo em $bonusFixedTurns rounds)"
         : "${(assetInteresPerTurn * 100).toInt()}% por roundo";
 
     return Container(
@@ -433,11 +433,11 @@ class LoanDialogState extends State<LoanDialog> {
 
     if (loanAmount > 0) {
       if (_selectedLoanType == LoanType.bankLoan) {
-        // BÔNUS: Taxa e roundos fixos
+        // BÔNUS: Taxa e rounds fixos
         final double totalInterest = loanAmount * bonusFixedInterest;
         totalToPay = loanAmount + totalInterest;
       } else if (_selectedPropertyCollateral != null) {
-        // ATIVO: Taxa por roundo * número de roundos
+        // ATIVO: Taxa por roundo * número de rounds
         final double totalInterestRate = assetInteresPerTurn * _roundValueSelected;
         final double interestValue = loanAmount * totalInterestRate;
         totalToPay = loanAmount + interestValue;

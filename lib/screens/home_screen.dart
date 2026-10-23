@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
 import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
-import 'package:account_monopoly/exception/game_already_in_player_list_exception.dart';
+import 'package:account_monopoly/exception/game_not_exists_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
@@ -28,9 +29,6 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<UserProvider>(
         builder: (context, userProvider, child){
-          if(userProvider.isLoading){
-            return CircularProgressIndicator(color: Theme.of(context).primaryColor);
-          }
           return PopScope(
               canPop: false,
               child: Scaffold(
@@ -215,9 +213,18 @@ class HomeScreenState extends State<HomeScreen> {
                                         }
                                         Navigator.push(context, MaterialPageRoute(builder: (context) => AllPropertiesVesionsScreen()));
                                       },
-                                    ))
+                                    )),
                               ],
-                            )))
+                            ))),
+                    if (userProvider.isLoading)
+                      Container(
+                        color: Colors.black54,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ));
@@ -238,7 +245,7 @@ class HomeScreenState extends State<HomeScreen> {
   void _showEnterCodeDialog(BuildContext context) {
     final controller = TextEditingController();
     if(Provider.of<GameProvider>(context, listen: false).gameModelDTO != null){
-      Provider.of<GameProvider>(context, listen: false).reset();
+      Provider.of<GameProvider>(context, listen: false).cleanGameData();
     }
 
     showDialog(
@@ -282,19 +289,26 @@ class HomeScreenState extends State<HomeScreen> {
               ),
               TextButton(
                 child: const Text("Prosseguir", style: TextStyle(fontSize: 17.0, color: Colors.white)),
-                onPressed: () {
-                  try{
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  navigator.pop(); 
+
+                  try {
                     var gameProvider = Provider.of<GameProvider>(context, listen: false);
                     gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
-                    gameProvider.enterNewGameByIdRequest(destinationPeerId: controller.text);
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const GameScreen()));
-                  } on GameAlreadyInPlayerListException catch(g){
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    await gameProvider.enterGameRequest(destinationPeerId: controller.text);
+                    navigator.pushReplacement(MaterialPageRoute(builder: (context) => const GameScreen()));
+                    
+                  } on GameNotExistsException catch (g) {
+                    scaffoldMessenger.showSnackBar(
                         SnackBar(content: Text(g.toString()), backgroundColor: Colors.red));
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyGamesScreen()));
-                  } on Exception catch(e){
+                  } on TimeoutException catch(e) {
+                    scaffoldMessenger.showSnackBar(
+                        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                  } catch (e) {
                     log(e.toString());
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessenger.showSnackBar(
                         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
                   }
                 },
