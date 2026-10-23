@@ -143,13 +143,15 @@ class GameProvider extends ChangeNotifier {
         ledger.checkForMajorOwner(sourceplayer, event.property!.id);
         break;
       case EventType.buyFromTrade:
-        if(destinationPlayer!.id == currentPlayer.id){
+        if(destinationPlayer != null &&destinationPlayer.id == currentPlayer.id){
           currentPlayer.receiveCredit(event.tradeOffer!.totalAskingPrice, ledger.incomeTaxRate);
           currentPlayer.roundBalance.shareSalesIn += event.tradeOffer!.totalAskingPrice;
           currentPlayer.downgradePortfolio(event.tradeOffer!.propertyId, event.tradeOffer!.sharesAmount, event.tradeOffer!.totalAskingPrice);
         } 
         ledger.checkForMajorOwner(sourceplayer, event.tradeOffer!.propertyId);
-        ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
+        if(destinationPlayer != null){
+          ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
+        }
         ledger.removeTradeOffersByKey(event.tradeOffer!.offerId);
         break;
       case EventType.mortgageForeclosure:
@@ -218,7 +220,7 @@ class GameProvider extends ChangeNotifier {
             eventComposer(type: EventType.loanForeclosure, price: loan.totalDue);
           }
           else if(loan.type == LoanType.mortgage){
-            eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId);
+            eventComposer(type: EventType.mortgageForeclosure, propertyId: loan.collateralId, quantity: loan.collateralAmountShares);
           }
         }
       }
@@ -309,7 +311,9 @@ class GameProvider extends ChangeNotifier {
         case EventType.buyFromTrade:
           ledger.buyFromTrade(currentPlayer, tradeOffer!, destinationPlayer);
           ledger.checkForMajorOwner(currentPlayer, event.tradeOffer!.propertyId);
-          ledger.checkForMajorOwner(destinationPlayer!, event.tradeOffer!.propertyId);
+          if(destinationPlayer != null){
+            ledger.checkForMajorOwner(destinationPlayer, event.tradeOffer!.propertyId);
+          }
           break;
         case EventType.dividendsCalculation:
           if(ledger.lastPropertiesUpdateRound >= currentRound) throw PropertiesAlreadyUpdateException("");
