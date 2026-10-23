@@ -157,7 +157,8 @@ class Ledger {
   }
 
   void setTradeOffer(Player player, TradeOffer offer) {
-    final isAbleToTrade = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount);
+    int alreadyOffered = tradeOffers.values.where((o) => o.propertyId == offer.propertyId && o.sellerPlayerId == player.id).fold(0, (sum, o) => sum + o.sharesAmount);
+    final isAbleToTrade = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount + alreadyOffered);
     if (isAbleToTrade) {
       tradeOffers[offer.offerId] = offer;
     } else {
