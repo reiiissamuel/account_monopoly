@@ -44,9 +44,8 @@ class MyGamesScreen extends StatelessWidget {
               return userProvider.user!.games.isNotEmpty ? ListView.builder(
                   padding: const EdgeInsets.all(10.0),
                   itemCount: userProvider.user!.games.length,
-                  reverse: true,
                   itemBuilder: (context, index) {
-                    return _gameTile(context, userProvider.user!.games[index]);
+                    return _gameTile(context, userProvider.user!.games.reversed.toList()[index]);
                   }) : Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),

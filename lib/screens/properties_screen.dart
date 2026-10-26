@@ -82,9 +82,8 @@ class PropertiesScreen extends StatelessWidget {
                   child:  ListView.builder(
                           padding: const EdgeInsets.all(10.0),
                           itemCount: properties.length,
-                          reverse: true,
                           itemBuilder: (context, index) {
-                            return _propertyTile(context, properties[index]);
+                            return _propertyTile(context, properties.reversed.toList()[index]);
                           }),
                 ),
               ],
