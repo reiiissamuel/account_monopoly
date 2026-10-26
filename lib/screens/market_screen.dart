@@ -229,8 +229,8 @@ class _MarketScreenState extends State<MarketScreen> {
                   color: Theme.of(context).colorScheme.onInverseSurface,
                   fontWeight: FontWeight.bold,
                   fontSize: property.name.length > 20 ? 15 : 20,
-                ),
-              ),
+                )
+              )
             ],
           ),
 
