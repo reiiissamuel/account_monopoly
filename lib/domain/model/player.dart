@@ -142,6 +142,7 @@ void receiveCredit(double amount, double incomeTaxRate) {
   if (amount > 0) {
     currentCredit += amount;
     incomeTax += amount * incomeTaxRate;
+    receivedFrom += amount - (amount * incomeTaxRate);
   }
 }
 
@@ -149,6 +150,8 @@ void receiveCredit(double amount, double incomeTaxRate) {
     _checkIfEnoughCredit(amount);
     if (amount > 0) {
       currentCredit -= amount;
+      payedTo += amount;
+
     }
   }
 
