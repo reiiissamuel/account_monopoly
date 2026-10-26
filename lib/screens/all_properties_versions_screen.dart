@@ -102,6 +102,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                       : ListView.builder(
                           padding: const EdgeInsets.all(10.0),
                           itemCount: summary.length,
+                          reverse: true,
                           itemBuilder: (context, index) {
                             return _gameTile(context, summary[index]);
                           }),
