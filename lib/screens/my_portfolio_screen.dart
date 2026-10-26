@@ -116,7 +116,7 @@ class MyPortfolioScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(property.name, style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
+              Text("${property.name} (${property.id})" , style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
               Text("${item.sharesOwned} Ações", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18)),
             ],
           ),
