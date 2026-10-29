@@ -157,7 +157,8 @@ class Ledger {
   }
 
   void setTradeOffer(Player player, TradeOffer offer) {
-    final isAbleToTrade = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount);
+    int alreadyOffered = tradeOffers.values.where((o) => o.propertyId == offer.propertyId && o.sellerPlayerId == player.id).fold(0, (sum, o) => sum + o.sharesAmount);
+    final isAbleToTrade = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount + alreadyOffered);
     if (isAbleToTrade) {
       tradeOffers[offer.offerId] = offer;
     } else {
@@ -361,14 +362,14 @@ class Ledger {
   }
 
   void _handleLoanLate(Player player, Loan loan, List<Loan> foreclosuredLoans) {
-    // Esta lógica foi simplificada para ser executada em um ponto específico
 
-    if (loan.roundsToPayOff <= -3) {
+    if (loan.roundsToPayOff <= -2) {
       if (player.currentCredit >= loan.totalDue) {
         player.payDebit(loan.totalDue);
         player.roundBalance.otherOut += loan.totalDue;
         badCreditList.remove(player.id);
         foreclosuredLoans.add(loan);
+        loan.applyPayment(loan.totalDue);
         print('✅ ${player.username} teve o empréstimo ${loan.id} pago forçadamente.');
       } else {
         player.youBankrupt = true;

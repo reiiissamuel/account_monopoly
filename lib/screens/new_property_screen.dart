@@ -18,12 +18,12 @@ class NewPropertyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(versionId == null ? 'Cadastrar Nova Propriedade' : 'Atualizar Propriedade', style: const TextStyle(fontWeight: FontWeight.bold),
+        title: Text('Editor de Propriedade', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
           maxLines: 2,
-          textAlign: TextAlign.center,
+          textAlign: TextAlign.center
         ),
         backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
         actions: [
           const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
         ]
@@ -74,7 +74,6 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
     Colors.yellow,
     Colors.teal,
     Colors.pink,
-    Colors.black,
     Colors.white,
     Colors.brown,
     Colors.indigo,
@@ -85,7 +84,8 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
     Colors.deepPurpleAccent,
     Colors.cyanAccent,
     Colors.lime,
-    Colors.blueGrey
+    Colors.blueGrey,
+    Colors.black
   ];
 
   final List<IconData> availableIconsData = [
@@ -161,9 +161,9 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Assinatura de Cor do tabuleiro:',
-          style: TextStyle(color: Colors.white70, fontSize: 16),
+        Text(
+          'Selecione a cor da propriedade no tabuleiro:',
+          style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 16),
         ),
         const SizedBox(height: 8),
         SizedBox(
@@ -187,8 +187,8 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
                     color: color,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _colorSignature == color ? Colors.white : Colors.transparent,
-                      width: 3,
+                     color: _colorSignature == color ? Colors.white : Theme.of(context).colorScheme.outline,
+                      width: 2,
                     ),
                   ),
                 ),

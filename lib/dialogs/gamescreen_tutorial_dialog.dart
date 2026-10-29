@@ -93,11 +93,6 @@ class GameScreenTutorialDialog extends StatelessWidget {
         'description': 'Esta opção serve para enviar pagamentos ao banco provenientes de cartas evento(sorte ou revés).',
       },
       {
-        'iconPath': 'icons/paybank.png',
-        'title': 'Pagar ao banco',
-        'description': 'Esta opção serve para enviar pagamentos ao banco provenientes de cartas evento(sorte ou revés).',
-      },
-      {
         'iconPath': 'icons/bonus.png',
         'title': 'Fechar rodada',
         'description': 'Use essa opção apenas quando passar pela casa "Início" no tabuleiro. Você receberá o bonus da rodada e qualquer dividendo retido pago as suas ações de propriedades',

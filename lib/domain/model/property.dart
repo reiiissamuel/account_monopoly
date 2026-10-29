@@ -50,9 +50,9 @@ class Property {
   }
 
   void _setHistoricalData(List<double> rents, List<double> dividends, List<double> sharesPrice){
-    this.historicalSharesPrices = sharesPrice;
-    this.historicalRents = rents;
-    this.historicalDividends = dividends;
+    historicalSharesPrices = sharesPrice;
+    historicalRents = rents;
+    historicalDividends = dividends;
   }
 
   double get sharePrice => currentPrice / totalShares;

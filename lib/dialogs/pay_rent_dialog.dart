@@ -75,7 +75,7 @@ class _PayRentDialogState extends State<PayRentDialog> {
                 const Divider(color: Colors.white70),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<Property>(
-                  value: _selectedProperty,
+                  initialValue: _selectedProperty,
                   decoration: InputDecoration(
                     labelText: "Propriedade",
                     labelStyle: const TextStyle(

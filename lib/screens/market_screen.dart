@@ -48,11 +48,12 @@ class _MarketScreenState extends State<MarketScreen> {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Theme.of(context).primaryColor,
-            title: const Text(
+            foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+            title: Text(
               "Mercado de Ações",
               style: TextStyle(
                 letterSpacing: 2,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onInverseSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -88,30 +89,30 @@ class _MarketScreenState extends State<MarketScreen> {
                                   _searchText = text;
                                 });
                               },
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: "Pesquisar nome",
                                 hintText: "Av. Ipiranga",
-                                labelStyle: TextStyle(color: Colors.white54),
-                                hoverColor: Colors.white,
+                                labelStyle: const TextStyle(color: Colors.white54),
+                                hoverColor: Theme.of(context).colorScheme.onInverseSurface,
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(
+                                  borderRadius: const BorderRadius.all(
                                     Radius.circular(20.0),
                                   ),
                                   borderSide: BorderSide(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onInverseSurface,
                                     width: 5.0,
                                   ),
                                 ),
                                 disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(
+                                  borderRadius: const BorderRadius.all(
                                     Radius.circular(20.0),
                                   ),
                                   borderSide: BorderSide(
-                                    color: Colors.blueGrey,
+                                    color: Theme.of(context).colorScheme.onInverseSurface,
                                     width: 3.0,
                                   ),
                                 ),
-                                border: OutlineInputBorder(
+                                border: const OutlineInputBorder(
                                   borderRadius: BorderRadius.all(
                                     Radius.circular(20.0),
                                   ),
@@ -159,7 +160,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                 style: Theme.of(scaffoldContext)
                                     .textTheme
                                     .titleLarge
-                                    ?.copyWith(color: Colors.white70),
+                                    ?.copyWith(color: Theme.of(context).colorScheme.onInverseSurface),
                               ),
                             ],
                           ),
@@ -201,9 +202,9 @@ class _MarketScreenState extends State<MarketScreen> {
 
     // Cor do texto de origem (para destaque)
     final Color sourceColor = switch (offer.source) {
-      OfferSource.fundIPO => Colors.black,
-      OfferSource.bankForeclosed => Colors.blueGrey,
-      OfferSource.playerMarket => Colors.pinkAccent,
+      OfferSource.fundIPO => Colors.white,
+      OfferSource.bankForeclosed => Colors.black,
+      OfferSource.playerMarket => Colors.indigo,
     };
 
     return Container(
@@ -225,11 +226,11 @@ class _MarketScreenState extends State<MarketScreen> {
               Text(
                 '${property.name} (${offer.propertyId})',
                 style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onInverseSurface,
                   fontWeight: FontWeight.bold,
                   fontSize: property.name.length > 20 ? 15 : 20,
-                ),
-              ),
+                )
+              )
             ],
           ),
 
@@ -242,7 +243,7 @@ class _MarketScreenState extends State<MarketScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const Divider(color: Colors.white70),
+          Divider(color: Theme.of(context).colorScheme.onInverseSurface),
 
           // Preço e Disponibilidade
           Row(
@@ -280,11 +281,11 @@ class _MarketScreenState extends State<MarketScreen> {
                 askingPrice,
                 Colors.black,
               ),
-              _buildInfoColumn(context, "Disponível", available, Colors.white),
+              _buildInfoColumn(context, "Disponível", available, Theme.of(context).colorScheme.onInverseSurface),
             ],
           ),
           // Linha de Ação (Botão Comprar)
-          const Divider(color: Colors.white70),
+          Divider(color: Theme.of(context).colorScheme.onInverseSurface),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             spacing: 5,
@@ -292,12 +293,12 @@ class _MarketScreenState extends State<MarketScreen> {
               // BOTÃO DE DETALHES
               OutlinedButton.icon(
                 icon: const Icon(Icons.info_outline, color: Colors.white),
-                label: const Text(
+                label: Text(
                   "Detalhes",
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white70),
+                  side: BorderSide(color: Theme.of(context).colorScheme.outline),
                 ),
                 onPressed: () {
                   // AÇÃO: Navegar para a tela de detalhes da propriedade

@@ -7,6 +7,7 @@ import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/repository/user_repository.dart';
 import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -18,7 +19,10 @@ class UserModelDTO{
   final List<GameModelDTO> games;
   Map<String, List<Property>>? propertiesVersion;
 
-  UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged, required this.games, this.propertiesVersion});
+  int primaryColorValue;
+
+  UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged,
+   required this.games, this.propertiesVersion, this.primaryColorValue = ConfigsConstants.defaultPrimaryColorValue});
 
 // Método de SERIALIZAÇÃO (toDoMap) - NOVO E CORRIGIDO
   Map<String, dynamic> toMap() {
@@ -37,6 +41,7 @@ class UserModelDTO{
           propertyList.map((property) => property.toMap()).toList(),
         ),
       ),
+      'primaryColorValue': primaryColorValue
     };
   }
 
@@ -76,8 +81,9 @@ class UserModelDTO{
                 .map((p) => Property.fromMap(p as Map<String, dynamic>))
                 .toList(),
           );
-        },
+        }
       ),
+      primaryColorValue: map['primaryColorValue'] as int? ?? ConfigsConstants.defaultPrimaryColorValue,
     );
   }
 
@@ -91,6 +97,7 @@ class UserModelDTO{
     );
   }
 }
+
 class UserProvider extends ChangeNotifier{
   List<UserModelDTO> allUsers = [];
   UserModelDTO? user;
@@ -193,10 +200,6 @@ class UserProvider extends ChangeNotifier{
     }
   }
 
-  /*void recoverPass(String email){
-
-  }*/
-
   bool isLoggedIn(){
     return user != null;
   }
@@ -280,6 +283,23 @@ class UserProvider extends ChangeNotifier{
 
   GameModelDTO getGameById(String gameId) {
     return user!.games.firstWhere((g) => g.id == gameId, orElse: () => GameModelDTO.empty());
+  }
+
+  // Getter facilitador para recuperar a cor ativa em qualquer tela
+  Color get primaryColor {
+    if (user == null) return const Color(ConfigsConstants.defaultPrimaryColorValue); // Cor padrão se não houver usuário logado
+    return Color(user!.primaryColorValue);
+  }
+
+  Future<void> updatePrimaryColor(Color newColor) async {
+    if (user == null) return;
+    
+    // Atualiza o valor no modelo
+    user!.primaryColorValue = newColor.value;
+    notifyListeners(); // Notifica o app inteiro para redesenhar com a nova cor
+
+    // Persiste a alteração no backend/banco de dados
+    await updateUser(); 
   }
 
 }

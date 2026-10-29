@@ -31,7 +31,8 @@ class BeneficiariesScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Theme.of(context).primaryColor,
-            title: const Text("Beneficiários", style: TextStyle(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.bold)),
+            foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+            title: Text("Beneficiários", style: TextStyle(letterSpacing: 2, color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
             centerTitle: true,
           ),
           backgroundColor: Colors.black,

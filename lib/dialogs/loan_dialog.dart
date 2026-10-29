@@ -114,7 +114,7 @@ class LoanDialogState extends State<LoanDialog> {
               const SizedBox(height: 15),
 
               // 3. SELEÇÃO DE PARCELAS (APENAS SE FOR GARANTIA DE ATIVO)
-              if (_selectedLoanType != LoanType.bankLoan && _selectedPropertyCollateral != null)
+              if (_selectedLoanType != LoanType.bankLoan)
                 _buildTurnsDropdown(context, gameProvider),
 
               const SizedBox(height: 15),
@@ -122,10 +122,9 @@ class LoanDialogState extends State<LoanDialog> {
               // 4. INFORMAÇÕES DO EMPRÉSTIMO (Juros e Detalhes da Garantia)
               _buildRateInfoCard(context),
 
-              if (_selectedPropertyCollateral != null && _selectedPropertyCollateral != null) ...[
-                const SizedBox(height: 10),
-                _buildCollateralInfoCard(context, _selectedPropertyCollateral!),
-              ],
+              const SizedBox(height: 10),
+              _buildCollateralInfoCard(context, _selectedPropertyCollateral),
+
 
               const SizedBox(height: 20),
 
@@ -436,7 +435,7 @@ class LoanDialogState extends State<LoanDialog> {
         // BÔNUS: Taxa e rounds fixos
         final double totalInterest = loanAmount * bonusFixedInterest;
         totalToPay = loanAmount + totalInterest;
-      } else if (_selectedPropertyCollateral != null) {
+      } else if (_selectedLoanType == LoanType.mortgage) {
         // ATIVO: Taxa por roundo * número de rounds
         final double totalInterestRate = assetInteresPerTurn * _roundValueSelected;
         final double interestValue = loanAmount * totalInterestRate;
