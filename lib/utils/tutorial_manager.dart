@@ -18,7 +18,7 @@ class TutorialManager {
   static final GlobalKey analysisButtonKey = GlobalKey();
   static final GlobalKey instructionsTableKey = GlobalKey();
   static final GlobalKey goMarkeyButtonKey = GlobalKey();
-  static final GlobalKey foMyPortfolioButtonKey = GlobalKey();
+  static final GlobalKey goMyPortfolioButtonKey = GlobalKey();
   static final GlobalKey goPlayersButtonKey = GlobalKey();
   static final GlobalKey goPayRentButtonKey = GlobalKey();
   static final GlobalKey goMyFinancialHealthButtonKey = GlobalKey();
@@ -61,7 +61,7 @@ class TutorialManager {
       TutorialItemType.analysisButton.tutorialItemKey,
       TutorialItemType.instructionsTable.tutorialItemKey,
       TutorialItemType.goMarButton.tutorialItemKey,
-      TutorialItemType.foMyPortfolioButton.tutorialItemKey,
+      TutorialItemType.goMyPortfolioButton.tutorialItemKey,
       TutorialItemType.goPlayersButton.tutorialItemKey,
       TutorialItemType.goPayRentButton.tutorialItemKey,
       TutorialItemType.goMyFinancialHealthButton.tutorialItemKey,

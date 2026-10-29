@@ -12,7 +12,7 @@ enum TutorialItemType {
     analysisButton(title:'Gráficos', description: 'Clique neste botão para ser levado à telada com análises e gráficos das rodadas.'),
     instructionsTable(title:'Manual de Utilidade', description: 'Clicando aqui você acessará um guia rápido de instuções poderá rever este tutorial.'),
     goMarButton(title:'Mercado de Propriedades', description: 'Clique para comprar propriedades (ações)'),
-    foMyPortfolioButton(title:'Meu Portfólio', description: 'Clique ver todas as propriedades(ações) que você possiu, para vender, construir casas...'),
+    goMyPortfolioButton(title:'Meu Portfólio', description: 'Clique ver todas as propriedades(ações) que você possiu, para vender, construir casas...'),
     goPlayersButton(title:'Tela de Jogadores', description: 'Clique aqui sempre que precisar transferir dinheiro para outros jogadores.'),
     goPayRentButton(title:'Tela de Pagamento de Aluguel', description: 'Cliqui aqui sempre que precisar pagar aluguel em alguma propriedade.'),
     goMyFinancialHealthButton(title:'Perfil Financeiro', description: 'Clique aqui para acessar e acompanhar seu resumos financeiros, emprestimos em aberto, total devido de IR...'),
@@ -42,8 +42,8 @@ enum TutorialItemType {
           return TutorialManager.instructionsTableKey;
         case TutorialItemType.goMarButton:
           return TutorialManager.goMarkeyButtonKey;
-        case TutorialItemType.foMyPortfolioButton:
-          return TutorialManager.foMyPortfolioButtonKey;
+        case TutorialItemType.goMyPortfolioButton:
+          return TutorialManager.goMyPortfolioButtonKey;
         case TutorialItemType.goPlayersButton:
           return TutorialManager.goPlayersButtonKey;
         case TutorialItemType.goPayRentButton:
