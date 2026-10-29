@@ -19,4 +19,5 @@ class TipsResourse{
   static const String PROPERTIES = "Cadastre as propriedades do seu tabuleiro para usá-las no app. Você pode cadastrar diferentes versões de banco imobiliário.";
 
   static const String MARKET_SCREEN = "Nesta tela você poderá comprar ações das propriedades cadastradas no seu jogo. Lembre-se, seu lucro em cada propriedade será definido pela quantidade de cotas que você possui.";
+  static const String MY_PORTFOLIO_SCREEN = "Nesta tela você poderá visualizar todos os ativos que possui no jogo, incluindo detalhes sobre investimentos e ganhos.";
 }

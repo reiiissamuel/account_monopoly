@@ -2,65 +2,127 @@
 
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
+import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:account_monopoly/domain/model/shares_holder_summary.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/utils/tutorial_manager.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 
-class MyPortfolioScreen extends StatelessWidget {
+class MyPortfolioScreen extends StatefulWidget {
   const MyPortfolioScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, child) {
-        final currentPlayer = gameProvider.currentPlayer;
-        List<MapEntry<String, ShareHolder>> currentPortfolio = currentPlayer.portfolio.entries.where((entry) => entry.value.sharesOwned > 0).toList();
+  State<MyPortfolioScreen> createState() => _MyPortfolioScreenState();
+}
 
-        return Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).primaryColor,
-            foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
-            title: Text("Minha Carteira", style: TextStyle(letterSpacing: 2, color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
-            centerTitle: true,
-          ),
-          body: Column(
-            children: [
-              // RESUMO SUPERIOR
-              _buildSummaryHeader(context, gameProvider.ledger.getSharesHolderSummary(currentPlayer.portfolio)),
-              
-              const SizedBox(height: 10),
-              
-              // LISTA DE ATIVOS
-              Expanded(
-                child: currentPortfolio.isEmpty
-                    ? _buildEmptyPortfolio(context)
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(10.0),
-                        itemCount: currentPortfolio.length,
-                        itemBuilder: (context, index) {
-                          return _portfolioTile(
-                              context,
-                              currentPortfolio[index].value,
-                              gameProvider);
-                        }),
-              ),
-            ],
-          ),
-        );
-      },
+class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
+  final _myPortfolioScreenTutorialManager = TutorialManager.myPortfolio();
+  List<MapEntry<String, ShareHolder>> currentPortfolio = [];
+
+  ShareHolder _buildTutorialFakeProperty() {
+    
+    Property firstProperty = Provider.of<GameProvider>(context, listen: false).ledger.properties.entries.first.value;
+    return ShareHolder(
+      playerId: "player", propertyId: firstProperty.id, sharesOwned: 100, investmentValue: 1000, saleCapitalGain: 100
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return ShowCaseWidget(
+      onFinish: () {
+        setState(() => currentPortfolio.removeWhere((entry) => entry.key == "FAKE_PROPERTY"));
+      },
+      builder: (showCaseContext){
+      return Consumer<GameProvider>(
+        builder: (context, gameProvider, child) {
+
+          currentPortfolio = gameProvider.currentPlayer.portfolio.entries
+          .where((entry) => entry.value.sharesOwned > 0)
+          .toList();
+
+          if (!gameProvider.isMyPortfolioScreenOnBoarded) {
+            if (currentPortfolio.isEmpty) {
+              currentPortfolio.add(MapEntry("FAKE_PROPERTY", _buildTutorialFakeProperty()));
+            }
+            gameProvider.userModelController
+                .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _myPortfolioScreenTutorialManager.startTutorial(showCaseContext);
+            });
+          }
+
+          return Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+              title: Text("Minha Carteira", style: TextStyle(letterSpacing: 2, color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+              actions: [
+                TipIconButton(
+                  title: "Meu portfólio",
+                  tip: TipsResourse.MY_PORTFOLIO_SCREEN,
+                  onConfirm: () {
+                    if (currentPortfolio.isEmpty) {
+                      setState(() => currentPortfolio.add(MapEntry("FAKE_PROPERTY", _buildTutorialFakeProperty())));
+                    }
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        _myPortfolioScreenTutorialManager.startTutorial(showCaseContext);
+                      }
+                    });
+                  }
+                )
+              ],
+            ),
+            body: Builder(builder: (scaffoldContext) {
+              return Column(
+                children: [
+                  // RESUMO SUPERIOR
+                  _myPortfolioScreenTutorialManager.buildShowcase(
+                    type: TutorialItemType.myPortfolioSummaryView,
+                    child: _buildSummaryHeader(context, gameProvider.ledger.getSharesHolderSummary(gameProvider.currentPlayer.portfolio))
+                  ),
+                  
+                  const SizedBox(height: 10),
+                  
+                  // LISTA DE ATIVOS
+                  Expanded(
+                    child: currentPortfolio.isEmpty
+                        ? _buildEmptyPortfolio(context)
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(10.0),
+                            itemCount: currentPortfolio.length,
+                            itemBuilder: (context, index) {
+                              final tile = _portfolioTile(scaffoldContext, currentPortfolio[index].value, gameProvider);
+                              return index == 0
+                                  ? _myPortfolioScreenTutorialManager.buildShowcase(
+                                      type: TutorialItemType.myPortfolioListView,
+                                      child: tile,
+                                    )
+                                  : tile;
+                            }),
+                  ),
+                ],
+              );
+            }));
+        },
+      );
+    });}
 
   // --- WIDGETS DE CONSTRUÇÃO ---
 

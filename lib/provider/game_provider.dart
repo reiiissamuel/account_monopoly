@@ -29,6 +29,10 @@ class GameProvider extends ChangeNotifier {
 
   GameProvider({required this.userModelController});
 
+  bool get isGameScreenOnBoarded => userModelController.user?.isGameScreenOnBoarded ?? false;
+  bool get isMarketScreenOnBoarded => userModelController.user?.isMarketScreenOnBoarded ?? false;
+  bool get isMyPortfolioScreenOnBoarded => userModelController.user?.isMyPortfolioScreenOnBoarded ?? false;
+
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;

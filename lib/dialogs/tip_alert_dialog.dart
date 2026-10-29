@@ -4,9 +4,10 @@ class TipDialog extends StatelessWidget {
 
   final String title;
   final String tip;
+  final VoidCallback? onConfirm;
 
 
-  const TipDialog({super.key, required this.title, required this.tip});
+  const TipDialog({super.key, required this.title, required this.tip, this.onConfirm});
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +30,15 @@ class TipDialog extends StatelessWidget {
         // define os botões na base do dialogo
         ElevatedButton(
           child: Text("👍OK",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
+          onPressed: () {
+            Navigator.of(context).pop();
+            if (onConfirm != null) {
+              onConfirm!();
+            }
+          },
+        ),
+        ElevatedButton(
+          child: Text("Voltar",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
           onPressed: () {
             Navigator.of(context).pop();
           },

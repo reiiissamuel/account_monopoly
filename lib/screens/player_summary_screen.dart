@@ -74,7 +74,7 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                             title: "Minha carteira",
                             textFontSize: 13,
                             onPressed: (){
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPortfolioScreen()));
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => MyPortfolioScreen()));
                             }
                         ),
 

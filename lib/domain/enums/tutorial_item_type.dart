@@ -16,7 +16,15 @@ enum TutorialItemType {
     goMoreOptionsButton(title:'Mais Opções', description: 'Clique aqui para acessar opções rápidas tais como pagamentos ao banco, pagamento de IR, Solicitar restituição, solicitar o seu bonus de fim de rodada...'),
     goLoanButton(title:'Empréstimos', description: 'Clique aqui sempre que estiver apertado. O bando pode ter um emprestimo disponível pra você.'),
     logScreen(title:'Log de Eventos', description: 'Aqui você pode acompanhar todos os eventos que ocorreram durante o jogo.'),
-    chanceButton(title:'Carta Evento', description: 'Clique aqui para pegar uma carta evento durante o jogo.');
+    chanceButton(title:'Carta Evento', description: 'Clique aqui para pegar uma carta evento durante o jogo.'),
+
+    //MarketScreen Itens
+    searchPropertyByName(title:'Buscar Propriedade', description: 'Digite o nome da propriedade para encontrá-la rapidamente na lista abaixo.'),
+    propertyListView(title:'Lista de propriedades à venda', description: 'Aqui você verá todas as propriedades (ações) disponíveis para compra no mercado.\nNo quadro da propriedade você poderá ver detalhes e realizar a compra.'),
+    
+    //MyPortfolioScreen Itens
+    myPortfolioSummaryView(title:'Resumo de ganhos do Meu Portfólio', description: 'Aqui você verá um resumo dos lucros obtidos com suas propriedades (ações).'),
+    myPortfolioListView(title:'Lista do Meu Portfólio', description: 'Aqui você verá todas as propriedades (ações) que você possui.\nNo quadro da propriedade você poderá ver detalhes e realizar ações como vender ou construir casas.');
     
     final String title;
     final String description;

@@ -1,9 +1,11 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
+import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/utils/tutorial_manager.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +13,7 @@ import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
@@ -22,170 +25,191 @@ class MarketScreen extends StatefulWidget {
 class _MarketScreenState extends State<MarketScreen> {
   String _searchText = '';
   TextEditingController searchTextController = TextEditingController();
+  final _marketScreenTutorialManager = TutorialManager.market();
+  List<TradeOffer> availableStocks = [];
+
+  TradeOffer _buildTutorialFakeProperty() {
+    return TradeOffer(
+        offerId: "FAKE_PROPERTY",
+        propertyName: "Propriedade A",
+        colorSignature: Colors.grey,
+        currentMarketPrice: 16,
+        askingPrice: 16,
+        propertyId: "FAKE_OFFER",
+        sellerName: "property",
+        sellerPlayerId: "property",
+        turnsToEnd: 1, sharesAmount: 1000, source: OfferSource.fundIPO,
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, child) {
-        if (gameProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return ShowCaseWidget(
+      onFinish: () {
+        setState(() => availableStocks.removeWhere((offer) => offer.offerId == "FAKE_PROPERTY"));
+      },
+      builder: (showCaseContext){
+        return Consumer<GameProvider>(
+        builder: (context, gameProvider, child) {
+          if (gameProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        final List<TradeOffer> availableStocks;
-        if (_searchText.isEmpty) {
-          availableStocks = gameProvider.getAllMarketListings();
-        } else {
-          availableStocks = gameProvider
-              .getAllMarketListings()
-              .where(
-                (p) => p.propertyName.toLowerCase().contains(
-                  _searchText.toLowerCase(),
+          if (_searchText.isEmpty) {
+            availableStocks = gameProvider.getAllMarketListings();
+          } else {
+            availableStocks = gameProvider
+                .getAllMarketListings()
+                .where(
+                  (p) => p.propertyName.toLowerCase().contains(
+                    _searchText.toLowerCase(),
+                  ),
+                )
+                .toList();
+          }
+
+          if (!gameProvider.isMarketScreenOnBoarded) {
+            if (availableStocks.isEmpty){
+              availableStocks.add(_buildTutorialFakeProperty());
+            }
+            gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _marketScreenTutorialManager.startTutorial(showCaseContext);
+            });
+          }
+
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+              title: Text(
+                "Mercado de Ações",
+                style: TextStyle(
+                  letterSpacing: 2,
+                  color: Theme.of(context).colorScheme.onInverseSurface,
+                  fontWeight: FontWeight.bold,
                 ),
-              )
-              .toList();
-        }
-
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).primaryColor,
-            foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
-            title: Text(
-              "Mercado de Ações",
-              style: TextStyle(
-                letterSpacing: 2,
-                color: Theme.of(context).colorScheme.onInverseSurface,
-                fontWeight: FontWeight.bold,
               ),
+              centerTitle: true,
+              actions: [
+                TipIconButton(
+                  title: "Compra de ativos",
+                  tip: TipsResourse.MARKET_SCREEN,
+                  onConfirm: () async {
+                    if (availableStocks.isEmpty){
+                      availableStocks.add(_buildTutorialFakeProperty());
+                    }
+                    gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: true);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) _marketScreenTutorialManager.startTutorial(showCaseContext);
+                    });
+                  }
+                )
+              ],
             ),
-            centerTitle: true,
-            actions: const [
-              TipIconButton(
-                title: "Compra de ativos",
-                tip: TipsResourse.MARKET_SCREEN,
-              ),
-            ],
-          ),
-          backgroundColor: Colors.black,
-          body: Builder(
-            builder: (scaffoldContext) {
-              return Column(
-                children: [
-                  Container(
-                    color: Theme.of(context).primaryColor.withValues(alpha: .3),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 6,
-                            child: TextField(
-                              controller: searchTextController,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              onChanged: (text) {
-                                setState(() {
-                                  _searchText = text;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                labelText: "Pesquisar nome",
-                                hintText: "Av. Ipiranga",
-                                labelStyle: const TextStyle(color: Colors.white54),
-                                hoverColor: Theme.of(context).colorScheme.onInverseSurface,
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(20.0),
+            backgroundColor: Colors.black,
+            body: Builder(
+              builder: (scaffoldContext) {
+                return Column(
+                  children: [
+                    Container(
+                      color: Theme.of(context).primaryColor.withValues(alpha: .3),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 6,
+                              child: _marketScreenTutorialManager.buildShowcase(
+                                type: TutorialItemType.searchPropertyByName,
+                                 child: TextField(
+                                    controller: searchTextController,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    onChanged: (text) {
+                                      setState(() {
+                                        _searchText = text;
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: "Pesquisar nome",
+                                      hintText: "Av. Ipiranga",
+                                      labelStyle: const TextStyle(color: Colors.white54),
+                                      hoverColor: Theme.of(context).colorScheme.onInverseSurface,
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: const BorderRadius.all(
+                                          Radius.circular(20.0),
+                                        ),
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).colorScheme.onInverseSurface,
+                                          width: 5.0,
+                                        ),
+                                      ),
+                                      disabledBorder: OutlineInputBorder(
+                                        borderRadius: const BorderRadius.all(
+                                          Radius.circular(20.0),
+                                        ),
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).colorScheme.onInverseSurface,
+                                          width: 3.0,
+                                        ),
+                                      ),
+                                      border: const OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(20.0),
+                                        ),
+                                        borderSide: BorderSide(
+                                          color: Colors.blueGrey,
+                                          width: 3.0,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.onInverseSurface,
-                                    width: 5.0,
-                                  ),
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(20.0),
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.onInverseSurface,
-                                    width: 3.0,
-                                  ),
-                                ),
-                                border: const OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(
-                                    Radius.circular(20.0),
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: Colors.blueGrey,
-                                    width: 3.0,
-                                  ),
+                              )
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: IconButton(
+                                onPressed: () => setState(() {
+                                  _searchText = "";
+                                  searchTextController.text = "";
+                                }),
+                                icon: const Icon(
+                                  Icons.disabled_by_default,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: IconButton(
-                              onPressed: () => setState(() {
-                                _searchText = "";
-                                searchTextController.text = "";
-                              }),
-                              icon: const Icon(
-                                Icons.disabled_by_default,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  availableStocks.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.show_chart,
-                                size: 60.0,
-                                color: Theme.of(
-                                  context,
-                                ).primaryColor.withValues(alpha: .3),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                "Nenhuma ação disponível para negociação no momento.",
-                                textAlign: TextAlign.center,
-                                style: Theme.of(scaffoldContext)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(color: Theme.of(context).colorScheme.onInverseSurface),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Expanded(
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(10.0),
-                            itemCount: availableStocks.length,
-                            itemBuilder: (context, index) {
-                              return _offerTile(
-                                scaffoldContext,
-                                availableStocks[index],
-                                gameProvider,
-                              );
-                            },
-                          ),
-                        ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(10.0),
+                        itemCount: availableStocks.length,
+                        itemBuilder: (context, index) {
+                          final tile = _offerTile(scaffoldContext, availableStocks[index], gameProvider);
+                          return index == 0
+                              ? _marketScreenTutorialManager.buildShowcase(
+                                  type: TutorialItemType.propertyListView,
+                                  child: tile,
+                                )
+                              : tile;
+                        },
+                      ),
+                    )
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      );
+  
+    });}
 
   // -----------------------------------------------------------------
   Widget _offerTile(

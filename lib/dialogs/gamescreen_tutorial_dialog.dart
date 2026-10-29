@@ -1,4 +1,6 @@
+import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class GameScreenTutorialDialog extends StatelessWidget {
   const GameScreenTutorialDialog({super.key});
@@ -130,7 +132,16 @@ class GameScreenTutorialDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('FECHAR', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+          child: Text('Fechar', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+        ),
+        TextButton(
+          onPressed: (){
+            Navigator.of(context).pop();
+            final gameProvider = Provider.of<GameProvider>(context, listen: false);
+            gameProvider.userModelController.setOnBoardedOnScreen(isGameScreenOnBoarded: false);
+            gameProvider.notifyChanges(false);
+          },
+          child: Text('Rever tutorial', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
         ),
       ],
     );

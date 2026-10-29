@@ -35,7 +35,6 @@ class GameScreen extends StatefulWidget {
 
 class GameScreenState extends State<GameScreen> {
   final TutorialManager _gameScreenTutorialManager = TutorialManager.game();
-  bool _tutorialStarted = false;
   int eventDeckCount = 0;
   List<Chance> _chances = [];
 
@@ -62,9 +61,6 @@ class GameScreenState extends State<GameScreen> {
     return PopScope(
       canPop: false,
       child: ShowCaseWidget(
-        onFinish: (){
-          //TODO salvar em usermodel que o tutorial foi concluído
-        },
         builder: (showCaseContext) {
           return Consumer<GameProvider>(
             builder: (context, gameProvider, child) {
@@ -72,10 +68,11 @@ class GameScreenState extends State<GameScreen> {
                 return const WinnerDialog();
               }
 
-              if (!_tutorialStarted &&
+              if (!gameProvider.isGameScreenOnBoarded &&
                   !gameProvider.isLoading &&
                   !userProvider.isLoading) {
-                _tutorialStarted = true;
+                  gameProvider.userModelController
+                      .setOnBoardedOnScreen(isGameScreenOnBoarded: true);
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     _gameScreenTutorialManager.startTutorial(showCaseContext);
@@ -414,7 +411,7 @@ class GameScreenState extends State<GameScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            const MyPortfolioScreen(),
+                                            MyPortfolioScreen(),
                                       ),
                                     );
                                   },

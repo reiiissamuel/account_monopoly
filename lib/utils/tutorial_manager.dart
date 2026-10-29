@@ -30,6 +30,18 @@ class TutorialManager {
           TutorialItemType.goLoanButton,
           TutorialItemType.logScreen,
         ]);
+  
+  TutorialManager.market()
+      : this(const [
+        TutorialItemType.searchPropertyByName,
+        TutorialItemType.propertyListView
+      ]);
+  
+  TutorialManager.myPortfolio()
+      : this(const [
+        TutorialItemType.myPortfolioSummaryView,
+        TutorialItemType.myPortfolioListView
+      ]);
 
   TutorialManager.home()
       : this(const [
@@ -54,6 +66,13 @@ class TutorialManager {
       title: type.title,
       description: type.description,
       targetShapeBorder: shapeBorder,
+      tooltipBackgroundColor: Colors.grey[900]!,
+      textColor: Colors.white,
+      titleTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white70),
+      descTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+      tooltipPadding: const EdgeInsets.all(16),
+      showArrow: true,
+      blurValue: 1,
       child: child,
     );
   }
