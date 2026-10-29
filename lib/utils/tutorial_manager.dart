@@ -1,42 +1,56 @@
 import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:showcaseview/showcaseview.dart';
 
 class TutorialManager {
-  // --- CHAVES CENTRALIZADAS  ---
-  // HOMESCREEN
-  static final GlobalKey homeNewGameKey = GlobalKey();
-  static final GlobalKey homeEnterCodeKey = GlobalKey();
-  static final GlobalKey homeColorPaletteKey = GlobalKey();
+  final List<TutorialItemType> _order;
+  final Map<TutorialItemType, GlobalKey> _keys;
 
-  // GAMESCREEN
-  static final GlobalKey broadcastTableIdKey = GlobalKey();
-  static final GlobalKey exitButtonKey = GlobalKey();
-  static final GlobalKey roundViewerKey = GlobalKey();
-  static final GlobalKey balanceViewerKey = GlobalKey();
-  static final GlobalKey analysisButtonKey = GlobalKey();
-  static final GlobalKey instructionsTableKey = GlobalKey();
-  static final GlobalKey goMarkeyButtonKey = GlobalKey();
-  static final GlobalKey goMyPortfolioButtonKey = GlobalKey();
-  static final GlobalKey goPlayersButtonKey = GlobalKey();
-  static final GlobalKey goPayRentButtonKey = GlobalKey();
-  static final GlobalKey goMyFinancialHealthButtonKey = GlobalKey();
-  static final GlobalKey goMoreOptionsButtonKey= GlobalKey();
-  static final GlobalKey goLoanButtonKey = GlobalKey();
-  static final GlobalKey logScreenKey = GlobalKey();
-  static final GlobalKey chanceButtonKey = GlobalKey();
+  // Construtor principal: recebe a lista ordenada e cria as chaves só desses itens
+  TutorialManager(List<TutorialItemType> order)
+      : _order = List.unmodifiable(order),
+        _keys = {for (final t in order) t: GlobalKey()};
 
-  // --- MÉTODO REUTILIZÁVEL ---
-  static Widget buildShowcase({
+  // Um construtor nomeado por tela, só define a lista
+  TutorialManager.game()
+      : this(const [
+          TutorialItemType.broadcastTableId,
+          TutorialItemType.exitButton,
+          TutorialItemType.roundViewer,
+          TutorialItemType.chanceButton,
+          TutorialItemType.balanceViewer,
+          TutorialItemType.analysisButton,
+          TutorialItemType.instructionsTable,
+          TutorialItemType.goMarketButton,
+          TutorialItemType.goMyPortfolioButton,
+          TutorialItemType.goPlayersButton,
+          TutorialItemType.goPayRentButton,
+          TutorialItemType.goMyFinancialHealthButton,
+          TutorialItemType.goMoreOptionsButton,
+          TutorialItemType.goLoanButton,
+          TutorialItemType.logScreen,
+        ]);
+
+  TutorialManager.home()
+      : this(const [
+          //TODO
+        ]);
+
+  Widget buildShowcase({
     required TutorialItemType type,
     required Widget child,
     ShapeBorder shapeBorder = const RoundedRectangleBorder(
       borderRadius: BorderRadius.all(Radius.circular(12.0)),
     ),
   }) {
+    final key = _keys[type];
+    assert(key != null, '$type não faz parte do tutorial desta tela');
+
+    // Se o item não pertence a esta tela, devolve o widget sem showcase
+    if (key == null) return child;
+
     return Showcase(
-      key: type.tutorialItemKey, // Chama o getter dinâmico do enum
+      key: key,
       title: type.title,
       description: type.description,
       targetShapeBorder: shapeBorder,
@@ -44,30 +58,9 @@ class TutorialManager {
     );
   }
 
-  // --- DISPARADORES DE TUTORIAL POR TELA ---
-  static void startHomeTutorial(BuildContext context) {
-    ShowCaseWidget.of(context).startShowCase([
-      //TODO add
-    ]);
-  }
-
-  static void startGameTutorial(BuildContext context) {
-    ShowCaseWidget.of(context).startShowCase([
-      TutorialItemType.broadcastTableId.tutorialItemKey,
-      TutorialItemType.exitButton.tutorialItemKey,
-      TutorialItemType.roundViewer.tutorialItemKey,
-      TutorialItemType.chanceButton.tutorialItemKey,
-      TutorialItemType.balanceViewer.tutorialItemKey,
-      TutorialItemType.analysisButton.tutorialItemKey,
-      TutorialItemType.instructionsTable.tutorialItemKey,
-      TutorialItemType.goMarButton.tutorialItemKey,
-      TutorialItemType.goMyPortfolioButton.tutorialItemKey,
-      TutorialItemType.goPlayersButton.tutorialItemKey,
-      TutorialItemType.goPayRentButton.tutorialItemKey,
-      TutorialItemType.goMyFinancialHealthButton.tutorialItemKey,
-      TutorialItemType.goMoreOptionsButton.tutorialItemKey,
-      TutorialItemType.goLoanButton.tutorialItemKey,
-      TutorialItemType.logScreen.tutorialItemKey
-    ]);
+  void startTutorial(BuildContext context) {
+    ShowCaseWidget.of(context).startShowCase(
+      [for (final t in _order) _keys[t]!],
+    );
   }
 }
