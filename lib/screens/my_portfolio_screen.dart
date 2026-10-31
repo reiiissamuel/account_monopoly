@@ -32,20 +32,22 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
   final _myPortfolioScreenTutorialManager = TutorialManager.myPortfolio();
   List<MapEntry<String, ShareHolder>> currentPortfolio = [];
 
+  bool _isTutorialActive = false;
+
   ShareHolder _buildTutorialFakeProperty() {
-    
-    Property firstProperty = Provider.of<GameProvider>(context, listen: false).ledger.properties.entries.first.value;
     return ShareHolder(
-      playerId: "player", propertyId: firstProperty.id, sharesOwned: 100, investmentValue: 1000, saleCapitalGain: 100
+      playerId: "player",
+      propertyId: "FAKE_PROPERTY",
+      sharesOwned: 100,
+      investmentValue: 1000,
+      saleCapitalGain: 100,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return ShowCaseWidget(
-      onFinish: () {
-        setState(() => currentPortfolio.removeWhere((entry) => entry.key == "FAKE_PROPERTY"));
-      },
+      onFinish: () => setState(() => _isTutorialActive = false),
       builder: (showCaseContext){
       return Consumer<GameProvider>(
         builder: (context, gameProvider, child) {
@@ -55,14 +57,17 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
           .toList();
 
           if (!gameProvider.isMyPortfolioScreenOnBoarded) {
-            if (currentPortfolio.isEmpty) {
-              currentPortfolio.add(MapEntry("FAKE_PROPERTY", _buildTutorialFakeProperty()));
-            }
+            _isTutorialActive = true;
             gameProvider.userModelController
                 .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: true);
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) _myPortfolioScreenTutorialManager.startTutorial(showCaseContext);
             });
+          }
+
+          // a fake sobrevive aos rebuilds até o onFinish, só se a carteira continuar vazia
+          if (_isTutorialActive && currentPortfolio.isEmpty) {
+            currentPortfolio.add(MapEntry("FAKE_PROPERTY", _buildTutorialFakeProperty()));
           }
 
           return Scaffold(
@@ -77,14 +82,9 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
                   title: "Meu portfólio",
                   tip: TipsResourse.MY_PORTFOLIO_SCREEN,
                   onConfirm: () {
-                    if (currentPortfolio.isEmpty) {
-                      setState(() => currentPortfolio.add(MapEntry("FAKE_PROPERTY", _buildTutorialFakeProperty())));
-                    }
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        _myPortfolioScreenTutorialManager.startTutorial(showCaseContext);
-                      }
-                    });
+                    gameProvider.userModelController
+                        .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: false);
+                    gameProvider.notifyChanges(false);
                   }
                 )
               ],
@@ -161,15 +161,18 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
 
   // 2. TILE DE CADA ATIVO
   Widget _portfolioTile(BuildContext context, ShareHolder item, GameProvider gameProvider) {
+    // property é null no item de exemplo do tutorial
     final property = gameProvider.ledger.properties[item.propertyId];
-    final Color pnlColor = item.getProfitPercentage(property!.sharePrice) >= 0 ? Colors.green : Colors.red;
+    final sharePrice = property?.sharePrice ?? item.averageCostPerShare;
+    final Color baseColor = property?.colorSignature ?? Colors.grey;
+    final Color pnlColor = item.getProfitPercentage(sharePrice) >= 0 ? Colors.green : Colors.red;
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       padding: const EdgeInsets.all(15.0),
       decoration: BoxDecoration(
-        color: property.colorSignature.withValues(alpha: .8),
+        color: baseColor.withValues(alpha: .8),
         borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: property.colorSignature.withValues(alpha: .5)),
+        border: Border.all(color: baseColor.withValues(alpha: .5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +181,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("${property.name} (${property.id})" , style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
+              Text("${property?.name ?? 'Propriedade A'} (${item.propertyId})" , style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
               Text("${item.sharesOwned} Ações", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18)),
             ],
           ),
@@ -188,10 +191,10 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn("Lucro: ", StringUtils.currencyFormat(item.getNetProfit(property.sharePrice)), pnlColor),
+              _buildInfoColumn("Lucro: ", StringUtils.currencyFormat(item.getNetProfit(sharePrice)), pnlColor),
               _buildInfoColumn("Proventos recebidos: ", StringUtils.currencyFormat(item.dividendsReceived), pnlColor),
               //_buildInfoColumn("Lucro por ação: ", StringUtils.currencyFormat(item.getNetProfitPerShare(property.sharePrice)), pnlColor),
-              _buildInfoColumn("Variação %", "${item.getProfitPercentage(property.sharePrice).toStringAsFixed(2)}%", pnlColor),
+              _buildInfoColumn("Variação %", "${item.getProfitPercentage(sharePrice).toStringAsFixed(2)}%", pnlColor),
             ],
           ),
           const SizedBox(height: 10),
@@ -202,7 +205,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
             children: [
               _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Theme.of(context).colorScheme.onInverseSurface),
               _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Theme.of(context).colorScheme.onInverseSurface),
-              _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(property.sharePrice), Colors.yellow),
+              _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(sharePrice), Colors.yellow),
             ],
           ),
           const SizedBox(height: 10),
@@ -213,9 +216,9 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
             children: [
               _buildInfoColumn(
                   "Última distribuição",
-                  "Rodada ${property.lastDividendRound}", Theme.of(context).colorScheme.onInverseSurface),
+                  "Rodada ${property?.lastDividendRound ?? 0}", Theme.of(context).colorScheme.onInverseSurface),
 
-              if(property.checkMajorOwnerById(gameProvider.currentPlayer.id)) ...[
+              if(property?.checkMajorOwnerById(gameProvider.currentPlayer.id) ?? false) ...[
                 const SizedBox(
                   height: 50,
                   width: 180,
@@ -260,7 +263,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white),
                 onPressed: () {
                   // Ação: Abrir diálogo para criar oferta de venda (P2P)
-                  _showSellSharesDialog(context, item, gameProvider, property);
+                  _showSellSharesDialog(context, item, gameProvider, property!);
                 },
               ),
             ],
