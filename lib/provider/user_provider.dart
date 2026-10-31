@@ -50,7 +50,8 @@ class UserModelDTO{
       'primaryColorValue': primaryColorValue,
       'isGameScreenOnBoarded': isGameScreenOnBoarded,
       'isHomeScreenOnBoarded': isHomeScreenOnBoarded,
-      'isMarketScreenOnBoarded': isMarketScreenOnBoarded
+      'isMarketScreenOnBoarded': isMarketScreenOnBoarded,
+      'isMyPortfolioScreenOnBoarded': isMyPortfolioScreenOnBoarded
     };
   }
 

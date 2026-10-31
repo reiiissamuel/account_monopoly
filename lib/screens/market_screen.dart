@@ -1,6 +1,7 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
+import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
@@ -27,8 +28,10 @@ class _MarketScreenState extends State<MarketScreen> {
   TextEditingController searchTextController = TextEditingController();
   final _marketScreenTutorialManager = TutorialManager.market();
   List<TradeOffer> availableStocks = [];
+  TradeOffer? _tutorialFake;
 
   TradeOffer _buildTutorialFakeProperty() {
+    
     return TradeOffer(
         offerId: "FAKE_PROPERTY",
         propertyName: "Propriedade A",
@@ -45,38 +48,34 @@ class _MarketScreenState extends State<MarketScreen> {
   @override
   Widget build(BuildContext context) {
     return ShowCaseWidget(
-      onFinish: () {
-        setState(() => availableStocks.removeWhere((offer) => offer.offerId == "FAKE_PROPERTY"));
-      },
+      onFinish: () => setState(() => _tutorialFake = null),
       builder: (showCaseContext){
         return Consumer<GameProvider>(
         builder: (context, gameProvider, child) {
           if (gameProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (_searchText.isEmpty) {
-            availableStocks = gameProvider.getAllMarketListings();
-          } else {
-            availableStocks = gameProvider
-                .getAllMarketListings()
-                .where(
-                  (p) => p.propertyName.toLowerCase().contains(
-                    _searchText.toLowerCase(),
-                  ),
-                )
+        final rawList = gameProvider.getAllMarketListings();
+        availableStocks = _searchText.isEmpty
+            ? List.from(rawList)
+            : rawList
+                .where((p) => p.propertyName.toLowerCase().contains(_searchText.toLowerCase()))
                 .toList();
-          }
 
-          if (!gameProvider.isMarketScreenOnBoarded) {
-            if (availableStocks.isEmpty){
-              availableStocks.add(_buildTutorialFakeProperty());
-            }
-            gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: true);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _marketScreenTutorialManager.startTutorial(showCaseContext);
-            });
-          }
+        if (!gameProvider.isMarketScreenOnBoarded) {
+          // só cria a ofertafake se o mercado estiver vazio e tutorial ativo
+          if (rawList.isEmpty) _tutorialFake = _buildTutorialFakeProperty();
+          gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: true);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _marketScreenTutorialManager.startTutorial(showCaseContext);
+          });
+        }
+
+        // mantém a fake enquanto o tutorial durar e a lista continuar vazia
+        if (_tutorialFake != null && availableStocks.isEmpty) {
+          availableStocks.add(_tutorialFake!);
+        }
 
           return Scaffold(
             appBar: AppBar(
@@ -95,15 +94,10 @@ class _MarketScreenState extends State<MarketScreen> {
                 TipIconButton(
                   title: "Compra de ativos",
                   tip: TipsResourse.MARKET_SCREEN,
-                  onConfirm: () async {
-                    if (availableStocks.isEmpty){
-                      availableStocks.add(_buildTutorialFakeProperty());
-                    }
-                    gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: true);
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) _marketScreenTutorialManager.startTutorial(showCaseContext);
-                    });
-                  }
+                  onConfirm: () {
+                    gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: false);
+                    gameProvider.notifyChanges(false);
+                  },
                 )
               ],
             ),
@@ -191,13 +185,16 @@ class _MarketScreenState extends State<MarketScreen> {
                         padding: const EdgeInsets.all(10.0),
                         itemCount: availableStocks.length,
                         itemBuilder: (context, index) {
-                          final tile = _offerTile(scaffoldContext, availableStocks[index], gameProvider);
-                          return index == 0
-                              ? _marketScreenTutorialManager.buildShowcase(
+                          final Icon? propertyIconSignature = gameProvider.ledger.properties[availableStocks[index].propertyId]?.iconSignature;
+                          final tile = _offerTile(scaffoldContext, availableStocks[index], gameProvider, propertyIconSignature);
+                          
+                          if(index == 0){
+                            return _marketScreenTutorialManager.buildShowcase(
                                   type: TutorialItemType.propertyListView,
                                   child: tile,
-                                )
-                              : tile;
+                                ); 
+                          }
+                          return tile;
                         },
                       ),
                     )
@@ -216,13 +213,13 @@ class _MarketScreenState extends State<MarketScreen> {
     BuildContext context,
     TradeOffer offer,
     GameProvider gameProvider,
+    Icon? propertyIconSignature
   ) {
     final String currentMarketPrice = StringUtils.currencyFormat(
       offer.currentMarketPrice,
     );
     final String askingPrice = StringUtils.currencyFormat(offer.askingPrice);
     final String available = offer.sharesAmount.toString();
-    final property = gameProvider.ledger.properties[offer.propertyId];
 
     // Cor do texto de origem (para destaque)
     final Color sourceColor = switch (offer.source) {
@@ -246,13 +243,13 @@ class _MarketScreenState extends State<MarketScreen> {
           Row(
             spacing: 5,
             children: [
-              Icon(property!.iconSignature.icon),
+              (propertyIconSignature ?? const Icon(Icons.house)),
               Text(
-                '${property.name} (${offer.propertyId})',
+                '${offer.propertyName} (${offer.propertyId})',
                 style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                   color: Theme.of(context).colorScheme.onInverseSurface,
                   fontWeight: FontWeight.bold,
-                  fontSize: property.name.length > 20 ? 15 : 20,
+                  fontSize: offer.propertyName.length > 20 ? 15 : 20,
                 )
               )
             ],
