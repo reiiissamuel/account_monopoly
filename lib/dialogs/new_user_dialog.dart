@@ -17,7 +17,6 @@ class NewUserDialogState extends State<NewUserDialog> {
   static const String nameHIntText = "Me diga seu nome.";
   static const String userNameHintText = "Defina um apelido.";
   static const String validationNameErrorMsg = "Você precisa definir um nome com mais de 1 caractere.";
-  static const String validationUsernameErrorMsg = "Você precisa definir um nome de usuário sem espaço.";
 
   final _nameController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -88,7 +87,7 @@ class NewUserDialogState extends State<NewUserDialog> {
                         borderRadius: BorderRadius.all(Radius.circular(20.0))),
                   ),
                   validator: (text) {
-                    if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return validationUsernameErrorMsg;
+                    if(text == null || text.isEmpty|| text.length < 3 || text.contains(" ")) return validationNameErrorMsg;
                     try{
                       userProvider.checkUserExists(text);
                     } on UserExistsException catch(e){
