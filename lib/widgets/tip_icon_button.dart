@@ -43,6 +43,12 @@ class TipIconButton extends StatelessWidget {
                 ),
               ),
               actions: <Widget>[
+                ElevatedButton(
+                  child: Text("Voltar",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
                 // define os botões na base do dialogo
                 ElevatedButton(
                   child: Text("Rever tutorial na tela",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
@@ -51,12 +57,6 @@ class TipIconButton extends StatelessWidget {
                     if (onConfirm != null) {
                       onConfirm!();
                     }
-                  },
-                ),
-                ElevatedButton(
-                  child: Text("Voltar",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
-                  onPressed: () {
-                    Navigator.of(context).pop();
                   },
                 ),
               ],
