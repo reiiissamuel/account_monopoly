@@ -24,7 +24,10 @@ enum TutorialItemType {
     
     //MyPortfolioScreen Itens
     myPortfolioSummaryView(title:'Resumo de ganhos do Meu Portfólio', description: 'Aqui você verá um resumo dos lucros obtidos com suas propriedades (ações).'),
-    myPortfolioListView(title:'Lista do Meu Portfólio', description: 'Aqui você verá todas as propriedades (ações) que você possui.\nNo quadro da propriedade você poderá ver detalhes e realizar ações como vender ou construir casas.');
+    myPortfolioListView(title:'Lista do Meu Portfólio', description: 'Aqui você verá todas as propriedades (ações) que você possui.\nNo quadro da propriedade você poderá ver detalhes e realizar ações como vender ou construir casas.'),
+    
+    //PlayersScreen Itens
+    playerListView(title:'Lista de Jogadores', description: 'Aqui você verá todos os jogadores do jogo e poderá, ao clicar no card, transferir dinheiro para eles.');
     
     final String title;
     final String description;

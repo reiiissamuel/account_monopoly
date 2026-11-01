@@ -1,7 +1,6 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
-import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
@@ -13,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/utils/tutorial_fake_objetcs.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -29,21 +29,6 @@ class _MarketScreenState extends State<MarketScreen> {
   final _marketScreenTutorialManager = TutorialManager.market();
   List<TradeOffer> availableStocks = [];
   TradeOffer? _tutorialFake;
-
-  TradeOffer _buildTutorialFakeProperty() {
-    
-    return TradeOffer(
-        offerId: "FAKE_PROPERTY",
-        propertyName: "Propriedade A",
-        colorSignature: Colors.grey,
-        currentMarketPrice: 16,
-        askingPrice: 16,
-        propertyId: "FAKE_OFFER",
-        sellerName: "property",
-        sellerPlayerId: "property",
-        turnsToEnd: 1, sharesAmount: 1000, source: OfferSource.fundIPO,
-      );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +50,7 @@ class _MarketScreenState extends State<MarketScreen> {
 
         if (!gameProvider.isMarketScreenOnBoarded) {
           // só cria a ofertafake se o mercado estiver vazio e tutorial ativo
-          if (rawList.isEmpty) _tutorialFake = _buildTutorialFakeProperty();
+          if (rawList.isEmpty) _tutorialFake = TutorialFakeObjects.fakeTradeOffer;
           gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: true);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _marketScreenTutorialManager.startTutorial(showCaseContext);

@@ -30,6 +30,11 @@ class TutorialManager {
           TutorialItemType.goLoanButton,
           TutorialItemType.logScreen,
         ]);
+
+  TutorialManager.playersScreen()
+   : this(const [
+        TutorialItemType.playerListView
+      ]);
   
   TutorialManager.market()
       : this(const [

@@ -10,6 +10,7 @@ import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/utils/tutorial_fake_objetcs.dart';
 import 'package:account_monopoly/utils/tutorial_manager.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
@@ -34,16 +35,6 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
 
   bool _isTutorialActive = false;
 
-  ShareHolder _buildTutorialFakeProperty() {
-    return ShareHolder(
-      playerId: "player",
-      propertyId: "FAKE_PROPERTY",
-      sharesOwned: 100,
-      investmentValue: 1000,
-      saleCapitalGain: 100,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ShowCaseWidget(
@@ -67,7 +58,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
 
           // a fake sobrevive aos rebuilds até o onFinish, só se a carteira continuar vazia
           if (_isTutorialActive && currentPortfolio.isEmpty) {
-            currentPortfolio.add(MapEntry("FAKE_PROPERTY", _buildTutorialFakeProperty()));
+            currentPortfolio.add(MapEntry("FAKE_PROPERTY", TutorialFakeObjects.fakeShareHolder));
           }
 
           return Scaffold(
@@ -80,7 +71,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
               actions: [
                 TipIconButton(
                   title: "Meu portfólio",
-                  tip: TipsResourse.MY_PORTFOLIO_SCREEN,
+                  tip: TipsResourse.BENEFICIARIES_SCREEN,
                   onConfirm: () {
                     gameProvider.userModelController
                         .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: false);

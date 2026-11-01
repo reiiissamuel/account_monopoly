@@ -25,10 +25,11 @@ class UserModelDTO{
   bool isGameScreenOnBoarded;
   bool isMarketScreenOnBoarded;
   bool isMyPortfolioScreenOnBoarded;
+  bool isPlayersScreenOnBoarded;
 
   UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged,
    required this.games, this.propertiesVersion, this.primaryColorValue = ConfigsConstants.defaultPrimaryColorValue,
-    this.isGameScreenOnBoarded = false, this.isHomeScreenOnBoarded = false, this.isMarketScreenOnBoarded = false, this.isMyPortfolioScreenOnBoarded = false});
+    this.isGameScreenOnBoarded = false, this.isHomeScreenOnBoarded = false, this.isMarketScreenOnBoarded = false, this.isMyPortfolioScreenOnBoarded = false, this.isPlayersScreenOnBoarded = false});
 
 // Método de SERIALIZAÇÃO (toDoMap) - NOVO E CORRIGIDO
   Map<String, dynamic> toMap() {
@@ -51,7 +52,8 @@ class UserModelDTO{
       'isGameScreenOnBoarded': isGameScreenOnBoarded,
       'isHomeScreenOnBoarded': isHomeScreenOnBoarded,
       'isMarketScreenOnBoarded': isMarketScreenOnBoarded,
-      'isMyPortfolioScreenOnBoarded': isMyPortfolioScreenOnBoarded
+      'isMyPortfolioScreenOnBoarded': isMyPortfolioScreenOnBoarded,
+      'isPlayersScreenOnBoarded': isPlayersScreenOnBoarded
     };
   }
 
@@ -98,6 +100,7 @@ class UserModelDTO{
       isHomeScreenOnBoarded: map['isHomeScreenOnBoarded'] as bool? ?? false,
       isMarketScreenOnBoarded: map['isMarketScreenOnBoarded'] as bool? ?? false,
       isMyPortfolioScreenOnBoarded: map['isMyPortfolioScreenOnBoarded'] as bool? ?? false,
+      isPlayersScreenOnBoarded: map['isPlayersScreenOnBoarded'] as bool? ?? false
     );
   }
 
@@ -128,12 +131,13 @@ class UserProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  void setOnBoardedOnScreen({bool? isGameScreenOnBoarded, bool? isHomeScreenOnBoarded, bool? isMarketScreenOnBoarded, bool? isMyPortfolioScreenOnBoarded}) {
+  void setOnBoardedOnScreen({bool? isGameScreenOnBoarded, bool? isHomeScreenOnBoarded, bool? isMarketScreenOnBoarded, bool? isMyPortfolioScreenOnBoarded, bool? isPlayersScreenOnBoarded}) {
     if (user == null) return;
     user!.isGameScreenOnBoarded = isGameScreenOnBoarded ?? user!.isGameScreenOnBoarded;
     user!.isHomeScreenOnBoarded = isHomeScreenOnBoarded ?? user!.isHomeScreenOnBoarded;
     user!.isMarketScreenOnBoarded = isMarketScreenOnBoarded ?? user!.isMarketScreenOnBoarded;
     user!.isMyPortfolioScreenOnBoarded = isMyPortfolioScreenOnBoarded ?? user!.isMyPortfolioScreenOnBoarded;
+    user!.isPlayersScreenOnBoarded = isPlayersScreenOnBoarded ?? user!.isPlayersScreenOnBoarded;
   }
 
   Future<void> signUp(
