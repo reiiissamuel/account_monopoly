@@ -1,6 +1,7 @@
 import 'package:account_monopoly/domain/enums/property_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
+import 'package:account_monopoly/utils/icon_data_extension.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
@@ -10,7 +11,7 @@ import 'package:provider/provider.dart';
 
 class NewPropertyScreen extends StatelessWidget {
   final String? versionId;
-  final Property? property; 
+  final Property? property;
 
   const NewPropertyScreen({super.key, this.versionId, this.property});
 
@@ -60,9 +61,10 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
   String _versionid = '';
   PropertyType _propertyType = PropertyType.reit; // Valor inicial
   Color _colorSignature = Colors.grey; // Valor inicial
-IconData _iconSignatureData = Icons.business; // Valor inicial
+  IconData _iconSignatureData = Icons.business; // Valor inicial
   String _rentPrice = '';
   String _buildingCost = '';
+  final List<IconData> _availableIconsData = Property.signatureIconsOptions;
 
   // Lista de cores pré-definidas para seleção
   final List<Color> availableColors = [
@@ -88,20 +90,6 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
     Colors.black
   ];
 
-  final List<IconData> availableIconsData = [
-    Icons.local_shipping,
-    Icons.local_taxi,
-    Icons.train,
-    Icons.directions_bus,
-    Icons.nature,
-    Icons.bolt,
-    Icons.local_gas_station,
-    Icons.account_balance,
-    Icons.airplanemode_active,
-    Icons.water,
-    Icons.phone,
-  ];
-
   @override
   void initState(){
     super.initState();
@@ -110,8 +98,8 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
       _name = widget.property!.name;
       _basePrice = StringUtils.currencyFormat(widget.property!.basePrice);
       _propertyType = widget.property!.propertyType;
-      _colorSignature = widget.property!.colorSignature;
-      _iconSignatureData = widget.property!.iconSignature.icon ?? Icons.business; // Valor inicial
+      _colorSignature = Color(widget.property!.colorSignature);
+      _iconSignatureData = IconDataExtension.fromKey(widget.property!.iconSignature); // Valor inicial
       _rentPrice = StringUtils.currencyFormat(widget.property!.currentRent);
       _buildingCost = StringUtils.currencyFormat(widget.property!.currentBuildingCost);
     }
@@ -214,9 +202,9 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
           height: 50,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: availableIconsData.length,
+            itemCount: _availableIconsData.length,
             itemBuilder: (context, index) {
-              final iconData = availableIconsData[index]; 
+              final iconData = _availableIconsData[index]; 
               final isSelected = _iconSignatureData == iconData; 
               
               return GestureDetector(
@@ -389,9 +377,9 @@ IconData _iconSignatureData = Icons.business; // Valor inicial
                         id: propertyId,
                         name: _name,
                         basePrice: StringUtils.currencyAsDouble(_basePrice),
-                        colorSignature: _colorSignature,
+                        colorSignature: _colorSignature.toARGB32(),
                         propertyType: _propertyType,
-                        iconSignature: Icon(_iconSignatureData),
+                        iconSignature: _iconSignatureData.toKey(),
                         currentRent: StringUtils.currencyAsDouble(_rentPrice),
                         currentBuildingCost: _propertyType == PropertyType.reit ? StringUtils.currencyAsDouble(_buildingCost) : 0
                     );

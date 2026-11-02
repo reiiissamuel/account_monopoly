@@ -4,6 +4,7 @@ import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
+import 'package:account_monopoly/utils/icon_data_extension.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/utils/tutorial_manager.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
@@ -170,7 +171,7 @@ class _MarketScreenState extends State<MarketScreen> {
                         padding: const EdgeInsets.all(10.0),
                         itemCount: availableStocks.length,
                         itemBuilder: (context, index) {
-                          final Icon? propertyIconSignature = gameProvider.ledger.properties[availableStocks[index].propertyId]?.iconSignature;
+                          final Icon propertyIconSignature = Icon(IconDataExtension.fromKey(gameProvider.ledger.properties[availableStocks[index].propertyId]?.iconSignature ?? 'default'));
                           final tile = _offerTile(scaffoldContext, availableStocks[index], gameProvider, propertyIconSignature);
                           
                           if(index == 0){
@@ -217,7 +218,7 @@ class _MarketScreenState extends State<MarketScreen> {
       margin: const EdgeInsets.only(bottom: 12.0),
       padding: const EdgeInsets.all(15.0),
       decoration: BoxDecoration(
-        color: offer.colorSignature, // Cor base da propriedade
+        color: Color(offer.colorSignature), // Cor base da propriedade
         borderRadius: const BorderRadius.all(Radius.circular(15.0)),
         boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 5)],
       ),

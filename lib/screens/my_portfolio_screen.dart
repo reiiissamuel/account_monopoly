@@ -155,7 +155,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
     // property é null no item de exemplo do tutorial
     final property = gameProvider.ledger.properties[item.propertyId];
     final sharePrice = property?.sharePrice ?? item.averageCostPerShare;
-    final Color baseColor = property?.colorSignature ?? Colors.grey;
+    final Color baseColor = Color(property?.colorSignature ?? Colors.grey.toARGB32());
     final Color pnlColor = item.getProfitPercentage(sharePrice) >= 0 ? Colors.green : Colors.red;
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),

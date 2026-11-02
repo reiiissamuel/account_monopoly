@@ -406,7 +406,7 @@ class GameProvider extends ChangeNotifier {
         askingPrice: property.sharePrice - (property.sharePrice * 0.1),
         source: OfferSource.bankForeclosed,
         currentMarketPrice: property.sharePrice,
-        colorSignature: property.colorSignature.withValues(alpha: 0.7), // Cor ligeiramente diferente
+        colorSignature: property.colorSignature, // Cor ligeiramente diferente
         propertyName: '${property.name} (Recup.)',
         turnsToEnd: 1
       ));

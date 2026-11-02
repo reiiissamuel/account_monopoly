@@ -16,13 +16,15 @@ abstract final class TutorialFakeObjects {
       id: "FAKE_PROPERTY",
       name: "Propriedade A",
       propertyType: PropertyType.stocks, basePrice: 200,
-      colorSignature: Colors.grey, iconSignature: const Icon(Icons.home), currentBuildingCost: 200,
+      colorSignature: Colors.grey.toARGB32(),
+      currentBuildingCost: 200,
+      iconSignature: 'iconSignature',
     );
 
   static final TradeOffer fakeTradeOffer = TradeOffer(
         offerId: "FAKE_PROPERTY",
         propertyName: "Propriedade A",
-        colorSignature: Colors.grey,
+        colorSignature: Colors.grey.toARGB32(),
         currentMarketPrice: 16,
         askingPrice: 16,
         propertyId: "FAKE_OFFER",

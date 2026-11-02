@@ -1,6 +1,7 @@
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/new_property_screen.dart';
+import 'package:account_monopoly/utils/icon_data_extension.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
@@ -99,7 +100,7 @@ class PropertiesScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 5.0),
       height: 215.0,
       decoration: BoxDecoration(
-        color: property.colorSignature.withValues(alpha: 0.3),
+        color: Color(property.colorSignature).withValues(alpha: 0.3),
         borderRadius: const BorderRadius.all(Radius.circular(15.0)),
       ),
       child: Container(
@@ -107,14 +108,14 @@ class PropertiesScreen extends StatelessWidget {
         margin: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.all(Radius.circular(15.0)),
-          color: property.colorSignature,
+          color: Color(property.colorSignature),
         ),
         child: Column(
           children: <Widget>[
             Row(
               spacing: 5,
               children: [
-                Icon(property.iconSignature.icon, color: Theme.of(context).colorScheme.onInverseSurface),
+                Icon(IconDataExtension.fromKey(property.iconSignature), color: Theme.of(context).colorScheme.onInverseSurface),
                 Text( property.name,
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                     fontWeight: FontWeight.bold,
@@ -155,7 +156,7 @@ class PropertiesScreen extends StatelessWidget {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
-                    backgroundColor: property.colorSignature.withValues(alpha: 0.3),
+                    backgroundColor: Color(property.colorSignature).withValues(alpha: 0.3),
                   ),
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewPropertyScreen(property: property, versionId: versionId)));
@@ -173,7 +174,7 @@ class PropertiesScreen extends StatelessWidget {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
-                    backgroundColor: property.colorSignature.withValues(alpha: 0.3),
+                    backgroundColor: Color(property.colorSignature).withValues(alpha: 0.3),
                   ),
                   onPressed: () async {
                     showDialog(context: context, builder: (BuildContext context){

@@ -1,16 +1,30 @@
 import 'package:account_monopoly/domain/enums/property_type.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/utils/configs_constants.dart';
-import 'package:account_monopoly/utils/icon_data_extension.dart';
 import 'package:flutter/material.dart';
 
 class Property {
+
+  static final List<IconData> signatureIconsOptions = [
+    Icons.local_shipping,
+    Icons.local_taxi,
+    Icons.train,
+    Icons.directions_bus,
+    Icons.nature,
+    Icons.bolt,
+    Icons.local_gas_station,
+    Icons.account_balance,
+    Icons.airplanemode_active,
+    Icons.water,
+    Icons.phone,
+  ];
+
   final String id;
   final String name;
   final double basePrice;
   final PropertyType propertyType;
-  final Color colorSignature;
-  final Icon iconSignature;
+  final int colorSignature;
+  final String iconSignature;
 
   int lastDividendRound;
   double currentPrice;
@@ -32,8 +46,8 @@ class Property {
     required this.basePrice,
     required this.colorSignature,
     required this.propertyType,
-    required this.iconSignature,
     required this.currentBuildingCost,
+    required this.iconSignature,
     this.payoutPercentage = ConfigsConstants.initialPayout,
     this.currentRent = 0,
     this.totalShares = 0,
@@ -42,7 +56,7 @@ class Property {
     this.collectedRent = 0,
     this.buildings = 0,
     this.majorOwnerId = "",
-    this.lastDividendRound = 0,
+    this.lastDividendRound = 0
   }) {
     if (currentPrice == 0.0) {
       currentPrice = basePrice;
@@ -112,22 +126,13 @@ class Property {
   }
 
   Map<String, dynamic> toMap() {
-    // ⚠️ Pegamos o IconData da propriedade 'icon' do widget Icon.
-    final IconData? iconData = iconSignature.icon;
-
-    if (iconData == null) {
-      throw StateError(
-        "A propriedade 'iconSignature' não contém IconData para serialização.",
-      );
-    }
-
     return {
       'id': id,
       'name': name,
       'basePrice': basePrice,
       'majorOwnerId': majorOwnerId,
       'currentPrice': currentPrice,
-      'colorSignature': colorSignature.toARGB32(), // Usa extensão
+      'colorSignature': colorSignature,
       'totalShares': totalShares,
       'availableShares': availableShares,
       'currentRent': currentRent,
@@ -142,7 +147,7 @@ class Property {
       'lastDividendRound': lastDividendRound,
 
       // ✅ SERIALIZAÇÃO DO ÍCONE: Converte o IconData para Map.
-      'iconSignature': iconData.toMap(),
+      'iconSignature': iconSignature,
     };
   }
 
@@ -150,9 +155,6 @@ class Property {
 
     // 2. Constrói o widget Icon final
     // OBS: É altamente recomendado armazenar apenas o IconData, não o widget Icon, na classe de modelo.
-    final Icon restoredIcon = Icon(IconDataExtension.fromMap(
-      map['iconSignature'] as Map<String, dynamic>,
-    ));
     var rents = List<double>.from((map['historicalRents'] as List<dynamic>).map((e) => e.toDouble()).toList(), growable: true);
     var dividends = List<double>.from((map['historicalDividends'] as List<dynamic>).map((e) => e.toDouble()).toList(), growable: true);
     var sharesPrices = List<double>.from((map['historicalSharesPrices'] as List<dynamic>).map((e) => e.toDouble()).toList(), growable: true);
@@ -172,9 +174,8 @@ class Property {
         collectedRent: (map['collectedRent'] as num).toDouble(),
         currentBuildingCost: (map['currentBuildingCost'] as num).toDouble(),
         majorOwnerId: map['majorOwnerId'] as String,
-        colorSignature: Color(map['colorSignature'] as int),
-        iconSignature: restoredIcon,
-
+        colorSignature: map['colorSignature'] as int,
+        iconSignature: 'iconSignature',
         lastDividendRound: map['lastDividendRound'] as int,
         totalShares: map['totalShares'] as int,
         availableShares: map['availableShares'] as int,
