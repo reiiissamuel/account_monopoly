@@ -80,15 +80,21 @@ flutter:
 
     - jsondata/chances.json
 
-flutter_launcher_icons:
+flutter_icons:
   # Define o caminho para a sua imagem PNG de alta resolução.
-  image_path: "icons/apptheme.png"
-
-  # Habilita a geração para Android (true ou false)
-  android: true
-
-  # Habilita a geração para iOS (true ou false)
-  ios: true
+  image_path: "icons/apptheme.png" # Onde você vai colocar a sua imagem master (alta resolução, ex: 1024x1024)
+  
+  android: true   # Gera para APK / App Bundle
+  ios: true       # Gera para Apple (iPhone/iPad)
+  web:
+    generate: true
+    image_path: "icons/apptheme.png"
+  windows:
+    generate: true
+    image_path: "icons/apptheme.png"
+  macos:
+    generate: true
+    image_path: "icons/apptheme.png"
 
   # Opcional para Android: Mudar o ícone adaptativo (Android 8.0+)
   # foreground_image: "assets/icon/app_icon_foreground.png"
