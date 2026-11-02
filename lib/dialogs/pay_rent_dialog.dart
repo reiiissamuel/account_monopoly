@@ -1,11 +1,15 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/property_type.dart';
+import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/utils/tutorial_manager.dart';
 import 'package:account_monopoly/widgets/counter_stepper.dart';
 import 'package:flutter/material.dart';
+import 'package:showcaseview/showcaseview.dart';
+import 'package:account_monopoly/utils/tutorial_fake_objetcs.dart';
 
 class PayRentDialog extends StatefulWidget {
   final GameProvider provider;
@@ -17,30 +21,36 @@ class PayRentDialog extends StatefulWidget {
 }
 
 class _PayRentDialogState extends State<PayRentDialog> {
+  
+  final _payRentDialogTutorialManager = TutorialManager.payRentDialog();
   late Property _selectedProperty;
   List<Property> _properties = [];
   late GameProvider _provider;
   int _multiplier = 2; 
   late double _rentToPay;
 
-  static const int _minMultiplier = 2; 
+  int _minMultiplier = 2; 
 
   @override
   void initState() {
     super.initState();
     _provider = widget.provider;
+    _loadProperties();
+  }
 
-    // Filtra apenas as propriedades que já foram compradas (onde availableShares < totalShares)
+  // Filtra apenas as propriedades que já foram compradas (onde availableShares < totalShares)
+  void _loadProperties() {
     _properties = widget.properties
         .where((property) => property.availableShares < property.totalShares)
         .toList();
 
     if (_properties.isNotEmpty) {
       _selectedProperty = _properties.first;
+      _multiplier = _minMultiplier;
       _rentToPay = _calculateRent(_selectedProperty, _multiplier);
     }
   }
-  
+
   double _calculateRent(Property property, int multiplier) {
     if (property.propertyType == PropertyType.reit) {
       return property.currentRent;
@@ -58,23 +68,69 @@ class _PayRentDialogState extends State<PayRentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasValidProperties = _properties.isNotEmpty;
 
-    return AlertDialog(
-      backgroundColor: Theme.of(context).primaryColor,
-      title: const Text(
-        "💸 Pagamento de aluguel",
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-        textAlign: TextAlign.center,
-      ),
-      content: hasValidProperties
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
+    return ShowCaseWidget(
+      // descarta a fake e volta às propriedades reais
+      onFinish: () {
+        if (mounted) setState(_loadProperties);
+      },
+      builder: (showCaseContext) {
+
+      if (!_provider.isPayRentDialogOnBoarded) {
+        _provider.userModelController
+            .setOnBoardedOnScreen(isPayRentDialogOnBoarded: true);
+
+        // O multiplicador só existe em propriedades stocks. Sem uma delas, o passo
+        // do multiplicador ficaria sem alvo, então entra a fake.
+        if (!_properties.any((p) => p.propertyType == PropertyType.stocks)) {
+          _properties.insert(0, TutorialFakeObjects.getFakeStocksProperty());
+        }
+        _selectedProperty = _properties.firstWhere((p) => p.propertyType == PropertyType.stocks);
+        _multiplier = _minMultiplier;
+        _rentToPay = _calculateRent(_selectedProperty, _multiplier);
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _payRentDialogTutorialManager.startTutorial(showCaseContext);
+        });
+      }
+
+      final bool hasValidProperties = _properties.isNotEmpty;
+      final Widget title = Row(
+        children: [
+          // espaço do tamanho do botão para manter o título centralizado
+          const SizedBox(width: 36),
+          const Expanded(
+            child: Text(
+              "💸 Pagamento de aluguel",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          GestureDetector(
+          child: SizedBox(
+            height: 20.0,
+            width: 20.0,
+            child: Icon(Icons.question_mark_rounded, color: Theme.of(context).colorScheme.onInverseSurface)
+          ),
+          onTap: (){
+            _provider.userModelController
+                        .setOnBoardedOnScreen(isPayRentDialogOnBoarded: false);
+            setState(() {}); // o dialog não escuta o provider, então reconstrói localmente
+          })
+        ],
+      );
+
+      final Widget content = hasValidProperties
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                children: [
                 const Divider(color: Colors.white70),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<Property>(
+                _payRentDialogTutorialManager.buildShowcase(
+                  type: TutorialItemType.payRentDialogList,
+                  child: DropdownButtonFormField<Property>(
+                  key: ValueKey(_selectedProperty.id),
                   initialValue: _selectedProperty,
                   decoration: InputDecoration(
                     labelText: "Propriedade",
@@ -108,64 +164,71 @@ class _PayRentDialogState extends State<PayRentDialog> {
                   ),
                   items: _properties.map<DropdownMenuItem<Property>>((Property property) {
                     return DropdownMenuItem<Property>(
-                      value: property,
+                              value: property,
                       child: Text(property.name, maxLines: 2),
                     );
                   }).toList(),
                   onChanged: (Property? newProperty) {
                     if (newProperty != null) {
-                      setState(() {
+                        setState(() {
                         _selectedProperty = newProperty;
                         _multiplier = _minMultiplier; 
-                        _updateRentToPay();
-                      });
-                    }
-                  },
+                          _updateRentToPay();
+                        });
+                      }
+                    },
+                  ),
                 ),
                 const SizedBox(height: 20),
                 if (_selectedProperty.propertyType == PropertyType.stocks) 
-                  CounterStepper(
-                    title: 'Multiplicador',
-                    minValue: _minMultiplier, 
-                    maxValue: 12,
-                    onChanged: (value) {
-                      setState(() {
-                        _multiplier = value;
-                        _updateRentToPay();
-                      });
-                    }, 
+                  _payRentDialogTutorialManager.buildShowcase(
+                    type: TutorialItemType.valueRentMultiplier,
+                    child: CounterStepper(
+                      title: 'Multiplicador',
+                      minValue: _minMultiplier, 
+                      maxValue: 12,
+                      onChanged: (value) {
+                        setState(() {
+                          _multiplier = value;
+                          _updateRentToPay();
+                        });
+                      }, 
+                    )
                   ),
                 _selectedProperty.propertyType != PropertyType.stocks 
                     ? const SizedBox(height: 5) 
                     : const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Valor do aluguel:", 
-                      style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    Container(
-                      width: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: .5)),
+                _payRentDialogTutorialManager.buildShowcase(
+                  type: TutorialItemType.valueRentViewer,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Valor do aluguel:", 
+                        style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(5.0),
-                        child: Text(
-                          StringUtils.currencyFormat(_rentToPay),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                          textAlign: TextAlign.center,
+                      Container(
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: .5)),
                         ),
-                      ),
-                    )
-                  ],
+                        child: Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Text(
+                            StringUtils.currencyFormat(_rentToPay),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    ],
+                  )
                 ),
                 const SizedBox(height: 17),
                 const Divider(color: Colors.white70),
@@ -185,11 +248,12 @@ class _PayRentDialogState extends State<PayRentDialog> {
                   ),
                 ],
               ),
-            ),
-      actions: <Widget>[
-        TextButton(
+            );
+
+      final List<Widget> actions = <Widget>[
+          TextButton(
           child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
-          onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(),
         ),
         if (hasValidProperties)
           ElevatedButton(
@@ -215,7 +279,35 @@ class _PayRentDialogState extends State<PayRentDialog> {
               Navigator.pop(context);
             },
           ),
-      ],
-    );
+        ];
+
+      // Dialog em vez de AlertDialog: o AlertDialog mede o conteúdo por dimensões
+      // intrínsecas, e o Showcase usa LayoutBuilder, que não suporta isso.
+      return Dialog(
+        backgroundColor: Theme.of(context).primaryColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                title,
+                const SizedBox(height: 16),
+                Flexible(child: SingleChildScrollView(child: content)),
+                const SizedBox(height: 24),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  children: actions,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 }

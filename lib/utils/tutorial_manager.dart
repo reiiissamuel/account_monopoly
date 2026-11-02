@@ -48,9 +48,11 @@ class TutorialManager {
         TutorialItemType.myPortfolioListView
       ]);
 
-  TutorialManager.home()
+  TutorialManager.payRentDialog()
       : this(const [
-          //TODO
+          TutorialItemType.payRentDialogList,
+          TutorialItemType.valueRentMultiplier,
+          TutorialItemType.valueRentViewer
         ]);
 
   Widget buildShowcase({

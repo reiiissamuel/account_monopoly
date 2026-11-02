@@ -27,7 +27,16 @@ enum TutorialItemType {
     myPortfolioListView(title:'Lista do Meu Portfólio', description: 'Aqui você verá todas as propriedades (ações) que você possui.\nNo quadro da propriedade você poderá ver detalhes e realizar ações como vender ou construir casas.'),
     
     //PlayersScreen Itens
-    playerListView(title:'Lista de Jogadores', description: 'Aqui você verá todos os jogadores do jogo e poderá, ao clicar no card, transferir dinheiro para eles.');
+    playerListView(title:'Lista de Jogadores', description: 'Aqui você verá todos os jogadores do jogo e poderá, ao clicar no card, transferir dinheiro para eles.'),
+    
+    //PayRentDialog Itens
+    payRentDialogList(title:'Pague seus aluguéis por aqui', description: 'Selecione nesta lista a propriedade para a qual deseja pagar o aluguel.'),
+    valueRentViewer(
+     title:'Aluguel a Pagar',
+     description: """Aqui será mostrado o valor atual do aluguel que você deverá pagar.
+    \nLembre-se que nesta versão de bolsa de valores, os alugueis sofrem variações constantes com base nos lucros das propriedades e construções nela presentes."""),
+    valueRentMultiplier(title:'Multiplicador do Aluguel', description: '''As propriedades do tipo companhias tem suporte de multiplicador com base no valor dos dados (regra válida na maior parte das versões de banco imobiliario).
+    \nSelecione o multiplicador com base no valor dos dados.''');
     
     final String title;
     final String description;

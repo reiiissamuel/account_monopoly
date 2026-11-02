@@ -1,14 +1,23 @@
 import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/financial_report.dart';
 import 'package:account_monopoly/domain/model/balance.dart';
+import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:flutter/material.dart';
+import 'package:account_monopoly/domain/enums/property_type.dart';
 import 'package:account_monopoly/domain/model/player.dart';
 
 abstract final class TutorialFakeObjects {
 
   TutorialFakeObjects._();
+
+  static final Property _fakeStocksProperty = Property(
+      id: "FAKE_PROPERTY",
+      name: "Propriedade A",
+      propertyType: PropertyType.stocks, basePrice: 200,
+      colorSignature: Colors.grey, iconSignature: const Icon(Icons.home), currentBuildingCost: 200,
+    );
 
   static final TradeOffer fakeTradeOffer = TradeOffer(
         offerId: "FAKE_PROPERTY",
@@ -39,5 +48,10 @@ abstract final class TutorialFakeObjects {
       loans: [],
      portfolio: {},
     );
+
+  static Property getFakeStocksProperty() {
+    _fakeStocksProperty.collectedRent = 45;
+    return _fakeStocksProperty;
+  }
 
 }
