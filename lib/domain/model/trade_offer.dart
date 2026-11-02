@@ -41,7 +41,7 @@ class TradeOffer {
     'askingPrice': askingPrice,
     'source': source.name,
     'currentMarketPrice': currentMarketPrice,
-    'colorSignature': colorSignature.value,
+    'colorSignature': colorSignature.toARGB32(),
     'propertyName': propertyName,
     'turnsToEnd': turnsToEnd,
   };

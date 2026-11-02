@@ -2,64 +2,118 @@
 
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/offer_type.dart';
+import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/domain/model/share_holder.dart';
 import 'package:account_monopoly/domain/model/shares_holder_summary.dart';
 import 'package:account_monopoly/domain/model/trade_offer.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/screens/property_details_screen.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/utils/tutorial_fake_objetcs.dart';
+import 'package:account_monopoly/utils/tutorial_manager.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 
-class MyPortfolioScreen extends StatelessWidget {
+class MyPortfolioScreen extends StatefulWidget {
   const MyPortfolioScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, child) {
-        final currentPlayer = gameProvider.currentPlayer;
-        List<MapEntry<String, ShareHolder>> currentPortfolio = currentPlayer.portfolio.entries.where((entry) => entry.value.sharesOwned > 0).toList();
+  State<MyPortfolioScreen> createState() => _MyPortfolioScreenState();
+}
 
-        return Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).primaryColor,
-            title: const Text("Minha Carteira", style: TextStyle(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.bold)),
-            centerTitle: true,
-          ),
-          body: Column(
-            children: [
-              // RESUMO SUPERIOR
-              _buildSummaryHeader(context, gameProvider.ledger.getSharesHolderSummary(currentPlayer.portfolio)),
-              
-              const SizedBox(height: 10),
-              
-              // LISTA DE ATIVOS
-              Expanded(
-                child: currentPortfolio.isEmpty
-                    ? _buildEmptyPortfolio(context)
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(10.0),
-                        itemCount: currentPortfolio.length,
-                        itemBuilder: (context, index) {
-                          return _portfolioTile(
-                              context,
-                              currentPortfolio[index].value,
-                              gameProvider);
-                        }),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
+  final _myPortfolioScreenTutorialManager = TutorialManager.myPortfolio();
+  List<MapEntry<String, ShareHolder>> currentPortfolio = [];
+
+  bool _isTutorialActive = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShowCaseWidget(
+      onFinish: () => setState(() => _isTutorialActive = false),
+      builder: (showCaseContext){
+      return Consumer<GameProvider>(
+        builder: (context, gameProvider, child) {
+
+          currentPortfolio = gameProvider.currentPlayer.portfolio.entries
+          .where((entry) => entry.value.sharesOwned > 0)
+          .toList();
+
+          if (!gameProvider.isMyPortfolioScreenOnBoarded) {
+            _isTutorialActive = true;
+            gameProvider.userModelController
+                .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _myPortfolioScreenTutorialManager.startTutorial(showCaseContext);
+            });
+          }
+
+          // a fake sobrevive aos rebuilds até o onFinish, só se a carteira continuar vazia
+          if (_isTutorialActive && currentPortfolio.isEmpty) {
+            currentPortfolio.add(MapEntry("FAKE_PROPERTY", TutorialFakeObjects.fakeShareHolder));
+          }
+
+          return Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+              title: Text("Minha Carteira", style: TextStyle(letterSpacing: 2, color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+              actions: [
+                TipIconButton(
+                  title: "Meu portfólio",
+                  tip: TipsResourse.BENEFICIARIES_SCREEN,
+                  onConfirm: () {
+                    gameProvider.userModelController
+                        .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: false);
+                    gameProvider.notifyChanges(false);
+                  }
+                )
+              ],
+            ),
+            body: Builder(builder: (scaffoldContext) {
+              return Column(
+                children: [
+                  // RESUMO SUPERIOR
+                  _myPortfolioScreenTutorialManager.buildShowcase(
+                    type: TutorialItemType.myPortfolioSummaryView,
+                    child: _buildSummaryHeader(context, gameProvider.ledger.getSharesHolderSummary(gameProvider.currentPlayer.portfolio))
+                  ),
+                  
+                  const SizedBox(height: 10),
+                  
+                  // LISTA DE ATIVOS
+                  Expanded(
+                    child: currentPortfolio.isEmpty
+                        ? _buildEmptyPortfolio(context)
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(10.0),
+                            itemCount: currentPortfolio.length,
+                            itemBuilder: (context, index) {
+                              final tile = _portfolioTile(scaffoldContext, currentPortfolio[index].value, gameProvider);
+                              return index == 0
+                                  ? _myPortfolioScreenTutorialManager.buildShowcase(
+                                      type: TutorialItemType.myPortfolioListView,
+                                      child: tile,
+                                    )
+                                  : tile;
+                            }),
+                  ),
+                ],
+              );
+            }));
+        },
+      );
+    });}
 
   // --- WIDGETS DE CONSTRUÇÃO ---
 
@@ -88,7 +142,7 @@ class MyPortfolioScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 13)),
           Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: valueColor)),
         ],
       ),
@@ -98,15 +152,18 @@ class MyPortfolioScreen extends StatelessWidget {
 
   // 2. TILE DE CADA ATIVO
   Widget _portfolioTile(BuildContext context, ShareHolder item, GameProvider gameProvider) {
+    // property é null no item de exemplo do tutorial
     final property = gameProvider.ledger.properties[item.propertyId];
-    final Color pnlColor = item.getProfitPercentage(property!.sharePrice) >= 0 ? Colors.green : Colors.red;
+    final sharePrice = property?.sharePrice ?? item.averageCostPerShare;
+    final Color baseColor = property?.colorSignature ?? Colors.grey;
+    final Color pnlColor = item.getProfitPercentage(sharePrice) >= 0 ? Colors.green : Colors.red;
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       padding: const EdgeInsets.all(15.0),
       decoration: BoxDecoration(
-        color: property.colorSignature.withValues(alpha: .8),
+        color: baseColor.withValues(alpha: .8),
         borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: property.colorSignature.withValues(alpha: .5)),
+        border: Border.all(color: baseColor.withValues(alpha: .5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,20 +172,20 @@ class MyPortfolioScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(property.name, style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-              Text("${item.sharesOwned} Ações", style: const TextStyle(color: Colors.white70, fontSize: 18)),
+              Text("${property?.name ?? 'Propriedade A'} (${item.propertyId})" , style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
+              Text("${item.sharesOwned} Ações", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18)),
             ],
           ),
-          const Divider(color: Colors.white70),
+          Divider(color: Theme.of(context).colorScheme.onInverseSurface),
 
           // P&L
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn("Lucro: ", StringUtils.currencyFormat(item.getNetProfit(property.sharePrice)), pnlColor),
+              _buildInfoColumn("Lucro: ", StringUtils.currencyFormat(item.getNetProfit(sharePrice)), pnlColor),
               _buildInfoColumn("Proventos recebidos: ", StringUtils.currencyFormat(item.dividendsReceived), pnlColor),
               //_buildInfoColumn("Lucro por ação: ", StringUtils.currencyFormat(item.getNetProfitPerShare(property.sharePrice)), pnlColor),
-              _buildInfoColumn("Variação %", "${item.getProfitPercentage(property.sharePrice).toStringAsFixed(2)}%", pnlColor),
+              _buildInfoColumn("Variação %", "${item.getProfitPercentage(sharePrice).toStringAsFixed(2)}%", pnlColor),
             ],
           ),
           const SizedBox(height: 10),
@@ -137,9 +194,9 @@ class MyPortfolioScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Colors.white70),
-              _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Colors.white70),
-              _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(property.sharePrice), Colors.yellow),
+              _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Theme.of(context).colorScheme.onInverseSurface),
+              _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Theme.of(context).colorScheme.onInverseSurface),
+              _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(sharePrice), Colors.yellow),
             ],
           ),
           const SizedBox(height: 10),
@@ -150,9 +207,9 @@ class MyPortfolioScreen extends StatelessWidget {
             children: [
               _buildInfoColumn(
                   "Última distribuição",
-                  "Rodada ${property.lastDividendRound}", Colors.white70),
+                  "Rodada ${property?.lastDividendRound ?? 0}", Theme.of(context).colorScheme.onInverseSurface),
 
-              if(property.checkMajorOwnerById(gameProvider.currentPlayer.id)) ...[
+              if(property?.checkMajorOwnerById(gameProvider.currentPlayer.id) ?? false) ...[
                 const SizedBox(
                   height: 50,
                   width: 180,
@@ -180,7 +237,7 @@ class MyPortfolioScreen extends StatelessWidget {
               OutlinedButton.icon(
                 icon: const Icon(Icons.info_outline, color: Colors.white),
                 label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white70)),
+                style: OutlinedButton.styleFrom(side: BorderSide(color: Theme.of(context).colorScheme.onInverseSurface)),
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -197,7 +254,7 @@ class MyPortfolioScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white),
                 onPressed: () {
                   // Ação: Abrir diálogo para criar oferta de venda (P2P)
-                  _showSellSharesDialog(context, item, gameProvider, property);
+                  _showSellSharesDialog(context, item, gameProvider, property!);
                 },
               ),
             ],
@@ -226,7 +283,7 @@ class MyPortfolioScreen extends StatelessWidget {
         children: [
           Icon(Icons.pie_chart_outline, size: 80.0, color: Theme.of(context).primaryColor),
           const SizedBox(height: 20),
-          const Text("Sua carteira está vazia!", style: TextStyle(color: Colors.white70, fontSize: 18)),
+          Text("Sua carteira está vazia!", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18)),
           const Text("Compre ações no Mercado para começar a investir.", style: TextStyle(color: Colors.white54, fontSize: 14)),
         ],
       ),
@@ -252,15 +309,15 @@ class MyPortfolioScreen extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Ações disponíveis: ${item.sharesOwned}"),
+              Text("Ações disponíveis: ${item.sharesOwned}", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface)),
               Text("Custo Médio: ${StringUtils.currencyFormat(item.averageCostPerShare)}",
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface)
               ),
               const SizedBox(height: 15),
               TextField(
                 controller: quantityController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Quantidade de Ações", "Ex:10"),
+                decoration: _getInputDecoration("Quantidade de Ações", "Ex:10", context),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly
                 ]
@@ -269,7 +326,7 @@ class MyPortfolioScreen extends StatelessWidget {
               TextField(
                 controller: priceController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Preço por ação", "Ex:100,00"),
+                decoration: _getInputDecoration("Preço por ação", "Ex:100,00", context),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   StringUtils()
@@ -279,7 +336,7 @@ class MyPortfolioScreen extends StatelessWidget {
               TextField(
                 controller: turnController,
                 keyboardType: TextInputType.number,
-                decoration: _getInputDecoration("Duração da oferta (Rodadas)", "5"),
+                decoration: _getInputDecoration("Duração da oferta (Rodadas)", "5", context),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly
                 ]
@@ -288,11 +345,12 @@ class MyPortfolioScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
+              child: Text("Cancelar", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
-              child: Text("Criar Oferta", style: TextStyle(color: Theme.of(context).primaryColor)),
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.onInverseSurface),
+              child: Text("Criar Oferta", style: TextStyle(color: Theme.of(context).colorScheme.outline)),
               onPressed: () {
                 try {
                   final int? quantity = int.tryParse(quantityController.text);
@@ -330,28 +388,28 @@ class MyPortfolioScreen extends StatelessWidget {
     );
   }
 
-  InputDecoration _getInputDecoration(String labelText, String hintText){
+  InputDecoration _getInputDecoration(String labelText, String hintText, BuildContext context){
     return InputDecoration(
         labelText: labelText,
         hintText: hintText,
-        labelStyle: const TextStyle(color: Colors.white54),
+        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
         hoverColor: Colors.white,
-        focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(20.0)),
             borderSide: BorderSide(
-                color: Colors.white, width: 5.0
+                color: Theme.of(context).colorScheme.onInverseSurface, width: 5.0
             )
         ),
-        disabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+        disabledBorder: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(20.0)),
             borderSide: BorderSide(
-                color: Colors.blueGrey, width: 3.0
+                color: Theme.of(context).colorScheme.outlineVariant, width: 3.0
             )
         ),
-        border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+        border: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(20.0)),
             borderSide: BorderSide(
-                color: Colors.blueGrey, width: 3.0
+                color: Theme.of(context).colorScheme.outline, width: 3.0
             )
         )
     );

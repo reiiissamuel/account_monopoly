@@ -42,7 +42,7 @@
     {
       "name": "Mandato de Prizão",
       "id": 6,
-      "description": "Só é crime se te pegarem, certo?\n...\n\"Então, pegaram! Vá para prizão!\"",
+      "description": "Só é crime se te pegarem, certo?\n...\n\"Então, pegaram! Vá para prisão!\"",
       "effect": 0,
       "incoming": null,
       "isbenefit": false

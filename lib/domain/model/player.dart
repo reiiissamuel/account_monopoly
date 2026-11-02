@@ -22,8 +22,8 @@ class Player {
   double currentCredit;
   double incomeTax;
   double taxRefund;
-  double receivedFrom; //TODO variaveis não mais utilizdas
-  double payedTo; //TODO variaveis não mais utilizdas
+  double receivedFrom;
+  double payedTo;
   Balance roundBalance;
   bool youWon = false;
   bool youBankrupt = false;
@@ -142,6 +142,7 @@ void receiveCredit(double amount, double incomeTaxRate) {
   if (amount > 0) {
     currentCredit += amount;
     incomeTax += amount * incomeTaxRate;
+    receivedFrom += amount - (amount * incomeTaxRate);
   }
 }
 
@@ -149,6 +150,8 @@ void receiveCredit(double amount, double incomeTaxRate) {
     _checkIfEnoughCredit(amount);
     if (amount > 0) {
       currentCredit -= amount;
+      payedTo += amount;
+
     }
   }
 

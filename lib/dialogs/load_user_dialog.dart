@@ -13,24 +13,24 @@ class LoadUserDialog extends StatefulWidget {
 class LoadUserDialogState extends State<LoadUserDialog> {
   String? _dropdownValue;
 
-  static const String CREATE_USER_LABEL = "Criar novo usuário";
-  static const String SELECT_ONEOF_LABEL = "Selecionar";
+  static const String createUserLabel = "Criar novo usuário";
+  static const String selectOneOfLabel = "Selecionar";
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     List<String> displayUsernames = userProvider.allUsers.map((user) => user.username).toList();
-    displayUsernames.insert(0, CREATE_USER_LABEL);
-    displayUsernames.insert(0, SELECT_ONEOF_LABEL);
+    displayUsernames.insert(0, createUserLabel);
+    displayUsernames.insert(0, selectOneOfLabel);
 
     // Garante que _dropdownValue seja um valor válido da nova lista
     if (_dropdownValue == null || _dropdownValue!.isEmpty  || !displayUsernames.contains(_dropdownValue)) {
-      _dropdownValue = SELECT_ONEOF_LABEL;
+      _dropdownValue = selectOneOfLabel;
     }
 
     // Filtramos os itens que devem ter o botão de exclusão
     final List<String> selectableUsers = displayUsernames.where((name) =>
-      name != CREATE_USER_LABEL && name != SELECT_ONEOF_LABEL
+      name != createUserLabel && name != selectOneOfLabel
     ).toList();
 
     return Dialog(
@@ -72,14 +72,14 @@ class LoadUserDialogState extends State<LoadUserDialog> {
                   onChanged: (String? value) {
                     setState(() {
                       _dropdownValue = value;
-                      if (_dropdownValue == CREATE_USER_LABEL) {
+                      if (_dropdownValue == createUserLabel) {
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return const NewUserDialog();
                           },
                         );
-                      } else if (_dropdownValue != SELECT_ONEOF_LABEL) {
+                      } else if (_dropdownValue != selectOneOfLabel) {
                         userProvider.signIn(
                           userModelDTO: userProvider.allUsers.firstWhere((u) => u.username == _dropdownValue),
                         );

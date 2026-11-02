@@ -12,8 +12,9 @@ class GameBalanceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Relatório financeiro", style: TextStyle(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text("Relatório financeiro", style: TextStyle(letterSpacing: 2, color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
         centerTitle: true,
+        foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
         backgroundColor: Theme.of(context).primaryColor,
       ),
       backgroundColor: Colors.black,
