@@ -5,6 +5,7 @@ import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/configs_constants.dart';
+import 'package:account_monopoly/utils/icon_data_extension.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/chart_property_report.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
@@ -55,7 +56,7 @@ double _propertyReserveUsage = 0;
     return Scaffold(
      backgroundColor: Colors.black,
      appBar: AppBar(
-      backgroundColor: property.colorSignature,
+      backgroundColor: Color(property.colorSignature),
       title: Text(property.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       centerTitle: true,
       iconTheme: const IconThemeData(color: Colors.white),
@@ -114,13 +115,13 @@ double _propertyReserveUsage = 0;
  }
 
  // --- WIDGETS AUXILIARES ---
- Widget _buildSectionTitle(String title, Color color) {
+ Widget _buildSectionTitle(String title, int colorSignature) {
   return Padding(
    padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
    child: Text(
     title,
     style: TextStyle(
-     color: color, 
+     color: Color(colorSignature), 
      fontSize: 18, 
      fontWeight: FontWeight.bold,
      letterSpacing: 1.2
@@ -134,13 +135,13 @@ double _propertyReserveUsage = 0;
   return Container(
    padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
    decoration: BoxDecoration(
-    color: property.colorSignature.withOpacity(0.15),
+    color: Color(property.colorSignature).withOpacity(0.15),
     borderRadius: BorderRadius.circular(10.0),
-    border: Border.all(color: property.colorSignature.withOpacity(0.5)),
+    border: Border.all(color: Color(property.colorSignature).withOpacity(0.5)),
    ),
    child: Row(
     children: [
-     Icon(property.iconSignature.icon, size: 40, color: property.colorSignature),
+     Icon(IconDataExtension.fromKey(property.iconSignature), size: 40, color: Color(property.colorSignature)),
      const SizedBox(width: 15),
      Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,9 +243,9 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
   return Container(
    padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
    decoration: BoxDecoration(
-    color: property.colorSignature.withValues(alpha: 0.15),
+    color: Color(property.colorSignature).withValues(alpha: 0.15),
     borderRadius: BorderRadius.circular(10.0),
-    border: Border.all(color: property.colorSignature.withValues(alpha: .5)),
+    border: Border.all(color: Color(property.colorSignature).withValues(alpha: .5)),
    ),
    child: Center(
     child: Column(
@@ -287,7 +288,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
         ),
         style: ElevatedButton.styleFrom(
          foregroundColor: Colors.white, 
-         backgroundColor: property.colorSignature,
+         backgroundColor: Color(property.colorSignature),
          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
          shadowColor: Colors.black,
          shape: RoundedRectangleBorder(

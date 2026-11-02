@@ -10,7 +10,7 @@ class TradeOffer {
   final double askingPrice;
   final OfferSource source;
   final double currentMarketPrice;
-  final Color colorSignature;
+  final int colorSignature;
   final String propertyName;
   int turnsToEnd;
 
@@ -41,7 +41,7 @@ class TradeOffer {
     'askingPrice': askingPrice,
     'source': source.name,
     'currentMarketPrice': currentMarketPrice,
-    'colorSignature': colorSignature.toARGB32(),
+    'colorSignature': colorSignature,
     'propertyName': propertyName,
     'turnsToEnd': turnsToEnd,
   };
@@ -57,7 +57,7 @@ class TradeOffer {
       askingPrice: (map['askingPrice'] as num).toDouble(),
       source: OfferSource.values.firstWhere((e) => e.name == map['source']),
       currentMarketPrice: (map['currentMarketPrice'] as num).toDouble(),
-      colorSignature: Color(map['colorSignature'] as int),
+      colorSignature: map['colorSignature'] as int,
       propertyName: map['propertyName'] as String,
       turnsToEnd: map['turnsToEnd'] as int,
     );
