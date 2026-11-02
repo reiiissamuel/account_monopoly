@@ -411,7 +411,7 @@ class GameScreenState extends State<GameScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            MyPortfolioScreen(),
+                                            const MyPortfolioScreen(),
                                       ),
                                     );
                                   },
