@@ -105,7 +105,7 @@ class LoanDialogState extends State<LoanDialog> {
 
               if(_selectedLoanType == LoanType.mortgage) ...[
                 // 1. SELEÇÃO DE GARANTIA
-                _buildCollateralDropdown(context, portfolio),
+                _buildCollateralDropdown(context, portfolio, gameProvider),
                 const SizedBox(height: 15)
               ],
 
@@ -187,7 +187,7 @@ class LoanDialogState extends State<LoanDialog> {
   }
 
   // Dropdown de Garantia Principal
-  Widget _buildCollateralDropdown(BuildContext context, List<ShareHolder> portfolio) {
+  Widget _buildCollateralDropdown(BuildContext context, List<ShareHolder> portfolio, GameProvider gameProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -210,7 +210,7 @@ class LoanDialogState extends State<LoanDialog> {
               items: portfolio.map((option) {
                 return DropdownMenuItem<ShareHolder>(
                   value: option,
-                  child: Text(option.propertyId,
+                  child: Text(gameProvider.ledger.properties[option.propertyId]!.name,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)
                   ),
                 );
