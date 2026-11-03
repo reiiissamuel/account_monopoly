@@ -141,9 +141,9 @@ double _propertyReserveUsage = 0;
   return Container(
    padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
    decoration: BoxDecoration(
-    color: Color(property.colorSignature).withOpacity(0.15),
+    color: Color(property.colorSignature).withValues(alpha:0.15),
     borderRadius: BorderRadius.circular(10.0),
-    border: Border.all(color: Color(property.colorSignature).withOpacity(0.5)),
+    border: Border.all(color: Color(property.colorSignature).withValues(alpha:0.5)),
    ),
    child: Row(
     children: [

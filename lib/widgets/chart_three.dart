@@ -233,7 +233,7 @@ class ChartThree extends StatelessWidget {
                     ),
                     borderData: FlBorderData(
                       show: true,
-                      border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+                      border: Border.all(color: Colors.grey.withValues(alpha:0.3), width: 1),
                     ),
                     lineTouchData: LineTouchData(
                       enabled: true,
