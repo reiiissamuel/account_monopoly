@@ -152,118 +152,153 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
 
   // 2. TILE DE CADA ATIVO
   Widget _portfolioTile(BuildContext context, ShareHolder item, GameProvider gameProvider) {
-    // property é null no item de exemplo do tutorial
-    final property = gameProvider.ledger.properties[item.propertyId];
-    final sharePrice = property?.sharePrice ?? item.averageCostPerShare;
-    final Color baseColor = Color(property?.colorSignature ?? Colors.grey.toARGB32());
-    final Color pnlColor = item.getProfitPercentage(sharePrice) >= 0 ? Colors.green : Colors.red;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      padding: const EdgeInsets.all(15.0),
-      decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: .8),
-        borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: baseColor.withValues(alpha: .5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // NOME & QTD
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("${property?.name ?? 'Propriedade A'} (${item.propertyId})" , style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold)),
-              Text("${item.sharesOwned} Ações", style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 18)),
-            ],
-          ),
-          Divider(color: Theme.of(context).colorScheme.onInverseSurface),
-
-          // P&L
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildInfoColumn("Lucro: ", StringUtils.currencyFormat(item.getNetProfit(sharePrice)), pnlColor),
-              _buildInfoColumn("Proventos recebidos: ", StringUtils.currencyFormat(item.dividendsReceived), pnlColor),
-              //_buildInfoColumn("Lucro por ação: ", StringUtils.currencyFormat(item.getNetProfitPerShare(property.sharePrice)), pnlColor),
-              _buildInfoColumn("Variação %", "${item.getProfitPercentage(sharePrice).toStringAsFixed(2)}%", pnlColor),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // CUSTO E VALOR ATUAL
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Theme.of(context).colorScheme.onInverseSurface),
-              _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Theme.of(context).colorScheme.onInverseSurface),
-              _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(sharePrice), Colors.yellow),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Extra
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildInfoColumn(
-                  "Última distribuição",
-                  "Rodada ${property?.lastDividendRound ?? 0}", Theme.of(context).colorScheme.onInverseSurface),
-
-              if(property?.checkMajorOwnerById(gameProvider.currentPlayer.id) ?? false) ...[
-                const SizedBox(
-                  height: 50,
-                  width: 180,
-                  child: Text("👨‍💼 Você é o maior acionista desta empresa",
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 13
+  // property é null no item de exemplo do tutorial
+  final Property property = gameProvider.ledger.properties[item.propertyId]!;
+  final sharePrice = property.sharePrice;
+  final Color baseColor = Color(property.colorSignature);
+  final Color pnlColor = item.getProfitPercentage(sharePrice) >= 0 ? Colors.green : Colors.red;
+  
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12.0),
+    padding: const EdgeInsets.all(15.0),
+    decoration: BoxDecoration(
+      color: baseColor.withValues(alpha: .8),
+      borderRadius: BorderRadius.circular(10.0),
+      border: Border.all(color: baseColor.withValues(alpha: .5)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // NOME & QTD (Ajustado com Expanded para evitar overflow)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.propertyId,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                      color: Theme.of(context).colorScheme.onInverseSurface,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                )
-              ]
-            ],
-          ),
-          
-          const SizedBox(height: 15),
-          
-          // BOTÕES DE AÇÃO
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // BOTÃO DE DETALHES
-              OutlinedButton.icon(
-                icon: const Icon(Icons.info_outline, color: Colors.white),
-                label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
-                style: OutlinedButton.styleFrom(side: BorderSide(color: Theme.of(context).colorScheme.onInverseSurface)),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => PropertyDetailsScreen(propertyId: item.propertyId),
+                  Text(
+                    property.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                      color: Theme.of(context).colorScheme.onInverseSurface,
+                      fontWeight: FontWeight.bold, 
+                      fontSize: property.name.length > 20 ? 17 : 20,
                     ),
-                  );
-                },
+                  )
+                ],
               ),
-              const SizedBox(width: 8),
-              // BOTÃO DE VENDER (CRIAR OFERTA P2P)
-              ElevatedButton.icon(
-                icon: const Icon(Icons.sell),
-                label: const Text("VENDER"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white),
-                onPressed: () {
-                  // Ação: Abrir diálogo para criar oferta de venda (P2P)
-                  _showSellSharesDialog(context, item, gameProvider, property!);
-                },
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "${item.sharesOwned} Ações", 
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onInverseSurface, 
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+        Divider(color: Theme.of(context).colorScheme.onInverseSurface),
 
+        // P&L
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildInfoColumn("Lucro: ", StringUtils.currencyFormat(item.getNetProfit(sharePrice)), pnlColor),
+            _buildInfoColumn("Proventos recebidos: ", StringUtils.currencyFormat(item.dividendsReceived), pnlColor),
+            _buildInfoColumn("Variação %", "${item.getProfitPercentage(sharePrice).toStringAsFixed(2)}%", pnlColor),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // CUSTO E VALOR ATUAL
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildInfoColumn("Custo Médio", StringUtils.currencyFormat(item.averageCostPerShare), Theme.of(context).colorScheme.onInverseSurface),
+            _buildInfoColumn("Valor investido", StringUtils.currencyFormat(item.averageCostPerShare * item.sharesOwned), Theme.of(context).colorScheme.onInverseSurface),
+            _buildInfoColumn("Valor Atual", StringUtils.currencyFormat(sharePrice), Colors.yellow),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // Extra (Ajustado com Flex/Expanded para quebrar com segurança se necessário)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: _buildInfoColumn(
+                "Última distribuição",
+                "Rodada ${property.lastDividendRound}", 
+                Theme.of(context).colorScheme.onInverseSurface,
+              ),
+            ),
+
+            if (property.checkMajorOwnerById(gameProvider.currentPlayer.id)) ...[
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  "👨‍💼 Maior acionista",
+                  textAlign: TextAlign.right,
+                  maxLines: 2,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ]
+          ],
+        ),
+        
+        const SizedBox(height: 15),
+        
+        // BOTÕES DE AÇÃO
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // BOTÃO DE DETALHES
+            OutlinedButton.icon(
+              icon: const Icon(Icons.info_outline, color: Colors.white),
+              label: const Text("Detalhes", style: TextStyle(color: Colors.white)),
+              style: OutlinedButton.styleFrom(side: BorderSide(color: Theme.of(context).colorScheme.onInverseSurface)),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PropertyDetailsScreen(propertyId: item.propertyId),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            // BOTÃO DE VENDER (CRIAR OFERTA P2P)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.sell),
+              label: const Text("VENDER"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white),
+              onPressed: () {
+                _showSellSharesDialog(context, item, gameProvider, property);
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
   // Helper para colunas de informação no tile
   Widget _buildInfoColumn(String label, String value, Color color) {
     return Column(

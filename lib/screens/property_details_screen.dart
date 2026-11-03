@@ -57,7 +57,13 @@ double _propertyReserveUsage = 0;
      backgroundColor: Colors.black,
      appBar: AppBar(
       backgroundColor: Color(property.colorSignature),
-      title: Text(property.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      title: Text(
+        property.name,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: property.name.length > 20 ? 17 : 20)
+      ),
       centerTitle: true,
       iconTheme: const IconThemeData(color: Colors.white),
       actionsPadding: const EdgeInsets.all(5),
