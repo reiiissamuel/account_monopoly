@@ -82,6 +82,13 @@ class TutorialManager {
           TutorialItemType.hystoricalSharePriceCard,
           TutorialItemType.payoutEditorCard,
         ]);
+  
+  TutorialManager.loanDialog()
+      : this(const [
+        TutorialItemType.selectLoanTypeDropdown,
+        TutorialItemType.availableLoanValue,
+        TutorialItemType.totalValueToPay
+      ]);
 
   Widget buildShowcase({
     required TutorialItemType type,

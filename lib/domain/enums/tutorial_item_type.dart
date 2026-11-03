@@ -58,8 +58,12 @@ enum TutorialItemType {
     marketStatusCard(title:'Status do Mercado', description: 'Este card apresenta um detalhamento de informações de construções, valores e custo da propriedade selecionada.'),
     rentabilyMarkerCard(title:'Marcador de Rentabilidade', description: 'Aqui você terá informações atualizadas sobre a rentabilidade da propriedade selecionada.'),
     hystoricalSharePriceCard(title:'Histórico de Preço das Ações', description: 'Aqui você pode ver o histórico de preço das ações da propriedade ao longo das rodadas.'),
-    payoutEditorCard(title:'Editor de porcentagem de Pagamentos', description: 'Aqui você poderá editar a porcentagem dos lucros que serão distribuídos aos jogadores que possuem ações da propriedade selecionada.\nOBS.: Essa edição só poderá ser feita pelo jogador com a maior quantidade de ações disponíveis da propriedade.');
+    payoutEditorCard(title:'Editor de porcentagem de Pagamentos', description: 'Aqui você poderá editar a porcentagem dos lucros que serão distribuídos aos jogadores que possuem ações da propriedade selecionada.\nOBS.: Essa edição só poderá ser feita pelo jogador com a maior quantidade de ações disponíveis da propriedade.'),
 
+    //LoanDialog Itens
+    selectLoanTypeDropdown(title:'Tipo de Empréstimo', description: 'Você selecionar entre dois tipos de empréstimos:\nUm oferecendo as ações de uma propriedade a sua escolha como garantia e o outro da como garantia o seu bonus da rodada.'),
+    availableLoanValue(title:'Valor Disponível do Empréstimo', description: 'Com base nas opções de empréstimo selecionadas, aqui você verá o valor disponível para o empréstimo.'),
+    totalValueToPay(title:'Valor Total a Pagar', description: 'Aqui você verá o valor total que precisará pagar referente ao empréstimo selecionado.');
     
     final String title;
     final String description;

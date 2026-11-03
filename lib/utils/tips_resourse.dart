@@ -25,4 +25,6 @@ class TipsResourse{
   static String get PLAYER_SUMMARY_SCREEN => "Nesta tela você poderá visualizar o resumo financeiro do jogador, incluindo ganhos, despesas, impostos e status dos empréstimos ativos.";
   
   static String get PROPERTY_DETAILS_SCREEN => "Nesta tela você poderá visualizar os detalhes de uma propriedade, incluindo status de mercado, fluxo de renda, histórico de ações e opções de construção.";
+
+  static String get LOAN_DIALOG => "Nesta tela você poderá solicitar empréstimos, escolher o tipo de empréstimo, definir garantias e visualizar os detalhes do valor a pagar.";
 }
