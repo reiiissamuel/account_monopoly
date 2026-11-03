@@ -47,16 +47,20 @@ class TipIconButton extends StatelessWidget {
                     Navigator.of(context).pop();
                   },
                 ),
+                const SizedBox(width: 3, height: 3),
                 // define os botões na base do dialogo
-                ElevatedButton(
-                  child: Text("Rever tutorial na tela",style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    if (onConfirm != null) {
-                      onConfirm!();
-                    }
-                  },
-                ),
+                if (onConfirm != null) 
+                  ElevatedButton(
+                    child: Text(
+                      "Rever tutorial",
+                      style: TextStyle(fontSize: 17.0, letterSpacing: 2.0, color: Theme.of(context).primaryColor)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      if (onConfirm != null) {
+                        onConfirm!();
+                      }
+                    },
+                  )
               ],
             );
           });
