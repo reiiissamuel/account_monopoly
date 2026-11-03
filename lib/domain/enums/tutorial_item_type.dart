@@ -36,7 +36,21 @@ enum TutorialItemType {
      description: """Aqui será mostrado o valor atual do aluguel que você deverá pagar.
     \nLembre-se que nesta versão de bolsa de valores, os alugueis sofrem variações constantes com base nos lucros das propriedades e construções nela presentes."""),
     valueRentMultiplier(title:'Multiplicador do Aluguel', description: '''As propriedades do tipo companhias tem suporte de multiplicador com base no valor dos dados (regra válida na maior parte das versões de banco imobiliario).
-    \nSelecione o multiplicador com base no valor dos dados.''');
+    \nSelecione o multiplicador com base no valor dos dados.'''),
+
+    //MyFinancialScreen Itens
+    actionsRedirectsSession(title:'Ações', description: 'Nesta seção você poderá ir para tela do seu portfólio, ou ir para tela de transferências ou ainda acessar seus gráficos detalhados'),
+    totalBalanceSession(title:'Total Entradas e Saídas', description: 'Aqui você verá o total de entradas e saídas financeiras em toda a sua trajetória no jogo.'),
+    taxesSession(title:'Impostos', description: 'Na seção imposto você tem acesso ao total de imposto de renda que deverá pagar, bem como o total de restituição disponível referente ao último pagamento de imposto de renda.\n\nVolte para principal, clique no icone "Mais" para selecionar as opções de pagamento de imposto de renda e solicitação de restituição.'),
+    activeLoansSession(title:'Empréstimos Ativos', description: 'Aqui você verá todos os empréstimos ativos que você e também poderá gerenciar seus pagamentos.'),
+
+    //MoreOptionsDialog Itens
+    payTaxesOption(title:'Pague seus impostos', description: 'Clique nesta opção sempre que for solicitado a pagar o imposto de renda.'),
+    requestTaxRefundOption(title:'Solicite restituição de impostos', description: 'Clique aqui quando for solicitado a receber sua restituição de imposto, ou logo após ter pago o seu imposto de renda.'),
+    requestPaymentOption(title:'Solicite Pagamento', description: 'Clique nesta opção sempre que o jogo lhe direcionar a receber algum pagamento.\nComo em cartas chance, sorte, sorte ou revés...'),
+    payToBankOption(title:'Pague ao Banco', description: 'Clique nesta opção sempre que o jogo lhe direcionar a realizar um pagamento ao banco.\nComo em cartas chance, sorte, sorte ou revés...'),
+    requestRoundBonusOption(title:'Solicite Bônus de Rodada', description: 'Clique aqui toda vez que você completar uma volta no tabuleiro.'),
+    goToMyBenefitsOption(title:'Meus Benefícios', description: 'Clique aqui para ver seus benefícios ativos');
     
     final String title;
     final String description;

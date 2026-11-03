@@ -27,11 +27,14 @@ class UserModelDTO{
   bool isMyPortfolioScreenOnBoarded;
   bool isPlayersScreenOnBoarded;
   bool isPayRentDialogOnBoarded;
+  bool isMyFinancialScreenOnBoarded;
+  bool isMoreOptionsDialogOnBoarded;
 
   UserModelDTO({this.id, required this.name, required this.username, required this.lastLogged,
    required this.games, this.propertiesVersion, this.primaryColorValue = ConfigsConstants.defaultPrimaryColorValue,
     this.isGameScreenOnBoarded = false, this.isHomeScreenOnBoarded = false, this.isMarketScreenOnBoarded = false,
-     this.isMyPortfolioScreenOnBoarded = false, this.isPlayersScreenOnBoarded = false, this.isPayRentDialogOnBoarded = false});
+     this.isMyPortfolioScreenOnBoarded = false, this.isPlayersScreenOnBoarded = false, this.isPayRentDialogOnBoarded = false,
+      this.isMyFinancialScreenOnBoarded = false, this.isMoreOptionsDialogOnBoarded = false});
 
 // Método de SERIALIZAÇÃO (toDoMap) - NOVO E CORRIGIDO
   Map<String, dynamic> toMap() {
@@ -56,7 +59,9 @@ class UserModelDTO{
       'isMarketScreenOnBoarded': isMarketScreenOnBoarded,
       'isMyPortfolioScreenOnBoarded': isMyPortfolioScreenOnBoarded,
       'isPlayersScreenOnBoarded': isPlayersScreenOnBoarded,
-      'isPayRentDialogOnBoarded': isPayRentDialogOnBoarded
+      'isPayRentDialogOnBoarded': isPayRentDialogOnBoarded,
+      'isMyFinancialScreenOnBoarded': isMyFinancialScreenOnBoarded,
+      'isMoreOptionsDialogOnBoarded': isMoreOptionsDialogOnBoarded
     };
   }
 
@@ -104,7 +109,9 @@ class UserModelDTO{
       isMarketScreenOnBoarded: map['isMarketScreenOnBoarded'] as bool? ?? false,
       isMyPortfolioScreenOnBoarded: map['isMyPortfolioScreenOnBoarded'] as bool? ?? false,
       isPlayersScreenOnBoarded: map['isPlayersScreenOnBoarded'] as bool? ?? false,
-      isPayRentDialogOnBoarded: map['isPayRentDialogOnBoarded'] as bool? ?? false
+      isPayRentDialogOnBoarded: map['isPayRentDialogOnBoarded'] as bool? ?? false,
+      isMyFinancialScreenOnBoarded: map['isMyFinancialScreenOnBoarded'] as bool? ?? false,
+      isMoreOptionsDialogOnBoarded: map['isMoreOptionsDialogOnBoarded'] as bool? ?? false
     );
   }
 
@@ -135,14 +142,17 @@ class UserProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  void setOnBoardedOnScreen({bool? isGameScreenOnBoarded, bool? isHomeScreenOnBoarded, bool? isMarketScreenOnBoarded, bool? isMyPortfolioScreenOnBoarded, bool? isPlayersScreenOnBoarded, bool? isPayRentDialogOnBoarded}) {
+  void setOnBoardedOnScreen({bool? isGameScreenOnBoarded, bool? isHomeScreenOnBoarded, bool? isMarketScreenOnBoarded, 
+  bool? isMyPortfolioScreenOnBoarded, bool? isPlayersScreenOnBoarded, bool? isPayRentDialogOnBoarded, bool? isMyFinancialScreenOnBoarded, bool? isMoreOptionsDialogOnBoarded}) {
     if (user == null) return;
     user!.isGameScreenOnBoarded = isGameScreenOnBoarded ?? user!.isGameScreenOnBoarded;
     user!.isHomeScreenOnBoarded = isHomeScreenOnBoarded ?? user!.isHomeScreenOnBoarded;
     user!.isMarketScreenOnBoarded = isMarketScreenOnBoarded ?? user!.isMarketScreenOnBoarded;
+    user!.isMoreOptionsDialogOnBoarded = isMoreOptionsDialogOnBoarded ?? user!.isMoreOptionsDialogOnBoarded;
     user!.isMyPortfolioScreenOnBoarded = isMyPortfolioScreenOnBoarded ?? user!.isMyPortfolioScreenOnBoarded;
     user!.isPlayersScreenOnBoarded = isPlayersScreenOnBoarded ?? user!.isPlayersScreenOnBoarded;
     user!.isPayRentDialogOnBoarded = isPayRentDialogOnBoarded ?? user!.isPayRentDialogOnBoarded;
+    user!.isMyFinancialScreenOnBoarded = isMyFinancialScreenOnBoarded ?? user!.isMyFinancialScreenOnBoarded;
   }
 
   Future<void> signUp(

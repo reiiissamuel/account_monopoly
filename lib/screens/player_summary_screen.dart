@@ -1,5 +1,6 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
+import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/domain/model/loan.dart';
 import 'package:account_monopoly/domain/model/player.dart'; // Certifique-se de que o modelo Player está acessível
 import 'package:account_monopoly/exception/domain_exception.dart';
@@ -8,9 +9,13 @@ import 'package:account_monopoly/screens/beneficiaries_screen.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
 import 'package:account_monopoly/screens/my_portfolio_screen.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/utils/tutorial_manager.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class PlayerSummaryScreen extends StatefulWidget {
   const PlayerSummaryScreen({super.key});
@@ -20,22 +25,25 @@ class PlayerSummaryScreen extends StatefulWidget {
 }
 
 class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
+  final _myFinancialScreenTutorialManager = TutorialManager.myFinancialScreen();
+  
   @override
   Widget build(BuildContext context) {
     // Usamos Consumer para reagir às mudanças no GameProvider e UserProvider
-    return Consumer<GameProvider>(
+    return ShowCaseWidget(builder: (showCaseContext){
+      return Consumer<GameProvider>(
         builder: (context, gameProvider, child) {
 
           // Assume que o jogador atual está no UserProvider, mas a lógica do GameProvider
           // para o 'currentPlayer' é mais segura neste contexto.
-          final Player? player = gameProvider.currentPlayer;
+          final Player player = gameProvider.currentPlayer;
           final Color primaryColor = Theme.of(context).primaryColor;
 
-          if (player == null) {
-            return Scaffold(
-              appBar: AppBar(title: const Text("Resumo do Jogador")),
-              body: const Center(child: Text("Carregando dados do jogador...")),
-            );
+          if (!gameProvider.isMyFinancialScreenOnBoarded) {
+            gameProvider.userModelController.setOnBoardedOnScreen(isMyFinancialScreenOnBoarded: true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _myFinancialScreenTutorialManager.startTutorial(showCaseContext);
+            });
           }
 
           return Scaffold(
@@ -47,8 +55,18 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                 // Você pode querer usar o nome do jogador se ele estiver disponível
                 "Resumo Financeiro",
                 style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold),
-              ) ),
+              )),
               iconTheme: const IconThemeData(color: Colors.white),
+              actions: [
+                TipIconButton(
+                  title: "Compra de ativos",
+                  tip: TipsResourse.PLAYER_SUMMARY_SCREEN,
+                  onConfirm: () {
+                    gameProvider.userModelController.setOnBoardedOnScreen(isMyFinancialScreenOnBoarded: false);
+                    gameProvider.notifyChanges(false);
+                  },
+                )
+              ],
             ),
 
             backgroundColor: Colors.black, // Fundo escuro para contraste
@@ -62,87 +80,118 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                   _buildCreditCard(context, player, primaryColor),
                   const SizedBox(height: 20),
                   Divider(color: Theme.of(context).colorScheme.onInverseSurface),
-
-                  _buildSectionTitle("Ações", Theme.of(context).colorScheme.onInverseSurface),
-                  const SizedBox(height: 10),
-                  Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      alignment: WrapAlignment.spaceBetween,
+                
+                  // 2. Ações rapidas
+                  _myFinancialScreenTutorialManager.buildShowcase(
+                    type: TutorialItemType.actionsRedirectsSession,
+                    child: Column(
                       children: [
-                        GameIconButtonBuilder(
-                            imgPath: "icons/wallet.png",
-                            title: "Minha carteira",
-                            textFontSize: 13,
-                            onPressed: (){
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => MyPortfolioScreen()));
-                            }
-                        ),
+                         _buildSectionTitle("Ações", Theme.of(context).colorScheme.onInverseSurface),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          alignment: WrapAlignment.spaceBetween,
+                          children: [
+                            GameIconButtonBuilder(
+                                imgPath: "icons/wallet.png",
+                                title: "Minha carteira",
+                                textFontSize: 13,
+                                onPressed: (){
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => MyPortfolioScreen()));
+                                }
+                            ),
 
-                        GameIconButtonBuilder(
-                            imgPath: "icons/pay.png",
-                            title: "Transferir",
-                            onPressed: (){
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const BeneficiariesScreen()));
-                            }
-                        ),
-                        GameIconButtonBuilder(
-                            imgPath: "icons/graph.png",
-                            title: "Relatórios",
-                            onPressed: (){
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
-                            }
+                            GameIconButtonBuilder(
+                                imgPath: "icons/pay.png",
+                                title: "Transferir",
+                                onPressed: (){
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const BeneficiariesScreen()));
+                                }
+                            ),
+                            GameIconButtonBuilder(
+                                imgPath: "icons/graph.png",
+                                title: "Relatórios",
+                                onPressed: (){
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const GameBalanceScreen()));
+                                }
+                            )
+                          ]
                         )
                       ]
+                    )
                   ),
                   const SizedBox(height: 10),
                   Divider(color: Theme.of(context).colorScheme.onInverseSurface),
-                  // 2. Títulos Financeiros
-                  _buildSectionTitle("Transações e Impostos", Theme.of(context).colorScheme.onInverseSurface),
-                  const SizedBox(height: 10),
-                  // 3. Totais Recebidos e Pagos
-                  _buildTransactionRow(
-                    icon: Icons.arrow_upward_rounded,
-                    label: "Total Recebido (Ganhos)",
-                    value: player.receivedFrom,
-                    color: Colors.greenAccent,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTransactionRow(
-                    icon: Icons.arrow_downward_rounded,
-                    label: "Total Pago (Despesas)",
-                    value: player.payedTo,
-                    color: Colors.redAccent,
-                  ),
+                    
+                  // 2. Totais Recebidos e Pagos
+                  _myFinancialScreenTutorialManager.buildShowcase(
+                    type: TutorialItemType.totalBalanceSession,
+                    child: Column(
+                      children: [
+                        _buildSectionTitle("Total Entradas e Saídas", Theme.of(context).colorScheme.onInverseSurface),
+                        const SizedBox(height: 10),
+                        _buildTransactionRow(
+                          icon: Icons.arrow_upward_rounded,
+                          label: "Total Recebido (Ganhos)",
+                          value: player.receivedFrom,
+                          color: Colors.greenAccent,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTransactionRow(
+                          icon: Icons.arrow_downward_rounded,
+                          label: "Total Pago (Despesas)",
+                          value: player.payedTo,
+                          color: Colors.redAccent,
+                        )
+                      ]
+                    )
+                  ), 
                   const SizedBox(height: 20),
                   Divider(color: Theme.of(context).colorScheme.onInverseSurface),
 
-                  // 4. Seção de Impostos
-                  _buildSectionTitle("Situação Fiscal", Theme.of(context).colorScheme.onInverseSurface),
-                  const SizedBox(height: 10),
-
-                  _buildTaxRow(
-                    icon: Icons.gavel,
-                    label: "Imposto de Renda (IR)",
-                    value: player.incomeTax,
-                    color: Colors.orangeAccent,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTaxRow(
-                    icon: Icons.local_atm,
-                    label: "Restituição Fiscal",
-                    value: player.taxRefund,
-                    color: Colors.blueAccent,
+                  // 3. Seção de Impostos
+                  _myFinancialScreenTutorialManager.buildShowcase(
+                    type: TutorialItemType.taxesSession,
+                    child: Column(
+                      children: [
+                        _buildSectionTitle("Impostos", Theme.of(context).colorScheme.onInverseSurface),
+                        const SizedBox(height: 10),
+                        _buildTaxRow(
+                          icon: Icons.gavel,
+                          label: "Imposto de Renda (IR)",
+                          value: player.incomeTax,
+                          color: Colors.orangeAccent,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTaxRow(
+                          icon: Icons.local_atm,
+                          label: "Restituição Fiscal",
+                          value: player.taxRefund,
+                          color: Colors.blueAccent,
+                        ),
+                      ]
+                    )
                   ),
                   const SizedBox(height: 20),
                   Divider(color: Theme.of(context).colorScheme.onInverseSurface),
-                  _buildSectionTitle("Empréstimos Ativos", Theme.of(context).colorScheme.onInverseSurface),
-                  const SizedBox(height: 10),
-                  _buildLoansList(context, player.loans.where((l) => !l.isPaidOff).toList(), gameProvider),
+                  
+                  // 4. Empréstimos Ativos
+                  _myFinancialScreenTutorialManager.buildShowcase(
+                    type: TutorialItemType.activeLoansSession,
+                    child: Column(
+                      children: [
+                        _buildSectionTitle("Empréstimos Ativos", Theme.of(context).colorScheme.onInverseSurface),
+                        const SizedBox(height: 10),
+                        _buildLoansList(context, player.loans.where((l) => !l.isPaidOff).toList(), gameProvider),
+                      ]
+                    )
+                  ),
                 ],
               ),
             ),
           );
         });
+    });
   }
 
   // --- WIDGETS AUXILIARES ---

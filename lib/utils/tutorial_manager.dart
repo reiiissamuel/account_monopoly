@@ -54,6 +54,24 @@ class TutorialManager {
           TutorialItemType.valueRentMultiplier,
           TutorialItemType.valueRentViewer
         ]);
+  
+  TutorialManager.myFinancialScreen()
+      : this(const [
+          TutorialItemType.actionsRedirectsSession,
+          TutorialItemType.totalBalanceSession,
+          TutorialItemType.taxesSession,
+          TutorialItemType.activeLoansSession,
+        ]);
+  
+  TutorialManager.moreOptionsDialog()
+      : this(const [
+          TutorialItemType.payTaxesOption,
+          TutorialItemType.requestTaxRefundOption,
+          TutorialItemType.requestPaymentOption,
+          TutorialItemType.payToBankOption,
+          TutorialItemType.requestRoundBonusOption,
+          TutorialItemType.goToMyBenefitsOption,
+        ]);
 
   Widget buildShowcase({
     required TutorialItemType type,
