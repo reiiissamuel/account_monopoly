@@ -50,7 +50,16 @@ enum TutorialItemType {
     requestPaymentOption(title:'Solicite Pagamento', description: 'Clique nesta opção sempre que o jogo lhe direcionar a receber algum pagamento.\nComo em cartas chance, sorte, sorte ou revés...'),
     payToBankOption(title:'Pague ao Banco', description: 'Clique nesta opção sempre que o jogo lhe direcionar a realizar um pagamento ao banco.\nComo em cartas chance, sorte, sorte ou revés...'),
     requestRoundBonusOption(title:'Solicite Bônus de Rodada', description: 'Clique aqui toda vez que você completar uma volta no tabuleiro.'),
-    goToMyBenefitsOption(title:'Meus Benefícios', description: 'Clique aqui para ver seus benefícios ativos');
+    goToMyBenefitsOption(title:'Meus Benefícios', description: 'Clique aqui para ver seus benefícios ativos'),
+
+    //PropertyDetailScreen Itens
+    buildingButton(title:'Botão Construir Casa', description: 'Clique neste botão para construir uma casa na propriedade selecionada. Esta opção só estará habilitada nas propriedades que sejam terrenos e apenas se você for o jogador com o maior número de ações disponíveis desta propriedade.'),
+    sharesCurrentPriceCard(title:'Preço atual da ações', description: 'Aqui você também verá o preço atual das ações da propriedade selecionada.'),
+    marketStatusCard(title:'Status do Mercado', description: 'Este card apresenta um detalhamento de informações de construções, valores e custo da propriedade selecionada.'),
+    rentabilyMarkerCard(title:'Marcador de Rentabilidade', description: 'Aqui você terá informações atualizadas sobre a rentabilidade da propriedade selecionada.'),
+    hystoricalSharePriceCard(title:'Histórico de Preço das Ações', description: 'Aqui você pode ver o histórico de preço das ações da propriedade ao longo das rodadas.'),
+    payoutEditorCard(title:'Editor de porcentagem de Pagamentos', description: 'Aqui você poderá editar a porcentagem dos lucros que serão distribuídos aos jogadores que possuem ações da propriedade selecionada.\nOBS.: Essa edição só poderá ser feita pelo jogador com a maior quantidade de ações disponíveis da propriedade.');
+
     
     final String title;
     final String description;

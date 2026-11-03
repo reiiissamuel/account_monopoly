@@ -23,4 +23,6 @@ class TipsResourse{
   static const String BENEFICIARIES_SCREEN = "Nesta tela você poderá visualizar a lista de beneficiários (jogadores que podem receber transferências) disponíveis no jogo.";
 
   static String get PLAYER_SUMMARY_SCREEN => "Nesta tela você poderá visualizar o resumo financeiro do jogador, incluindo ganhos, despesas, impostos e status dos empréstimos ativos.";
+  
+  static String get PROPERTY_DETAILS_SCREEN => "Nesta tela você poderá visualizar os detalhes de uma propriedade, incluindo status de mercado, fluxo de renda, histórico de ações e opções de construção.";
 }

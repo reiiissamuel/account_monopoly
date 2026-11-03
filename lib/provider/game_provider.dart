@@ -36,6 +36,7 @@ class GameProvider extends ChangeNotifier {
   bool get isPayRentDialogOnBoarded => userModelController.user?.isPayRentDialogOnBoarded ?? false;
   bool get isMyFinancialScreenOnBoarded => userModelController.user?.isMyFinancialScreenOnBoarded ?? false;
   bool get isMoreOptionsDialogOnBoarded => userModelController.user?.isMoreOptionsDialogOnBoarded ?? false;
+  bool get isPropertyDetailsScreenOnBoarded => userModelController.user?.isPropertyDetailsScreenOnBoarded ?? false;
 
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;

@@ -72,6 +72,16 @@ class TutorialManager {
           TutorialItemType.requestRoundBonusOption,
           TutorialItemType.goToMyBenefitsOption,
         ]);
+  
+  TutorialManager.propertyDetailsScreen()
+      : this(const [
+          TutorialItemType.buildingButton,
+          TutorialItemType.sharesCurrentPriceCard,
+          TutorialItemType.marketStatusCard,
+          TutorialItemType.rentabilyMarkerCard,
+          TutorialItemType.hystoricalSharePriceCard,
+          TutorialItemType.payoutEditorCard,
+        ]);
 
   Widget buildShowcase({
     required TutorialItemType type,

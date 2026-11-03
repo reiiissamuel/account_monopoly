@@ -30,7 +30,9 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     // Usamos Consumer para reagir às mudanças no GameProvider e UserProvider
-    return ShowCaseWidget(builder: (showCaseContext){
+    return ShowCaseWidget(
+      enableAutoScroll: true,
+      builder: (showCaseContext){
       return Consumer<GameProvider>(
         builder: (context, gameProvider, child) {
 
