@@ -122,7 +122,7 @@ class _PayRentDialogState extends State<PayRentDialog> {
 
       final Widget content = hasValidProperties
             ? Column(
-                mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                 const Divider(color: Colors.white70),
@@ -130,53 +130,54 @@ class _PayRentDialogState extends State<PayRentDialog> {
                 _payRentDialogTutorialManager.buildShowcase(
                   type: TutorialItemType.payRentDialogList,
                   child: DropdownButtonFormField<Property>(
-                  key: ValueKey(_selectedProperty.id),
-                  initialValue: _selectedProperty,
-                  decoration: InputDecoration(
-                    labelText: "Propriedade",
-                    labelStyle: const TextStyle(
+                    key: ValueKey(_selectedProperty.id),
+                    initialValue: _selectedProperty,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: "Propriedade",
+                      labelStyle: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 15.0,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 3.0),
+                        borderRadius: const BorderRadius.all(Radius.circular(20)),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white, width: 5.0),
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ),
+                      disabledBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                        borderSide: BorderSide(color: Colors.blueGrey, width: 3.0),
+                      ),
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                        borderSide: BorderSide(color: Colors.blueGrey, width: 3.0),
+                      ),
+                    ), 
+                    dropdownColor: Colors.black,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
                       fontSize: 15.0,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 3.0),
-                      borderRadius: const BorderRadius.all(Radius.circular(20)),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white, width: 5.0),
-                      borderRadius: BorderRadius.all(Radius.circular(20)),
-                    ),
-                    disabledBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                      borderSide: BorderSide(color: Colors.blueGrey, width: 3.0),
-                    ),
-                    border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                      borderSide: BorderSide(color: Colors.blueGrey, width: 3.0),
-                    ),
-                  ), 
-                  dropdownColor: Colors.black,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 15.0,
-                  ),
-                  items: _properties.map<DropdownMenuItem<Property>>((Property property) {
-                    return DropdownMenuItem<Property>(
-                              value: property,
-                      child: Text(property.name, maxLines: 2),
-                    );
-                  }).toList(),
-                  onChanged: (Property? newProperty) {
-                    if (newProperty != null) {
-                        setState(() {
-                        _selectedProperty = newProperty;
-                        _multiplier = _minMultiplier; 
-                          _updateRentToPay();
-                        });
-                      }
-                    },
+                    items: _properties.map<DropdownMenuItem<Property>>((Property property) {
+                      return DropdownMenuItem<Property>(
+                                value: property,
+                        child: Text(property.name, maxLines: 2, overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                    onChanged: (Property? newProperty) {
+                      if (newProperty != null) {
+                          setState(() {
+                          _selectedProperty = newProperty;
+                          _multiplier = _minMultiplier; 
+                            _updateRentToPay();
+                          });
+                        }
+                      },
                   ),
                 ),
                 const SizedBox(height: 20),

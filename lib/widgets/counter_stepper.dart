@@ -27,13 +27,13 @@ class _CounterStepperState extends State<CounterStepper> {
   Widget build(BuildContext context) {
     return Center(
         child: Container(
-          width: 185,
-          height: 73,
+          constraints: const BoxConstraints(minHeight: 73, maxWidth: 185),
           decoration: BoxDecoration(
             color: Colors.grey.shade900.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(40)
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
               Row(

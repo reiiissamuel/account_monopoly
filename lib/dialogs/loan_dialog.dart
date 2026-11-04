@@ -1,6 +1,9 @@
 // dialogs/loan_dialog.dart (CÓDIGO COMPLETO)
 
 import 'dart:async'; // Mantido caso haja uso futuro de Future.delayed
+import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/utils/tutorial_manager.dart';
 
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
@@ -10,8 +13,10 @@ import 'package:account_monopoly/exception/domain_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class LoanDialog extends StatefulWidget {
   const LoanDialog({super.key});
@@ -21,6 +26,8 @@ class LoanDialog extends StatefulWidget {
 }
 
 class LoanDialogState extends State<LoanDialog> {
+
+  final _loanDialogTutorialManager = TutorialManager.loanDialog();
 
   final String bonusLabel = "Bonus da rodada";
   int _roundValueSelected = 3;
@@ -38,7 +45,7 @@ class LoanDialogState extends State<LoanDialog> {
   // --- CONSTANTES DE NEGÓCIO ---
 
   static const double assetLiquidationFactor = 0.80; // porcentagem do ativo hipotecado para emprestimo
-  static const double assetInteresPerTurn = 0.05;  // 5% de juros por roundo
+  static const double assetInteresPerTurn = 0.05;  // 5% de juros por round
   static const int bonusFixedTurns = 3;              // 3 rounds fixos para bônus
   static const double bonusFixedInterest = 0.15;      // 15% de juros fixos para bônus
 
@@ -75,70 +82,112 @@ class LoanDialogState extends State<LoanDialog> {
     gameProvider = context.watch<GameProvider>();
     final List<ShareHolder> portfolio = gameProvider.currentPlayer.portfolio.values.toList();
 
-    return Dialog(
-      backgroundColor: Theme.of(context).primaryColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-            color: Colors.black87,
-            borderRadius: BorderRadius.circular(20.0)),
-        constraints: const BoxConstraints(maxHeight: 600, maxWidth: 350),
+    return ShowCaseWidget(
+      enableAutoScroll: true,
+      builder: (showCaseContext){
+        if (!gameProvider.isLoanDialogOnBoarded) {
+          gameProvider.userModelController.setOnBoardedOnScreen(isLoanDialogOnBoarded: true);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _loanDialogTutorialManager.startTutorial(showCaseContext);
+          });
+        }
+        return Dialog(
+        backgroundColor: Theme.of(context).primaryColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(20.0)),
+          constraints: const BoxConstraints(maxHeight: 600, maxWidth: 350),
 
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 15.0),
-                  child: Text("🤝🏾Empréstimo",
-                      style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(), 
+                    // Primeiro item: Fica exatamente no meio
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 15.0),
+                        child: Text(
+                          "🤝🏾Empréstimo",
+                          style: TextStyle(
+                            fontSize: 24.0, 
+                            fontWeight: FontWeight.bold, 
+                            color: Colors.white, 
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(), 
+                    TipIconButton(
+                      title: "Empréstimos",
+                      tip: TipsResourse.LOAN_DIALOG,
+                      onConfirm: () {
+                        gameProvider.userModelController.setOnBoardedOnScreen(isLoanDialogOnBoarded: false);
+                        gameProvider.notifyChanges(false);
+                      },
+                    )
+                  ],
                 ),
-              ),
-              const Divider(color: Colors.white70),
-              const SizedBox(height: 15),
+                const Divider(color: Colors.white70),
+                const SizedBox(height: 15),
+                _loanDialogTutorialManager.buildShowcase(
+                  type: TutorialItemType.selectLoanTypeDropdown,
+                  child: _buildLoanDropdown(context),
+                ),
+                const SizedBox(height: 15),
 
-              _buildLoanDropdown(context),
-              const SizedBox(height: 15),
+                if(_selectedLoanType == LoanType.mortgage) ...[
+                  // 1. SELEÇÃO DE GARANTIA
+                  _buildCollateralDropdown(context, portfolio, gameProvider),
+                  const SizedBox(height: 15)
+                ],
 
-              if(_selectedLoanType == LoanType.mortgage) ...[
-                // 1. SELEÇÃO DE GARANTIA
-                _buildCollateralDropdown(context, portfolio),
-                const SizedBox(height: 15)
+                // 2. VALOR DISPONÍVEL (CALCULADO PELA GARANTIA)
+                _loanDialogTutorialManager.buildShowcase(
+                  type: TutorialItemType.availableLoanValue,
+                  child: _buildCalculatedAmountDisplay(context),
+                ),
+                const SizedBox(height: 15),
+
+                // 3. SELEÇÃO DE PARCELAS (APENAS SE FOR GARANTIA DE ATIVO)
+                if (_selectedLoanType != LoanType.bankLoan)
+                  _buildTurnsDropdown(context, gameProvider),
+
+                const SizedBox(height: 15),
+
+                // 4. INFORMAÇÕES DO EMPRÉSTIMO (Juros e Detalhes da Garantia)
+                _buildRateInfoCard(context),
+
+                const SizedBox(height: 10),
+                _buildCollateralInfoCard(context, _selectedPropertyCollateral),
+
+
+                const SizedBox(height: 20),
+
+                // 5. VALOR TOTAL A PAGAR (DISPLAY)
+                _loanDialogTutorialManager.buildShowcase(
+                  type: TutorialItemType.totalValueToPay,
+                  child: _buildTotalValueDisplay(context),
+                ),
+
+                const SizedBox(height: 20),
+
+                // 6. BOTÕES DE AÇÃO
+                _buildActionButtons(context, gameProvider),
               ],
-
-              // 2. VALOR DISPONÍVEL (CALCULADO PELA GARANTIA)
-              _buildCalculatedAmountDisplay(context),
-              const SizedBox(height: 15),
-
-              // 3. SELEÇÃO DE PARCELAS (APENAS SE FOR GARANTIA DE ATIVO)
-              if (_selectedLoanType != LoanType.bankLoan)
-                _buildTurnsDropdown(context, gameProvider),
-
-              const SizedBox(height: 15),
-
-              // 4. INFORMAÇÕES DO EMPRÉSTIMO (Juros e Detalhes da Garantia)
-              _buildRateInfoCard(context),
-
-              const SizedBox(height: 10),
-              _buildCollateralInfoCard(context, _selectedPropertyCollateral),
-
-
-              const SizedBox(height: 20),
-
-              // 5. VALOR TOTAL A PAGAR (DISPLAY)
-              _buildTotalValueDisplay(context),
-
-              const SizedBox(height: 20),
-
-              // 6. BOTÕES DE AÇÃO
-              _buildActionButtons(context, gameProvider),
-            ],
+            ),
           ),
         ),
-      ),
+      );
+      }
     );
   }
 
@@ -187,7 +236,7 @@ class LoanDialogState extends State<LoanDialog> {
   }
 
   // Dropdown de Garantia Principal
-  Widget _buildCollateralDropdown(BuildContext context, List<ShareHolder> portfolio) {
+  Widget _buildCollateralDropdown(BuildContext context, List<ShareHolder> portfolio, GameProvider gameProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -210,7 +259,7 @@ class LoanDialogState extends State<LoanDialog> {
               items: portfolio.map((option) {
                 return DropdownMenuItem<ShareHolder>(
                   value: option,
-                  child: Text(option.propertyId,
+                  child: Text(gameProvider.ledger.properties[option.propertyId]!.name,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)
                   ),
                 );
@@ -301,7 +350,7 @@ class LoanDialogState extends State<LoanDialog> {
     final Color indicatorColor = _selectedLoanType == LoanType.bankLoan ? Colors.lightBlueAccent : Colors.yellow;
     final String rateText = _selectedLoanType == LoanType.bankLoan
         ? "15% total (Fixo em $bonusFixedTurns rounds)"
-        : "${(assetInteresPerTurn * 100).toInt()}% por roundo";
+        : "${(assetInteresPerTurn * 100).toInt()}% por round";
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -436,7 +485,7 @@ class LoanDialogState extends State<LoanDialog> {
         final double totalInterest = loanAmount * bonusFixedInterest;
         totalToPay = loanAmount + totalInterest;
       } else if (_selectedLoanType == LoanType.mortgage) {
-        // ATIVO: Taxa por roundo * número de rounds
+        // ATIVO: Taxa por round * número de rounds
         final double totalInterestRate = assetInteresPerTurn * _roundValueSelected;
         final double interestValue = loanAmount * totalInterestRate;
         totalToPay = loanAmount + interestValue;

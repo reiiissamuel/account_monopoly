@@ -1,10 +1,10 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
-import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
 import 'package:account_monopoly/domain/model/chance.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 
@@ -28,7 +28,7 @@ class ChancesScreen extends StatelessWidget {
                 showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return const TipDialog(
+                      return const TipIconButton(
                           title: "Tela de Benefícios",
                           tip: TipsResourse.BENEFITS_SCREEN);
                     });
@@ -130,15 +130,7 @@ class ChancesScreen extends StatelessWidget {
                       icon: const Icon(Icons.help),
                       iconSize: 40,
                       color: Colors.white,
-                      onPressed: () {
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return TipDialog(
-                                  title: chance.name!,
-                                  tip: chance.description!);
-                            });
-                      },
+                      onPressed: () => TipIconButton(title: chance.name!, tip: chance.description!),
                     )
                   ],
                 ))

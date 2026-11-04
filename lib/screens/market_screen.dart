@@ -215,7 +215,7 @@ class _MarketScreenState extends State<MarketScreen> {
     };
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
+      margin: const EdgeInsets.only(bottom: 5.0),
       padding: const EdgeInsets.all(15.0),
       decoration: BoxDecoration(
         color: Color(offer.colorSignature), // Cor base da propriedade
@@ -227,16 +227,37 @@ class _MarketScreenState extends State<MarketScreen> {
         children: <Widget>[
           // Título do FII
           Row(
-            spacing: 5,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start, // Alinha ao topo caso quebre linha
             children: [
-              (propertyIconSignature ?? const Icon(Icons.house)),
+              Expanded(
+                child: Row(
+                  spacing: 5.0,
+                  children: [
+                    (propertyIconSignature ?? const Icon(Icons.house)),
+                    Expanded(
+                      child: Text(
+                        offer.propertyName, // Podes deixar o nome limpo se já usas wrap ou maxLines
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                          color: Theme.of(context).colorScheme.onInverseSurface,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18, // Um tamanho fixo seguro evita estouros indesejados
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
               Text(
-                '${offer.propertyName} (${offer.propertyId})',
+                offer.propertyId,
                 style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                   color: Theme.of(context).colorScheme.onInverseSurface,
                   fontWeight: FontWeight.bold,
-                  fontSize: offer.propertyName.length > 20 ? 15 : 20,
-                )
+                  fontSize: 16,
+                ),
               )
             ],
           ),

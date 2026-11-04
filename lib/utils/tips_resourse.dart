@@ -21,4 +21,10 @@ class TipsResourse{
   static const String MARKET_SCREEN = "Nesta tela você poderá comprar ações das propriedades cadastradas no seu jogo. Lembre-se, seu lucro em cada propriedade será definido pela quantidade de cotas que você possui.";
   static const String MY_PORTFOLIO_SCREEN = "Nesta tela você poderá visualizar todos os ativos que possui no jogo, incluindo detalhes sobre investimentos e ganhos.";
   static const String BENEFICIARIES_SCREEN = "Nesta tela você poderá visualizar a lista de beneficiários (jogadores que podem receber transferências) disponíveis no jogo.";
+
+  static String get PLAYER_SUMMARY_SCREEN => "Nesta tela você poderá visualizar o resumo financeiro do jogador, incluindo ganhos, despesas, impostos e status dos empréstimos ativos.";
+  
+  static String get PROPERTY_DETAILS_SCREEN => "Nesta tela você poderá visualizar os detalhes de uma propriedade, incluindo status de mercado, fluxo de renda, histórico de ações e opções de construção.";
+
+  static String get LOAN_DIALOG => "Nesta tela você poderá solicitar empréstimos, escolher o tipo de empréstimo, definir garantias e visualizar os detalhes do valor a pagar.";
 }
