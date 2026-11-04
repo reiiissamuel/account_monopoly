@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
+import 'package:account_monopoly/dialogs/rules_dialog.dart';
 import 'package:account_monopoly/exception/game_not_exists_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/game_screen.dart';
@@ -24,10 +25,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  bool _hasShownRulesDialog = false;
+
   @override
   Widget build(BuildContext context) {
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
+        
+        if (!userProvider.isLoggedIn() && !_hasShownRulesDialog) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              RulesDialog.show(context);
+              _hasShownRulesDialog = true;
+            }
+          });
+        }
+
         return PopScope(
           canPop: false,
           child: Scaffold(
@@ -43,9 +56,12 @@ class HomeScreenState extends State<HomeScreen> {
               centerTitle: true,
               automaticallyImplyLeading: false,
               actions: [
-                const TipIconButton(
+                TipIconButton(
                             tip: TipsResourse.HOME_SCREEN_TIP,
                             title: "Tela inicial",
+                            onConfirm: () {
+                              RulesDialog.show(context);
+                            }
                 )
               ],
             ),
