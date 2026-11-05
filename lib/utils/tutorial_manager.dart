@@ -54,6 +54,41 @@ class TutorialManager {
           TutorialItemType.valueRentMultiplier,
           TutorialItemType.valueRentViewer
         ]);
+  
+  TutorialManager.myFinancialScreen()
+      : this(const [
+          TutorialItemType.actionsRedirectsSession,
+          TutorialItemType.totalBalanceSession,
+          TutorialItemType.taxesSession,
+          TutorialItemType.activeLoansSession,
+        ]);
+  
+  TutorialManager.moreOptionsDialog()
+      : this(const [
+          TutorialItemType.payTaxesOption,
+          TutorialItemType.requestTaxRefundOption,
+          TutorialItemType.requestPaymentOption,
+          TutorialItemType.payToBankOption,
+          TutorialItemType.requestRoundBonusOption,
+          TutorialItemType.goToMyBenefitsOption,
+        ]);
+  
+  TutorialManager.propertyDetailsScreen()
+      : this(const [
+          TutorialItemType.buildingButton,
+          TutorialItemType.sharesCurrentPriceCard,
+          TutorialItemType.marketStatusCard,
+          TutorialItemType.rentabilyMarkerCard,
+          TutorialItemType.hystoricalSharePriceCard,
+          TutorialItemType.payoutEditorCard,
+        ]);
+  
+  TutorialManager.loanDialog()
+      : this(const [
+        TutorialItemType.selectLoanTypeDropdown,
+        TutorialItemType.availableLoanValue,
+        TutorialItemType.totalValueToPay
+      ]);
 
   Widget buildShowcase({
     required TutorialItemType type,

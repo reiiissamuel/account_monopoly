@@ -1,5 +1,6 @@
 import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/property_type.dart';
+import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
 import 'package:account_monopoly/domain/model/property.dart';
 import 'package:account_monopoly/exception/domain_exception.dart';
@@ -7,6 +8,7 @@ import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/utils/configs_constants.dart';
 import 'package:account_monopoly/utils/icon_data_extension.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/utils/tutorial_manager.dart';
 import 'package:account_monopoly/widgets/chart_property_report.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
 import 'package:account_monopoly/widgets/percent_spinner.dart';
@@ -15,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class PropertyDetailsScreen extends StatefulWidget {
  final String propertyId;
@@ -26,93 +29,134 @@ class PropertyDetailsScreen extends StatefulWidget {
 }
 
 class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
+  final _propertyDetailsManager = TutorialManager.propertyDetailsScreen();
+  int payout = 0;
+  bool _payoutInitialized = false;
 
-int payout = 0;
-bool _payoutInitialized = false;
-
-double _propertyReserveUsage = 0;
+  double _propertyReserveUsage = 0;
 
  @override
- Widget build(BuildContext context) {
-  return Consumer<GameProvider>(
-   builder: (context, gameProvider, child) {
-    final property = gameProvider.ledger.properties[widget.propertyId];
-    final ledger = gameProvider.ledger;
+  Widget build(BuildContext context) {
+    return ShowCaseWidget(
+      enableAutoScroll: true,
+      builder: (showCaseContext) {
+        return Consumer<GameProvider>(
+          builder: (context, gameProvider, child) {
+            final property = gameProvider.ledger.properties[widget.propertyId];
+            final ledger = gameProvider.ledger;
 
-    if (property == null) {
-     return Scaffold(
-      appBar: AppBar(title: const Text("Erro")),
-      body: const Center(child: Text("Propriedade não encontrada.")),
-     );
-    }
-        
-    // CORREÇÃO: Inicializa 'payout' apenas uma vez usando o valor do ledger
-    if (!_payoutInitialized) {
-      payout = (property.payoutPercentage * 100).toInt();
-      _payoutInitialized = true;
-    }
+            if (property == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text("Erro")),
+              body: const Center(child: Text("Propriedade não encontrada.")),
+            );
+            }
 
-    // --- CONTEÚDO DA TELA DE DETALHES ---
-    return Scaffold(
-     backgroundColor: Colors.black,
-     appBar: AppBar(
-      backgroundColor: Color(property.colorSignature),
-      title: Text(property.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      centerTitle: true,
-      iconTheme: const IconThemeData(color: Colors.white),
-      actionsPadding: const EdgeInsets.all(5),
-      actions: (property.propertyType == PropertyType.stocks || property.majorOwnerId != gameProvider.currentPlayer.id)
-       ? null : [
-        property.buildings <= 4 
-        ? GameIconButtonBuilder(
-            imgPath: "icons/buildhome.png",
-            height: 30,
-            width: 30,
-            onPressed: () => _processBuildingPurchase(context, property, gameProvider)
-          )
-        : GameIconButtonBuilder(
-            imgPath: "icons/buildhotel.png",
-            height: 30,
-            width: 30,
-            onPressed: () => _processBuildingPurchase(context, property, gameProvider)
-          )
-      ],
-     ),
-     body: SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-       crossAxisAlignment: CrossAxisAlignment.start,
-       children: <Widget>[
-        _buildHeader(context, property),
+            if (!gameProvider.isPropertyDetailsScreenOnBoarded) {
+              gameProvider.userModelController.setOnBoardedOnScreen(isPropertyDetailsScreenOnBoarded: true);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _propertyDetailsManager.startTutorial(showCaseContext);
+              });
+            }
+                
+            // CORREÇÃO: Inicializa 'payout' apenas uma vez usando o valor do ledger
+            if (!_payoutInitialized) {
+              payout = (property.payoutPercentage * 100).toInt();
+              _payoutInitialized = true;
+            }
 
-        const SizedBox(height: 20),
-        // 2. STATUS DO ATIVO
-        _buildSectionTitle("📈 Status de Mercado", property.colorSignature),
-        _buildStatusSection(context, property, ledger),
-        
-        const SizedBox(height: 20),
-      
-        // 3. MÉTICAS DE RENDA
-        _buildSectionTitle("💰 Fluxo de Renda (Aluguel)", property.colorSignature),
-        _buildIncomeSection(context, property),
-        const SizedBox(height: 20),
-        // 4. HISTÓRICO DE AÇÕES (Placeholder)
+            // --- CONTEÚDO DA TELA DE DETALHES ---
+            return Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Color(property.colorSignature),
+              title: Text(
+                property.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: property.name.length > 20 ? 17 : 20)
+              ),
+              centerTitle: true,
+              iconTheme: const IconThemeData(color: Colors.white),
+              actionsPadding: const EdgeInsets.all(5),
+              actions: [
+                TipIconButton(
+                  title: "Detalhes da Propriedade",
+                  tip: TipsResourse.PROPERTY_DETAILS_SCREEN,
+                  onConfirm: () {
+                    gameProvider.userModelController.setOnBoardedOnScreen(isPropertyDetailsScreenOnBoarded: false);
+                    gameProvider.notifyChanges(false);
+                  },
+                ),
+                _propertyDetailsManager.buildShowcase(
+                  type: TutorialItemType.buildingButton, 
+                  child: AbsorbPointer(
+                    absorbing: (property.propertyType != PropertyType.reit || property.majorOwnerId != gameProvider.currentPlayer.id), 
+                    child: Opacity(
+                      opacity: (property.propertyType != PropertyType.reit || property.majorOwnerId != gameProvider.currentPlayer.id) ? 0.5 : 1.0,
+                      child: GameIconButtonBuilder(
+                        imgPath: (property.buildings <= 4 || gameProvider.isPropertyDetailsScreenOnBoarded) ? "icons/buildhome.png" : "icons/buildhotel.png",
+                        height: 30,
+                        width: 30,
+                        onPressed: () => _processBuildingPurchase(context, property, gameProvider)
+                      ),
+                    )
+                  )
+                )
+              ]
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                
+                _propertyDetailsManager.buildShowcase(
+                  type: TutorialItemType.sharesCurrentPriceCard,
+                  child: _buildHeader(context, property)
+                ),
 
-        _buildSectionTitle("📊 Histórico & Volatilidade", property.colorSignature),
-        _buildHistoryPlaceholder(context, property),
+                const SizedBox(height: 20),
+                // 2. STATUS DO ATIVO
+                _buildSectionTitle("📈 Status de Mercado", property.colorSignature),
+                _propertyDetailsManager.buildShowcase(
+                  type: TutorialItemType.marketStatusCard,
+                  child: _buildStatusSection(context, property, ledger)
+                ),
+                
+                const SizedBox(height: 20),
+              
+                // 3. MÉTICAS DE RENDA
+                _buildSectionTitle("💰 Fluxo de Renda (Aluguel)", property.colorSignature),
+                _propertyDetailsManager.buildShowcase(
+                  type: TutorialItemType.rentabilyMarkerCard,
+                  child: _buildIncomeSection(context, property)
+                ),
 
-        const SizedBox(height: 20),
+                // 4. HISTÓRICO DE AÇÕES (Placeholder)
+                _buildSectionTitle("📊 Histórico & Volatilidade", property.colorSignature),
+                _propertyDetailsManager.buildShowcase(
+                  type: TutorialItemType.hystoricalSharePriceCard,
+                  child: _buildHistoryPlaceholder(context, property)
+                ),
 
-        _buildPayoutChanger(context, gameProvider, property),
-        const SizedBox(height: 20),
-        
-       ],
-      ),
-     ),
-    );
-   },
-  );
- }
+                const SizedBox(height: 20),
+
+                _propertyDetailsManager.buildShowcase(
+                  type: TutorialItemType.payoutEditorCard,
+                  child: _buildPayoutChanger(context, gameProvider, property)
+                ),
+                const SizedBox(height: 20),
+                
+              ],
+              ),
+            ),
+            );
+          },
+          );
+      }
+    );}
 
  // --- WIDGETS AUXILIARES ---
  Widget _buildSectionTitle(String title, int colorSignature) {
@@ -135,9 +179,9 @@ double _propertyReserveUsage = 0;
   return Container(
    padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
    decoration: BoxDecoration(
-    color: Color(property.colorSignature).withOpacity(0.15),
+    color: Color(property.colorSignature).withValues(alpha:0.15),
     borderRadius: BorderRadius.circular(10.0),
-    border: Border.all(color: Color(property.colorSignature).withOpacity(0.5)),
+    border: Border.all(color: Color(property.colorSignature).withValues(alpha:0.5)),
    ),
    child: Row(
     children: [

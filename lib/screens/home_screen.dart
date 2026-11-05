@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:account_monopoly/dialogs/new_user_dialog.dart';
-import 'package:account_monopoly/dialogs/tip_alert_dialog.dart';
+import 'package:account_monopoly/dialogs/rules_dialog.dart';
 import 'package:account_monopoly/exception/game_not_exists_exception.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/screens/game_screen.dart';
 import 'package:account_monopoly/screens/my_games_screen.dart';
 import 'package:account_monopoly/screens/all_properties_versions_screen.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
+import 'package:account_monopoly/widgets/tip_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,10 +25,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  bool _hasShownRulesDialog = false;
+
   @override
   Widget build(BuildContext context) {
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
+        
+        if (!userProvider.isLoggedIn() && !_hasShownRulesDialog) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              RulesDialog.show(context);
+              _hasShownRulesDialog = true;
+            }
+          });
+        }
+
         return PopScope(
           canPop: false,
           child: Scaffold(
@@ -42,30 +55,14 @@ class HomeScreenState extends State<HomeScreen> {
               ),
               centerTitle: true,
               automaticallyImplyLeading: false,
-              actions: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 16.0,
-                  ),
-                  child: GestureDetector(
-                    child: Icon(
-                      Icons.question_mark_rounded,
-                      color: Theme.of(context).colorScheme.onInverseSurface,
-                    ),
-                    onTap: () => {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return const TipDialog(
+              actions: [
+                TipIconButton(
                             tip: TipsResourse.HOME_SCREEN_TIP,
                             title: "Tela inicial",
-                          );
-                        },
-                      ),
-                    },
-                  ),
-                ),
+                            onConfirm: () {
+                              RulesDialog.show(context);
+                            }
+                )
               ],
             ),
             floatingActionButton: Padding(

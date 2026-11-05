@@ -93,12 +93,12 @@ class PropertiesScreen extends StatelessWidget {
     );
   }
 
-  Widget _propertyTile(BuildContext context, Property property){
-    // Usar Provider.of com listen: false fora do build principal está OK aqui
-    UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
+  Widget _propertyTile(BuildContext context, Property property) {
+  // Usar Provider.of com listen: false fora do build principal está OK aqui
+  UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
+  
     return Container(
       margin: const EdgeInsets.only(bottom: 5.0),
-      height: 215.0,
       decoration: BoxDecoration(
         color: Color(property.colorSignature).withValues(alpha: 0.3),
         borderRadius: const BorderRadius.all(Radius.circular(15.0)),
@@ -112,94 +112,119 @@ class PropertiesScreen extends StatelessWidget {
         ),
         child: Column(
           children: <Widget>[
+            // TÍTULO DA PROPRIEDADE (Ajustado com Expanded para evitar overflow)
             Row(
-              spacing: 5,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(IconDataExtension.fromKey(property.iconSignature), color: Theme.of(context).colorScheme.onInverseSurface),
-                Text( property.name,
-                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 21,
-                    color: Theme.of(context).colorScheme.onInverseSurface
-                  ) ,
-                )
+                Padding(
+                  padding: const EdgeInsets.only(top: 2.0),
+                  child: Icon(
+                    IconDataExtension.fromKey(property.iconSignature), 
+                    color: Theme.of(context).colorScheme.onInverseSurface,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    property.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: property.name.length > 20 ? 17 : 20,
+                      color: Theme.of(context).colorScheme.onInverseSurface,
+                    ),
+                  ),
+                ),
               ],
             ),
             Divider(color: Theme.of(context).colorScheme.onInverseSurface),
+            
+            // INFORMAÇÕES
             Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 2,
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  // Informações adicionais
                   "Código: ${property.id}",
                   style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
                 ),
                 Text(
-                  // Informações adicionais
                   "Valor: ${StringUtils.currencyFormat(property.basePrice)}",
                   style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
                 ),
                 Text(
-                  // Informações adicionais
                   "Aluguel: ${StringUtils.currencyFormat(property.currentRent)}",
                   style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onInverseSurface),
                 )
               ],
             ),
             Divider(color: Theme.of(context).colorScheme.onInverseSurface),
+            
+            // BOTÕES DE AÇÃO
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
+              spacing: 8,
               children: [
-                // Botão de Usar/Selecionar
+                // Botão de Editar
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                     backgroundColor: Color(property.colorSignature).withValues(alpha: 0.3),
+                    foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
                   ),
                   onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => NewPropertyScreen(property: property, versionId: versionId)));
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => NewPropertyScreen(property: property, versionId: versionId),
+                      ),
+                    );
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
                     child: Icon(
                       Icons.edit,
-                      color: Theme.of(context).colorScheme.onInverseSurface,
-                      size: 38.0,
+                      size: 30.0,
                     ),
-                  )
+                  ),
                 ),
+                
                 // Botão de Excluir
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                     backgroundColor: Color(property.colorSignature).withValues(alpha: 0.3),
+                    foregroundColor: Colors.white,
                   ),
                   onPressed: () async {
-                    showDialog(context: context, builder: (BuildContext context){
-                      return ConfirmActionDialog(
+                    showDialog(
+                      context: context, 
+                      builder: (BuildContext context) {
+                        return ConfirmActionDialog(
                           title: "Alerta de Exclusão!",
                           textContent: "Essa ação não poderá ser desfeita",
                           onConfirm: () async {
                             Navigator.pop(context);
-                            try{
+                            try {
                               userProvider.deleteProperty(versionId, property.id);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Propriedade excluída."), backgroundColor: Colors.green));
-                            } on Exception catch(e){
+                                const SnackBar(content: Text("Propriedade excluída."), backgroundColor: Colors.green),
+                              );
+                            } on Exception catch(e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                                SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+                              );
                             }
-                          });
-                    });
+                          },
+                        );
+                      },
+                    );
                   },
                   child: const Padding(
                     padding: EdgeInsets.all(2),
                     child: Icon(
                       Icons.delete,
-                      color: Colors.white,
-                      size: 40.0,
+                      size: 30.0,
                     ),
                   ),
                 ),
@@ -209,5 +234,4 @@ class PropertiesScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-}
+}}
