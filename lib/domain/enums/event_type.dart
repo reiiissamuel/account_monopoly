@@ -24,7 +24,8 @@ enum EventType{
   serverHandShake(messageScope: "{DEST} entrou no jogo."),
   saveGame(messageScope: "💾Salvando progresso..."),
   CHANCE_USED(messageScope: "{SOURCE}  usou um benefício."),
-  joinTable(messageScope: '{SOURCE} está se conectando à mesa...'),;
+  joinTable(messageScope: '{SOURCE} está se conectando à mesa...'),
+  negativeBalanceRecovery(messageScope: "O banco liquidou algumas ações de {SOURCE} para cobrir o saldo negativo.");
 
   final String? messageScope;
 

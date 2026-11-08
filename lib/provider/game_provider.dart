@@ -25,7 +25,8 @@ class GameProvider extends ChangeNotifier {
   bool isLoading = false;
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
-  String? any;
+
+  bool toogleNegativeBalanceAlert = true;
 
   GameProvider({required this.userModelController});
 
@@ -181,8 +182,8 @@ class GameProvider extends ChangeNotifier {
       case EventType.saveGame:
         _updateUserModel();
         break;
-      case EventType.bankruptcy:
-        //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
+      case EventType.bankruptcy || EventType.negativeBalanceRecovery:
+        gameModelDTO!.ledger = event.gameData!.ledger; // Atualiza o ledger com os dados do evento para atualizar de uma vez todas as propriedades e o estado do mercado
         break;
       case EventType.iwon:
         gameModelDTO!.winner = sourceplayer;
@@ -223,7 +224,18 @@ class GameProvider extends ChangeNotifier {
       eventComposer(type: EventType.dividendsCalculation);
       currentPlayer.financialReport.addRoundBalance(currentRound, currentPlayer.roundBalance.copyAndReset());
 
-      List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
+      if(currentPlayer.currentCredit < 0) {
+        ledger.liquidateSharesToPayPlayerDebit(currentPlayer);
+        if(currentPlayer.youBankrupt) {
+          eventComposer(type: EventType.bankruptcy);
+          eventComposer(type: EventType.saveGame);
+          return;
+        } else {
+          eventComposer(type: EventType.negativeBalanceRecovery);
+        }
+      }
+
+      List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(currentPlayer);
       if(foreclosureLoans.isNotEmpty){
         for(var loan in foreclosureLoans){
           if(loan.type == LoanType.bankLoan){
@@ -235,7 +247,7 @@ class GameProvider extends ChangeNotifier {
         }
       }
 
-      if (ledger.badCreditList.containsKey(currentPlayer.id)){
+      if (ledger.badCreditList.containsKey(currentPlayer.id) && ledger.badCreditList[currentPlayer.id]!.roundsInBlacklist <= 0){
         eventComposer(type: EventType.bankBlacklisted);
       }
 
@@ -285,7 +297,7 @@ class GameProvider extends ChangeNotifier {
           ledger.processRoundBonus(currentPlayer);
           break;
         case EventType.payBank:
-          currentPlayer.payDebit(price!);
+          currentPlayer.payDebit(price!, false);
           currentPlayer.roundBalance.otherOut += price;
           break;
         case EventType.receiveFromBank:
@@ -293,7 +305,7 @@ class GameProvider extends ChangeNotifier {
           currentPlayer.roundBalance.otherIn += price;
           break;
         case EventType.transfer:
-          currentPlayer.payDebit(price!);
+          currentPlayer.payDebit(price!, false);
           currentPlayer.roundBalance.transferOut += price;
           destinationPlayer!.receiveCredit(price, ledger.incomeTaxRate);
           destinationPlayer.roundBalance.transferIn += price;
@@ -337,7 +349,13 @@ class GameProvider extends ChangeNotifier {
           _updateUserModel();
           break;
         case EventType.bankruptcy:
-          //
+          if(currentPlayer.portfolio.isNotEmpty){
+            ledger.removeAllSharesFromPlayer(currentPlayer);
+          }
+          event.gameData = gameModelDTO; //passando game model inteiro para enviar o ledger atualizado junto com o evento
+          break;
+        case EventType.negativeBalanceRecovery:
+          event.gameData = gameModelDTO;
           break;
         case EventType.iwon:
           gameModelDTO!.winner = currentPlayer;
@@ -357,6 +375,10 @@ class GameProvider extends ChangeNotifier {
       gameModelDTO!.updateOtherPlayers(destinationPlayer);
       gameModelDTO!.updateOtherPlayers(sourcePlayer);
        _sendEvent(event);
+
+       if(currentPlayer.currentCredit < 0 && !toogleNegativeBalanceAlert) {
+         toogleNegativeBalanceAlert = true;
+       }
 
       gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
       notifyChanges(false);

@@ -11,6 +11,8 @@ import 'package:account_monopoly/screens/market_screen.dart';
 import 'package:account_monopoly/screens/my_portfolio_screen.dart';
 import 'package:account_monopoly/screens/player_summary_screen.dart';
 import 'package:account_monopoly/utils/tutorial_manager.dart';
+import 'package:account_monopoly/widgets/custom_alert_dialog.dart';
+import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/winner_dialog.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -66,6 +68,49 @@ class GameScreenState extends State<GameScreen> {
             builder: (context, gameProvider, child) {
               if (gameProvider.gameModelDTO!.winner != null) {
                 return const WinnerDialog();
+              }
+
+              if (gameProvider.currentPlayer.youBankrupt) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    CustomAlertDialog.show(
+                      context,
+                      description: TipsResourse.BANKRUPTCY_ALERT,
+                      icon: Icons.money_off,
+                      firstActionButtonText: "Sair",
+                      onFirstAction: () {
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  }
+                });
+              }
+
+              if (gameProvider.currentPlayer.currentCredit < 0 && gameProvider.toogleNegativeBalanceAlert) {
+                gameProvider.toogleNegativeBalanceAlert = false;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    CustomAlertDialog.show(
+                      context,
+                      description: TipsResourse.NEGATIVE_BALANCE_ALERT,
+                      icon: Icons.warning_amber_rounded,
+                      firstActionButtonText: "Vender ações",
+                      onFirstAction: () {
+                        setState(() {
+                          Navigator.push(
+                             context,
+                             MaterialPageRoute(builder: (context) => const MyPortfolioScreen()));
+                        });
+                      },
+                      secondActionButtonText: "Pedir empréstimo",
+                      onSecondAction: !gameProvider.gameModelDTO!.loanEnabled ? null : () {
+                        setState(() {
+                          _dialogCaller(context, const LoanDialog());
+                        });
+                      },
+                    );
+                  }
+                });
               }
 
               if (!gameProvider.isGameScreenOnBoarded &&

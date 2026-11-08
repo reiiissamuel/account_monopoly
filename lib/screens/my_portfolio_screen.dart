@@ -71,7 +71,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
               actions: [
                 TipIconButton(
                   title: "Meu portfólio",
-                  tip: TipsResourse.BENEFICIARIES_SCREEN,
+                  tip: TipsResourse.MY_PORTFOLIO_SCREEN,
                   onConfirm: () {
                     gameProvider.userModelController
                         .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: false);

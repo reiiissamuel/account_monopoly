@@ -146,8 +146,10 @@ void receiveCredit(double amount, double incomeTaxRate) {
   }
 }
 
-  void payDebit(double amount) {
-    _checkIfEnoughCredit(amount);
+  void payDebit(double amount, bool forceDebit) {
+    if (!forceDebit) {
+      _checkIfEnoughCredit();
+    }
     if (amount > 0) {
       currentCredit -= amount;
       payedTo += amount;
@@ -155,8 +157,8 @@ void receiveCredit(double amount, double incomeTaxRate) {
     }
   }
 
-  void _checkIfEnoughCredit(double value){
-    if (currentCredit < value) throw NotEnoughCreditException(ConfigsConstants.notEnoughCreditErrorMsg);
+  void _checkIfEnoughCredit(){
+    if (currentCredit < 0) throw NotEnoughCreditException(ConfigsConstants.notEnoughCreditErrorMsg);
   }
 
   factory Player.fromMap(Map<String, dynamic> map) {
