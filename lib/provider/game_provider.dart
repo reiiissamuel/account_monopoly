@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
-import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
 import 'package:account_monopoly/domain/model/game.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
@@ -215,6 +214,7 @@ class GameProvider extends ChangeNotifier {
     
     gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
     gameModelDTO!.updateOtherPlayers(destinationPlayer); //atualiza o estado do jogador que recebeu o evento
+    if(!currentPlayer.youBankrupt && gameModelDTO!.winner == null) checkIfImWinner();
     gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
   }
 
@@ -390,78 +390,6 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  List<TradeOffer> getAllMarketListings() {
-  final List<TradeOffer> listings = [];
-
-  // -------------------------------------------------------------
-  // A. IPO / FUNDO (Property.availableShares)
-  // -------------------------------------------------------------
-  for (var property in ledger.properties.values) {
-    if (property.availableShares > 0) {
-      listings.add(TradeOffer(
-        offerId: property.id,
-        propertyId: property.id,
-        sellerName: ledger.bankId,
-        sellerPlayerId: ledger.bankId,
-        sharesAmount: property.availableShares,
-        askingPrice: property.sharePrice,
-        source: OfferSource.fundIPO,
-        currentMarketPrice: property.sharePrice,
-        colorSignature: property.colorSignature,
-        propertyName: property.name,
-        turnsToEnd: 1
-      ));
-    }
-  }
-
-  // -------------------------------------------------------------
-  // B. ATIVOS RECUPERADOS DO BANCO (Ledger.bankPortfolio)
-  // -------------------------------------------------------------
-  for (var entry in ledger.bankPortfolio.entries) {
-    final propertyId = entry.key;
-    final bankShare = entry.value;
-    final property = ledger.properties[propertyId]!;
-    
-    if (bankShare.sharesOwned > 0) {
-      listings.add(TradeOffer(
-        offerId: propertyId,
-        propertyId: propertyId,
-        sellerPlayerId: ledger.bankId,
-        sellerName: ledger.bankId,
-        sharesAmount: bankShare.sharesOwned,
-        askingPrice: property.sharePrice - (property.sharePrice * 0.1),
-        source: OfferSource.bankForeclosed,
-        currentMarketPrice: property.sharePrice,
-        colorSignature: property.colorSignature, // Cor ligeiramente diferente
-        propertyName: '${property.name} (Recup.)',
-        turnsToEnd: 1
-      ));
-    }
-  }
-
-  // -------------------------------------------------------------
-  // C. MERCADO SECUNDÁRIO (P2P - Ofertas de Jogadores)
-  // -------------------------------------------------------------
-  for (var offer in ledger.tradeOffers.values) {
-    final property = ledger.properties[offer.propertyId];
-    listings.add(TradeOffer(
-      offerId: offer.offerId,
-      propertyId: offer.propertyId,
-      sellerPlayerId: offer.sellerPlayerId,
-      sellerName: offer.sellerName,
-      sharesAmount: offer.sharesAmount,
-      askingPrice: offer.askingPrice,
-      turnsToEnd: offer.turnsToEnd,
-      source: OfferSource.playerMarket,
-      currentMarketPrice: property!.sharePrice,
-      colorSignature: property.colorSignature,
-      propertyName: '${property.name} (Venda P2P)',
-    ));
-  }
-  
-  return listings;
-}
-
   Future<void> createNewGame({required GameModelDTO game}) async {
     try{
       isLoading = true;
@@ -577,5 +505,12 @@ class GameProvider extends ChangeNotifier {
 
     isLoading = false;
     notifyListeners();
+  }
+
+  void checkIfImWinner(){
+    bool isEveryoneEliminatedButMe = gameModelDTO!.othersPlayers.values.every((player) => currentPlayer.id != player.id && player.youBankrupt)
+    && !currentPlayer.youBankrupt;
+    gameModelDTO!.winner = isEveryoneEliminatedButMe ? currentPlayer : null;
+    notifyChanges(false);
   }
 }

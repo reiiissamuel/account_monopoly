@@ -66,7 +66,7 @@ class GameScreenState extends State<GameScreen> {
               if (gameProvider.gameModelDTO!.winner != null) {
                 return const WinnerDialog();
               }
-
+              
               if (gameProvider.currentPlayer.youBankrupt) {
                 _isGameFinished = true;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -85,7 +85,7 @@ class GameScreenState extends State<GameScreen> {
                 });
               }
 
-              if (gameProvider.currentPlayer.currentCredit < 0 && gameProvider.toogleNegativeBalanceAlert) {
+              if (gameProvider.currentPlayer.currentCredit < 0 && gameProvider.toogleNegativeBalanceAlert && !gameProvider.currentPlayer.youBankrupt) {
                 gameProvider.toogleNegativeBalanceAlert = false;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {

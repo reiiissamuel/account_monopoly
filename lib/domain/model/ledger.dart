@@ -1,5 +1,6 @@
 
 import 'dart:math';
+import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/blacklisted_player_dto.dart';
 
 import 'package:account_monopoly/domain/enums/loan_type.dart';
@@ -147,6 +148,78 @@ class Ledger {
 
 // FUNÇÔES AUXILIAR: GESTÃO DAS AÇÔES E NEGOCIAÇÕES
 
+  List<TradeOffer> getAllMarketListings() {
+    final List<TradeOffer> listings = [];
+
+    // -------------------------------------------------------------
+    // A. IPO / FUNDO (Property.availableShares)
+    // -------------------------------------------------------------
+    for (var property in properties.values) {
+      if (property.availableShares > 0) {
+        listings.add(TradeOffer(
+          offerId: property.id,
+          propertyId: property.id,
+          sellerName: bankId,
+          sellerPlayerId: bankId,
+          sharesAmount: property.availableShares,
+          askingPrice: property.sharePrice,
+          source: OfferSource.fundIPO,
+          currentMarketPrice: property.sharePrice,
+          colorSignature: property.colorSignature,
+          propertyName: property.name,
+          turnsToEnd: 1
+        ));
+      }
+    }
+
+    // -------------------------------------------------------------
+    // B. ATIVOS RECUPERADOS DO BANCO (bankPortfolio)
+    // -------------------------------------------------------------
+    for (var entry in bankPortfolio.entries) {
+      final propertyId = entry.key;
+      final bankShare = entry.value;
+      final property = properties[propertyId]!;
+      
+      if (bankShare.sharesOwned > 0) {
+        listings.add(TradeOffer(
+          offerId: propertyId,
+          propertyId: propertyId,
+          sellerPlayerId: bankId,
+          sellerName: bankId,
+          sharesAmount: bankShare.sharesOwned,
+          askingPrice: property.sharePrice - (property.sharePrice * 0.1),
+          source: OfferSource.bankForeclosed,
+          currentMarketPrice: property.sharePrice,
+          colorSignature: property.colorSignature, // Cor ligeiramente diferente
+          propertyName: '${property.name} (Recup.)',
+          turnsToEnd: 1
+        ));
+      }
+    }
+
+    // -------------------------------------------------------------
+    // C. MERCADO SECUNDÁRIO (P2P - Ofertas de Jogadores)
+    // -------------------------------------------------------------
+    for (var offer in tradeOffers.values) {
+      final property = properties[offer.propertyId];
+      listings.add(TradeOffer(
+        offerId: offer.offerId,
+        propertyId: offer.propertyId,
+        sellerPlayerId: offer.sellerPlayerId,
+        sellerName: offer.sellerName,
+        sharesAmount: offer.sharesAmount,
+        askingPrice: offer.askingPrice,
+        turnsToEnd: offer.turnsToEnd,
+        source: OfferSource.playerMarket,
+        currentMarketPrice: property!.sharePrice,
+        colorSignature: property.colorSignature,
+        propertyName: '${property.name} (Venda P2P)',
+      ));
+    }
+    
+    return listings;
+  }
+
   Property buyFromIPO(Player buyer, String propertyId, int sharesAmount) {
     if(isBlacklisted(buyer.id)) throw(Exception(ConfigsConstants.blackListErrorMsg));
     final totalCost = properties[propertyId]!.sharePrice * sharesAmount;
@@ -160,9 +233,14 @@ class Ledger {
   }
 
   void setTradeOffer(Player player, TradeOffer offer) {
+    bool isMortgagedProperty = player.loans.any((l) => l.collateralId == offer.propertyId && !l.isPaidOff);
+    if (isMortgagedProperty){
+      throw MortgagedPropertyException(ConfigsConstants.mortgagedPropertyErrorMsg);
+    }
+    
     int alreadyOffered = tradeOffers.values.where((o) => o.propertyId == offer.propertyId && o.sellerPlayerId == player.id).fold(0, (sum, o) => sum + o.sharesAmount);
-    final isAbleToTrade = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount + alreadyOffered);
-    if (isAbleToTrade) {
+    final hasAmount = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount + alreadyOffered);
+    if (hasAmount) {
       tradeOffers[offer.offerId] = offer;
     } else {
       throw NotEnoughSharesToTradeException(ConfigsConstants.notEnoughSharesToTradeErrorMsg);

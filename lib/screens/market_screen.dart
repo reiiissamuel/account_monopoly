@@ -42,7 +42,7 @@ class _MarketScreenState extends State<MarketScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final rawList = gameProvider.getAllMarketListings();
+        final rawList = gameProvider.ledger.getAllMarketListings();
         availableStocks = _searchText.isEmpty
             ? List.from(rawList)
             : rawList
