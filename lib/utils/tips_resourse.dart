@@ -28,7 +28,7 @@ class TipsResourse{
 
   static String get LOAN_DIALOG => "Nesta tela você poderá solicitar empréstimos, escolher o tipo de empréstimo, definir garantias e visualizar os detalhes do valor a pagar.";
 
-  static String get NEGATIVE_BALANCE_ALERT => '''Você está com saldo negativo, venda ativos ou peça um empréstimo para equilibrar suas finanças.\nSe inciar a próxima volta ainda com saldo negativo, o banco liquidará parte de seus ativos compulsóriamente para liquidar suas dividas.
+  static String get NEGATIVE_BALANCE_ALERT => '''Você está com saldo negativo, venda ativos ou peça um empréstimo para equilibrar suas finanças.\nSe iniciar a próxima volta ainda com saldo negativo, o banco liquidará parte de seus ativos compulsóriamente para liquidar suas dividas.
   \nSe mesmo com a liquidação de todo o seu patrimônio você ainda estiver com saldo negativo, você será considerado falido e estará fora do jogo.''';
 
   static String get BANKRUPTCY_ALERT => "Não foi dessa vez que você construiu seu império.\nVocê foi considerado falido e está fora do jogo.";
