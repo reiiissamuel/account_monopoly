@@ -10,7 +10,7 @@ enum TutorialItemType {
     instructionsTable(title:'Manual de Utilidade', description: 'Clicando aqui você terá acesso a um guia rápido de instuções do jogo, além de poder rever este tutorial.'),
     goMarketButton(title:'Mercado de Propriedades', description: 'Clique para comprar propriedades (ações)'),
     goMyPortfolioButton(title:'Meu Portfólio', description: 'Clique ver todas as propriedades(ações) que você possiu, para vender, construir casas...'),
-    goPlayersButton(title:'Tela de Jogadores', description: 'Clique aqui sempre que precisar transferir dinheiro para outros jogadores.'),
+    goPlayersButton(title:'Transferir', description: 'Clique aqui sempre que precisar transferir dinheiro para outros jogadores.'),
     goPayRentButton(title:'Tela de Pagamento de Aluguel', description: 'Cliqui aqui sempre que precisar pagar aluguel em alguma propriedade.'),
     goMyFinancialHealthButton(title:'Perfil Financeiro', description: 'Clique aqui para acessar e acompanhar seu resumos financeiros, emprestimos em aberto, total devido de IR...'),
     goMoreOptionsButton(title:'Mais Opções', description: 'Clique aqui para acessar opções rápidas tais como pagamentos ao banco, pagamento de IR, Solicitar restituição, solicitar o seu bonus de fim de rodada...'),

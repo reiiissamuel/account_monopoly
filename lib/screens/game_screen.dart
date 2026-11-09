@@ -3,7 +3,6 @@ import 'package:account_monopoly/dialogs/gamescreen_tutorial_dialog.dart';
 import 'package:account_monopoly/dialogs/loan_dialog.dart';
 import 'package:account_monopoly/dialogs/more_options_dialog.dart';
 import 'package:account_monopoly/dialogs/pay_rent_dialog.dart';
-import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/domain/enums/tutorial_item_type.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
@@ -17,11 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:account_monopoly/dialogs/winner_dialog.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
 import 'package:provider/provider.dart';
-
-import 'package:account_monopoly/dialogs/chance_dialog.dart';
 import 'package:account_monopoly/dialogs/confirm_action_dialog.dart';
 import 'package:account_monopoly/dialogs/table_info_dialog.dart';
-import 'package:account_monopoly/domain/model/chance.dart';
 import 'package:account_monopoly/provider/game_provider.dart';
 import 'package:account_monopoly/widgets/game_icon_button_builder.dart';
 import 'package:account_monopoly/screens/beneficiaries_screen.dart';
@@ -38,17 +34,18 @@ class GameScreen extends StatefulWidget {
 class GameScreenState extends State<GameScreen> {
   final TutorialManager _gameScreenTutorialManager = TutorialManager.game();
   int eventDeckCount = 0;
-  List<Chance> _chances = [];
+  //List<Chance> _chances = [];
 
   bool _balanceVisibility = false;
   late UserProvider userProvider;
+  bool _isGameFinished = false;
 
   @override
   void initState() {
     super.initState();
 
     Future.delayed(Duration.zero, () {
-      final gameProvider = Provider.of<GameProvider>(context, listen: false);
+      //final gameProvider = Provider.of<GameProvider>(context, listen: false);
       /*if (gameProvider.gameModelDTO!.chancesEnabled) {
         //_getAllEvents();
       }*/
@@ -71,6 +68,7 @@ class GameScreenState extends State<GameScreen> {
               }
 
               if (gameProvider.currentPlayer.youBankrupt) {
+                _isGameFinished = true;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     CustomAlertDialog.show(
@@ -78,8 +76,9 @@ class GameScreenState extends State<GameScreen> {
                       description: TipsResourse.BANKRUPTCY_ALERT,
                       icon: Icons.money_off,
                       firstActionButtonText: "Sair",
-                      onFirstAction: () {
-                        Navigator.of(context).pop();
+                      onFirstAction: () async {
+                        await gameProvider.leaveGame();
+                        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomeScreen()));
                       },
                     );
                   }
@@ -431,6 +430,7 @@ class GameScreenState extends State<GameScreen> {
                               _gameScreenTutorialManager.buildShowcase(
                                 type: TutorialItemType.goMarketButton,
                                 child: GameIconButtonBuilder(
+                                  disableClick: _isGameFinished,
                                   imgPath: "icons/buy.png",
                                   title: "Comprar",
                                   onPressed: () {
@@ -468,7 +468,7 @@ class GameScreenState extends State<GameScreen> {
                                 child: GameIconButtonBuilder(
                                   imgPath: "icons/pay.png",
                                   textFontSize: 13,
-                                  title: "Jogador",
+                                  title: "Transferir",
                                   onPressed: () {
                                     Navigator.push(
                                       context,
@@ -484,6 +484,7 @@ class GameScreenState extends State<GameScreen> {
                               _gameScreenTutorialManager.buildShowcase(
                                 type: TutorialItemType.goPayRentButton,
                                 child: GameIconButtonBuilder(
+                                  disableClick: _isGameFinished,
                                   imgPath: "icons/rent.png",
                                   textFontSize: 13,
                                   title: "Aluguel",
@@ -522,45 +523,23 @@ class GameScreenState extends State<GameScreen> {
 
                               _gameScreenTutorialManager.buildShowcase(
                                 type: TutorialItemType.goLoanButton,
-                                child: AbsorbPointer(
-                                  // Se a condição for falsa, o AbsorbPointer impede qualquer clique/toque no botão
-                                  absorbing:
-                                      !(gameProvider
-                                              .currentPlayer
-                                              .portfolio
-                                              .values
-                                              .isNotEmpty &&
-                                          gameProvider
-                                              .gameModelDTO!
-                                              .loanEnabled),
-                                  child: Opacity(
-                                    // Se estiver indisponível, fica com 40% de opacidade (opaco). Se disponível, 100% (1.0)
-                                    opacity:
-                                        (gameProvider
-                                                .currentPlayer
-                                                .portfolio
-                                                .values
-                                                .isNotEmpty &&
-                                            gameProvider
-                                                .gameModelDTO!
-                                                .loanEnabled)
-                                        ? 1.0
-                                        : 0.4,
-                                    child: GameIconButtonBuilder(
-                                      imgPath: "icons/loan.png",
-                                      title: "Empréstimo",
-                                      onPressed: () => _dialogCaller(
-                                        context,
-                                        const LoanDialog(),
-                                      ),
-                                    ),
+                                child: GameIconButtonBuilder(
+                                  imgPath: "icons/loan.png",
+                                  title: "Empréstimo",
+                                  disableClick: !gameProvider.currentPlayer.portfolio.values.isNotEmpty
+                                   || !gameProvider.gameModelDTO!.loanEnabled 
+                                   || _isGameFinished,
+                                  onPressed: () => _dialogCaller(
+                                    context,
+                                    const LoanDialog(),
                                   ),
-                                ),
+                                )
                               ),
 
                               _gameScreenTutorialManager.buildShowcase(
                                 type: TutorialItemType.goMoreOptionsButton,
                                 child: GameIconButtonBuilder(
+                                  disableClick: _isGameFinished,
                                   imgPath: "icons/more.png",
                                   title: "Mais",
                                   onPressed: () {
@@ -666,12 +645,12 @@ class GameScreenState extends State<GameScreen> {
     }
   }
 
-  void _getAllEvents() {
+  /* void _getAllEvents() {
     ChanceController chanceController = ChanceController();
     chanceController.getAllEvents().then((list) {
       setState(() {
         (_chances = list.cast()).shuffle();
       });
     });
-  }
+  } */
 }
