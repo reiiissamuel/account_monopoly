@@ -42,7 +42,8 @@ class GameModelDTO{
 
  void updateOtherPlayers(Player? player){
   if(player == null) return;
-  othersPlayers[player.id] = player;
+  final p = othersPlayers.values.firstWhere((p) => p.username == player.username, orElse: () => player);
+  othersPlayers[p.id] = player;
  }
 
  Map<String, dynamic> toMap() {
