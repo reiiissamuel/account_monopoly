@@ -116,7 +116,6 @@ class MyGamesScreen extends StatelessWidget {
                           Provider.of<GameProvider>(context, listen: false).enterGameRequest(game: game);
                           Navigator.of(_scafoldKey.currentState!.context).pop();
                           Navigator.pushReplacement(_scafoldKey.currentState!.context, MaterialPageRoute(builder: (context) => const GameScreen()));
-                          //.then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());
                         } on Exception{
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text("Houve um erro interno na tentativa de carregar um jogo"), backgroundColor: Colors.red));

@@ -94,6 +94,10 @@ class Player {
       portfolio: portfolio ?? Map<String, ShareHolder>.from(this.portfolio),
     );
   }
+
+  double netWorth(double portfolioValue) {
+    return currentCredit + portfolioValue - loans.fold(0.0, (sum, loan) => sum + loan.remainingDebt);
+  }
   
   void upgradePortfolio(String propertyId, int sharesAmount, double totalCost) {
     if(portfolio.containsKey(propertyId)) {

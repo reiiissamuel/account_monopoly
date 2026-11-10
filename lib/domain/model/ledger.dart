@@ -67,7 +67,7 @@ class Ledger {
     double totalDividends = 0;
     for(ShareHolder shareHolder in portfolio.values){
       double currentShareCost = properties[shareHolder.propertyId]!.sharePrice;
-      totalPortfolioValue += shareHolder.portfolioValue(currentShareCost);
+      totalPortfolioValue += shareHolder.currentValue(currentShareCost);
       totalInvested += shareHolder.investmentValue;
       totalDividends += shareHolder.dividendsReceived;
     }
@@ -82,7 +82,7 @@ class Ledger {
 
   double calculateShareHolderValue(ShareHolder item){
     final shareCurrentCost = properties[item.propertyId]!.sharePrice;
-    return item.portfolioValue(shareCurrentCost);
+    return item.currentValue(shareCurrentCost);
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DOS PAGAMENTOS

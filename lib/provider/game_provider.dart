@@ -507,9 +507,12 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void checkIfImWinner(){
-    bool isEveryoneEliminatedButMe = gameModelDTO!.othersPlayers.values.every((player) => currentPlayer.id != player.id && player.youBankrupt)
-    && !currentPlayer.youBankrupt;
+  void checkIfImWinner() {
+    bool isEveryoneEliminatedButMe = gameModelDTO!.othersPlayers.values.every((player) => 
+      // Se for eu mesmo, ignora a validação do loop (retorna true para passar direto)
+      player.id == currentPlayer.id || player.youBankrupt
+    ) && !currentPlayer.youBankrupt; // E o jogador atual não pode estar falido
+
     gameModelDTO!.winner = isEveryoneEliminatedButMe ? currentPlayer : null;
     notifyChanges(false);
   }
