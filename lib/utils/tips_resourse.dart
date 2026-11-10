@@ -32,4 +32,6 @@ class TipsResourse{
   \nSe mesmo com a liquidação de todo o seu patrimônio você ainda estiver com saldo negativo, você será considerado falido e estará fora do jogo.''';
 
   static String get BANKRUPTCY_ALERT => "Não foi dessa vez que você construiu seu império.\nVocê foi considerado falido e está fora do jogo.";
+
+  static String get ROUNDS_LIMIT_TIP => "Defina o número máximo de rodadas que o jogo terá. Quando o limite for atingido, o jogo será encerrado automaticamente.";
 }

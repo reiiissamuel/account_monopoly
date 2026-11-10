@@ -19,15 +19,15 @@ enum EventType{
   bankBlacklisted(messageScope: "{SOURCE} entrou para a lista de devedores do banco."),
   dividendsCalculation(messageScope: "Sua empresa recebeu {PRICE} em dividendos referente a rodada {ROUND}."),
   bankruptcy(messageScope: '{SOURCE} declarou falência'),
-  iwon(messageScope: '{SOURCE} venceu o jogo.'),
   lostConnection(messageScope: '{SOURCE} está desconectado.'),
   serverHandShake(messageScope: "{DEST} entrou no jogo."),
   saveGame(messageScope: "💾Salvando progresso..."),
   CHANCE_USED(messageScope: "{SOURCE}  usou um benefício."),
   joinTable(messageScope: '{SOURCE} está se conectando à mesa...'),
+  endGame(),
   negativeBalanceRecovery(messageScope: "O banco liquidou algumas ações de {SOURCE} para cobrir o saldo negativo.");
 
   final String? messageScope;
 
-  const EventType({required this.messageScope});
+  const EventType({this.messageScope});
 }

@@ -161,4 +161,24 @@ class MyGamesScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _getTileText(GameModelDTO game){
+    final player = game.player;
+    if (game.winner != null) {
+    // 1. A partida já terminou e tem um vencedor definido
+    if (game.winner!.id == player.id) {
+      return "Você venceu a partida na rodada ${player.financialReport.historicalBalances.length}!";
+    } else {
+      // Cobre tanto o player que perdeu jogando quanto o que já estava falido
+      return "A partida foi vencida por ${game.winner!.username} na rodada ${player.financialReport.historicalBalances.length}!";
+    }
+    } else {
+      // 2. A partida ainda está a decorrer (game.winner == null)
+      if (player.youBankrupt) {
+        return "Você faliu e está a assistir à partida."; // Ou mantém a tua mensagem original de falência
+      } else {
+        return "Saldo atual: ${StringUtils.currencyFormat(player.currentCredit)} R\$";
+      }
+    }
+  }
 }

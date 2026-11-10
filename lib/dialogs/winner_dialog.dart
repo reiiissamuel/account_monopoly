@@ -3,7 +3,6 @@ import 'package:account_monopoly/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:account_monopoly/domain/enums/event_type.dart';
 import 'package:account_monopoly/screens/game_balance_screen.dart';
 import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/utils/string_utils.dart';
@@ -16,10 +15,7 @@ class WinnerDialog extends StatelessWidget {
     GameProvider gameProvider = Provider.of<GameProvider>(context);
 
     // Coleta todos os jogadores da partida (jogador atual + outros jogadores)
-    List<Player> allPlayers = [
-      gameProvider.currentPlayer,
-      ...gameProvider.otherPlayers.values,
-    ];
+    List<Player> allPlayers = [...gameProvider.otherPlayers.values];
 
     // Ordena os jogadores por NetWorth de forma decrescente (ranking)
     allPlayers.sort((a, b) {
@@ -49,7 +45,7 @@ class WinnerDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                "Você construiu um império!",
+                "Um Império foi construído!",
                 style: TextStyle(
                   fontSize: 20.0,
                   fontWeight: FontWeight.w300,
@@ -78,9 +74,9 @@ class WinnerDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8.0),
-                    const Text(
-                      "Você Venceu!",
-                      style: TextStyle(color: Colors.white, fontSize: 17.0, fontWeight: FontWeight.bold),
+                    Text(
+                      "${allPlayers[0].username} Você Venceu!",
+                      style: const TextStyle(color: Colors.white, fontSize: 17.0, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -186,7 +182,6 @@ class WinnerDialog extends StatelessWidget {
                 ),
                 child: const Text("Sair", style: TextStyle(fontSize: 16.0, color: Colors.white)),
                 onPressed: () async {
-                  gameProvider.eventComposer(type: EventType.iwon);
                   await Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => const HomeScreen()),
                   ).then((_) async {

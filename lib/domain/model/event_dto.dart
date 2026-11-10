@@ -26,6 +26,7 @@ class EventDTO{
   }
 
   String getEventLog(Player currentPlayer){
+    if(type.messageScope == null) return "";
     final String sourcePlayerName =  sourcePlayer.username;
     final String destinationPlayerName =  destinationPlayer?.username ?? "";
     String message = type.messageScope

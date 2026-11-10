@@ -42,7 +42,7 @@ class GameProvider extends ChangeNotifier {
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
-  int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
+  int get currentRound => gameModelDTO!.currentPlayerRound;
   bool get isHost => peerService?.isHost ?? false;
   
   void cleanGameData(){
@@ -128,8 +128,6 @@ class GameProvider extends ChangeNotifier {
 
     Player sourceplayer = event.sourcePlayer;
     
-    double? price = event.price;
-    int? quantity = event.quantity;
     Player? destinationPlayer = event.destinationPlayer;
 
     switch (event.type) {
@@ -138,8 +136,8 @@ class GameProvider extends ChangeNotifier {
         break;
       case EventType.transfer:
         if(destinationPlayer!.id == currentPlayer.id){
-          currentPlayer.roundBalance.transferIn += price!;
-          currentPlayer.receiveCredit(price, ledger.incomeTaxRate);
+          currentPlayer.roundBalance.transferIn += event.price!;
+          currentPlayer.receiveCredit(event.price!, ledger.incomeTaxRate);
         } 
         break;
       case EventType.build || EventType.propertyUpdatePayout || EventType.payRent:
@@ -168,7 +166,7 @@ class GameProvider extends ChangeNotifier {
         ledger.bankPortfolio[event.property!.id] = ShareHolder(
             playerId: sourceplayer.id,
             propertyId: event.property!.id,
-            sharesOwned: quantity!,
+            sharesOwned: event.quantity!,
             investmentValue: 0,
             saleCapitalGain: 0);
         ledger.properties[event.property!.id] = event.property!;
@@ -184,8 +182,9 @@ class GameProvider extends ChangeNotifier {
       case EventType.bankruptcy || EventType.negativeBalanceRecovery:
         gameModelDTO!.ledger = event.gameData!.ledger; // Atualiza o ledger com os dados do evento para atualizar de uma vez todas as propriedades e o estado do mercado
         break;
-      case EventType.iwon:
+      case EventType.endGame:
         gameModelDTO!.winner = sourceplayer;
+        gameModelDTO!.othersPlayers = event.gameData!.othersPlayers; //subscrevendo lista de player com a lista ja rankeada vinda do evento
         break;
       case EventType.joinTable:
         sourceplayer.isOnline = true;
@@ -213,9 +212,8 @@ class GameProvider extends ChangeNotifier {
     }
     
     gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
-    gameModelDTO!.updateOtherPlayers(destinationPlayer); //atualiza o estado do jogador que recebeu o evento
-    if(!currentPlayer.youBankrupt && gameModelDTO!.winner == null) checkIfImWinner();
-    gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
+    gameModelDTO!.updateOtherPlayers(destinationPlayer); //atualiza o estado do jogador destinatario do evento
+    gameModelDTO!.addGameEventsLog(event.getEventLog(currentPlayer));
   }
 
   void processRoundEnding() {
@@ -229,10 +227,14 @@ class GameProvider extends ChangeNotifier {
         if(currentPlayer.youBankrupt) {
           eventComposer(type: EventType.bankruptcy);
           eventComposer(type: EventType.saveGame);
-          return;
         } else {
           eventComposer(type: EventType.negativeBalanceRecovery);
         }
+      }
+
+      if(gameModelDTO!.checkForAWinner()){
+        eventComposer(type: EventType.endGame);
+        return;
       }
 
       List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(currentPlayer);
@@ -256,10 +258,12 @@ class GameProvider extends ChangeNotifier {
         eventComposer(type: EventType.removeTradeOffer, tradeOffer: offer);
       }
       
-      eventComposer(type: EventType.saveGame);
+      
     } on Exception{
-      notifyChanges(false);
       rethrow;
+    } finally {
+      eventComposer(type: EventType.saveGame);
+      notifyChanges(false);
     }
   }
 
@@ -357,8 +361,8 @@ class GameProvider extends ChangeNotifier {
         case EventType.negativeBalanceRecovery:
           event.gameData = gameModelDTO;
           break;
-        case EventType.iwon:
-          gameModelDTO!.winner = currentPlayer;
+        case EventType.endGame:
+          event.gameData = gameModelDTO;
           break;
         case EventType.serverHandShake:
           event.gameData = gameModelDTO;
@@ -380,7 +384,7 @@ class GameProvider extends ChangeNotifier {
          toogleNegativeBalanceAlert = true;
        }
 
-      gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
+      gameModelDTO!.addGameEventsLog(event.getEventLog(currentPlayer));
       notifyChanges(false);
     } on PropertiesAlreadyUpdateException{
       notifyChanges(false);
@@ -507,13 +511,4 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void checkIfImWinner() {
-    bool isEveryoneEliminatedButMe = gameModelDTO!.othersPlayers.values.every((player) => 
-      // Se for eu mesmo, ignora a validação do loop (retorna true para passar direto)
-      player.id == currentPlayer.id || player.youBankrupt
-    ) && !currentPlayer.youBankrupt; // E o jogador atual não pode estar falido
-
-    gameModelDTO!.winner = isEveryoneEliminatedButMe ? currentPlayer : null;
-    notifyChanges(false);
-  }
 }
