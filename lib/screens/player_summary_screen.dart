@@ -62,7 +62,7 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
               actions: [
                 TipIconButton(
                   title: "Compra de ativos",
-                  tip: TipsResourse.PLAYER_SUMMARY_SCREEN,
+                  tip: TipsResourse.playerSummaryScreenTip,
                   onConfirm: () {
                     gameProvider.userModelController.setOnBoardedOnScreen(isMyFinancialScreenOnBoarded: false);
                     gameProvider.notifyChanges(false);

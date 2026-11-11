@@ -73,7 +73,7 @@ class GameScreenState extends State<GameScreen> {
                   if (mounted) {
                     CustomAlertDialog.show(
                       context,
-                      description: TipsResourse.BANKRUPTCY_ALERT,
+                      description: TipsResourse.bankruptcyAlertTip,
                       icon: Icons.money_off,
                       firstActionButtonText: "Sair",
                       onFirstAction: () async {
@@ -93,7 +93,7 @@ class GameScreenState extends State<GameScreen> {
                   if (mounted) {
                     CustomAlertDialog.show(
                       context,
-                      description: TipsResourse.NEGATIVE_BALANCE_ALERT,
+                      description: TipsResourse.negativeBalanceAlertTip,
                       icon: Icons.warning_amber_rounded,
                       firstActionButtonText: "Vender ações",
                       onFirstAction: () {

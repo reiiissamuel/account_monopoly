@@ -22,7 +22,7 @@ enum EventType{
   lostConnection(messageScope: '{SOURCE} está desconectado.'),
   serverHandShake(messageScope: "{DEST} entrou no jogo."),
   saveGame(messageScope: "💾Salvando progresso..."),
-  CHANCE_USED(messageScope: "{SOURCE}  usou um benefício."),
+  chanceUsed(messageScope: "{SOURCE}  usou um benefício."),
   joinTable(messageScope: '{SOURCE} está se conectando à mesa...'),
   endGame(),
   negativeBalanceRecovery(messageScope: "O banco liquidou algumas ações de {SOURCE} para cobrir o saldo negativo.");

@@ -116,7 +116,7 @@ class GameModelDTO{
     player: Player.fromMap(map['player'] as Map<String, dynamic>),
     ledger: Ledger.fromMap(map['ledger'] as Map<String, dynamic>),
     limitPlayer: (map['limitPlayer'] as num?)?.toInt() ?? 4,
-    roundsLimit: (map['roundsLimit'] as num?)?.toInt() ?? null,
+    roundsLimit: (map['roundsLimit'] as num?)?.toInt(),
     winner: restoredWinner,
     //chances: (map['chances'] as List<dynamic>).map((b) => Chance.fromMap(b as Map<String, dynamic>)).toList(),
   );

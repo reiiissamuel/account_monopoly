@@ -26,10 +26,10 @@ class GameBalanceScreen extends StatelessWidget {
             children: [
               ChartThree(),
               //const ChartOne(),
-              ChartTwo(chartTitle: "Gastos na Rodada Atual", chartType: PieChartType.ROUND_EXPANSES),
-              ChartTwo(chartTitle: "Ganhos na Rodada Atual", chartType: PieChartType.ROUND_PROFIT),
-              ChartTwo(chartTitle: "Gastos Gerais no Jogo", chartType: PieChartType.GENERAL_EXPANSES),
-              ChartTwo(chartTitle: "Ganhos Gerais no Jogo", chartType: PieChartType.GENERAL_PROFIT)
+              ChartTwo(chartTitle: "Gastos na Rodada Atual", chartType: PieChartType.roundExpanses),
+              ChartTwo(chartTitle: "Ganhos na Rodada Atual", chartType: PieChartType.roundProfit),
+              ChartTwo(chartTitle: "Gastos Gerais no Jogo", chartType: PieChartType.generalExpanses),
+              ChartTwo(chartTitle: "Ganhos Gerais no Jogo", chartType: PieChartType.generalProfit)
             ],
           )
       )

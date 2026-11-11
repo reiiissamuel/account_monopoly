@@ -29,7 +29,7 @@ class _PayRentDialogState extends State<PayRentDialog> {
   int _multiplier = 2; 
   late double _rentToPay;
 
-  int _minMultiplier = 2; 
+  final int _minMultiplier = 2; 
 
   @override
   void initState() {

@@ -26,7 +26,7 @@ class NewPropertyScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
         actions: [
-          const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
+          const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.propertiesTip)
         ]
       ),
       backgroundColor: Colors.black,

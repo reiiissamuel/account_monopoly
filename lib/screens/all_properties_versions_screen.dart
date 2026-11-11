@@ -52,7 +52,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
           ),
           centerTitle: true,
           actions: [
-            const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
+            const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.propertiesTip)
           ],
         ),
         backgroundColor: Colors.black,

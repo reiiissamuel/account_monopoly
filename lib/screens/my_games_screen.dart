@@ -33,7 +33,7 @@ class MyGamesScreen extends StatelessWidget {
               letterSpacing: 2)),
           centerTitle: true,
           actions: [
-            const TipIconButton(title: "Meus Jogos", tip: TipsResourse.MY_GAMES_SCREEN_TIP)
+            const TipIconButton(title: "Meus Jogos", tip: TipsResourse.myGamesScreenTip)
           ],
         ),
         backgroundColor: Colors.black,
@@ -95,9 +95,7 @@ class MyGamesScreen extends StatelessWidget {
             ),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text( player.youBankrupt
-                ? "Você faliu na rodada ${player.financialReport.historicalBalances.length + 1}"
-                : "Saldo atual: ${StringUtils.currencyFormat(player.currentCredit)} R\$",
+              child: Text( _getTileText(game),
                 style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 20.0),
               ),
             ),

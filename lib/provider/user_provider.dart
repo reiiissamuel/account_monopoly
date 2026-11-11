@@ -345,7 +345,7 @@ class UserProvider extends ChangeNotifier{
     if (user == null) return;
     
     // Atualiza o valor no modelo
-    user!.primaryColorValue = newColor.value;
+    user!.primaryColorValue = newColor.toARGB32();
     notifyListeners(); // Notifica o app inteiro para redesenhar com a nova cor
 
     // Persiste a alteração no backend/banco de dados

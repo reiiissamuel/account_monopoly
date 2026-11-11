@@ -79,7 +79,7 @@ class _MarketScreenState extends State<MarketScreen> {
               actions: [
                 TipIconButton(
                   title: "Compra de ativos",
-                  tip: TipsResourse.MARKET_SCREEN,
+                  tip: TipsResourse.marketScreenTip,
                   onConfirm: () {
                     gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: false);
                     gameProvider.notifyChanges(false);

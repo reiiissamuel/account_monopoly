@@ -57,7 +57,7 @@ class HomeScreenState extends State<HomeScreen> {
               automaticallyImplyLeading: false,
               actions: [
                 TipIconButton(
-                            tip: TipsResourse.HOME_SCREEN_TIP,
+                            tip: TipsResourse.homeScreenTip,
                             title: "Tela inicial",
                             onConfirm: () {
                               RulesDialog.show(context);

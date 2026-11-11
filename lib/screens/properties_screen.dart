@@ -34,7 +34,7 @@ class PropertiesScreen extends StatelessWidget {
           centerTitle: true,
           foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
           actions: [
-            const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
+            const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.propertiesTip)
           ],
         ),
         backgroundColor: Colors.black,

@@ -71,7 +71,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
               actions: [
                 TipIconButton(
                   title: "Meu portfólio",
-                  tip: TipsResourse.MY_PORTFOLIO_SCREEN,
+                  tip: TipsResourse.myPortfolioScreenTip,
                   onConfirm: () {
                     gameProvider.userModelController
                         .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: false);
@@ -389,10 +389,10 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
               onPressed: () {
                 try {
                   final int? quantity = int.tryParse(quantityController.text);
-                  final double? price = StringUtils.currencyAsDouble(priceController.text);
+                  final double price = StringUtils.currencyAsDouble(priceController.text);
                   final int? turns = int.tryParse(turnController.text);
                   
-                  if (quantity == null || price == null || turns == null || turns <= 0 || price <= 0|| quantity <= 0) {
+                  if (quantity == null || price == 0.0 || turns == null || turns <= 0 || price <= 0|| quantity <= 0) {
                     throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
                   }
                   final offer = TradeOffer(

@@ -161,9 +161,9 @@ class NewGameScreenState extends State<NewGameScreen> {
                       ],
                     ),
                   ),
-                  Expanded(
+                  const Expanded(
                       flex: 1,
-                      child: TipIconButton(title: "Limite de Rodadas", tip: TipsResourse.ROUNDS_LIMIT_TIP))
+                      child: TipIconButton(title: "Limite de Rodadas", tip: TipsResourse.roundsLimitTip))
                 ],
               ),
               const SizedBox(height: 20.0),
@@ -193,7 +193,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   ),
                   const Expanded(
                       flex: 1,
-                      child: TipIconButton(title: "Limite de Jogadores", tip: TipsResourse.PLAYERS_LIMIT_TIP))
+                      child: TipIconButton(title: "Limite de Jogadores", tip: TipsResourse.playersLimitTip))
                 ],
               ),
               const SizedBox(height: 20.0),         
@@ -223,7 +223,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   ),
                   const Expanded(
                       flex: 1,
-                      child: TipIconButton(title: "Versão do tabuleiro", tip: TipsResourse.VERSION))
+                      child: TipIconButton(title: "Versão do tabuleiro", tip: TipsResourse.versionTip))
                 ],
               ),
               const SizedBox(height: 20.0),
@@ -258,7 +258,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   ),
                   const Expanded(
                       flex:1,
-                      child: TipIconButton(title: "Nível dos juros:", tip: TipsResourse.LOAN_TAX_TIP))
+                      child: TipIconButton(title: "Nível dos juros:", tip: TipsResourse.loanTaxTip))
                 ],
               ),
               const SizedBox(height: 25.0),
@@ -401,7 +401,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                       initalGameCredit: StringUtils.currencyAsDouble(_initialCreditController.text),
                       chancesEnabled: isChanceSwitchEnabled,
                       loanEnabled: isLoanEnabled,
-                      roundsLimit: int.tryParse(_roundsLimitController.text) ?? null
+                      roundsLimit: int.tryParse(_roundsLimitController.text)
                   );
                   gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
                   await gameProvider.createNewGame(game: gameData);
