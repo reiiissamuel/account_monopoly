@@ -77,10 +77,9 @@ class GameScreenState extends State<GameScreen> {
                       icon: Icons.money_off,
                       firstActionButtonText: "Sair",
                       onFirstAction: () async {
-                        await Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => const HomeScreen())).then((_) async {
-                            await gameProvider.leaveGame();
-                          });
+                        await gameProvider.leaveGame();
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (context) => const HomeScreen()));
                         },
                     );
                   }
@@ -192,13 +191,10 @@ class GameScreenState extends State<GameScreen> {
                                     "indo até a sessão 'jogos ativos'",
                                 onConfirm: () async {
                                   // No botão de sair da UI:
+                                  await gameProvider.leaveGame();
                                   Navigator.of(context).pushReplacement(
-                                  await Navigator.of(context).pushReplacement(
                                     MaterialPageRoute(builder: (context) => const HomeScreen())
-                                  )
-                                  ).then((_) async {
-                                    await gameProvider.leaveGame();
-                                  });
+                                  );
                                 },
                               );
                             },

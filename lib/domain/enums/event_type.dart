@@ -19,7 +19,7 @@ enum EventType{
   bankBlacklisted(messageScope: "{SOURCE} entrou para a lista de devedores do banco."),
   dividendsCalculation(messageScope: "Sua empresa recebeu {PRICE} em dividendos referente a rodada {ROUND}."),
   bankruptcy(messageScope: '{SOURCE} declarou falência'),
-  lostConnection(messageScope: '{SOURCE} está desconectado.'),
+  leaveGame(messageScope: '{SOURCE} está desconectado.'),
   serverHandShake(messageScope: "{DEST} entrou no jogo."),
   saveGame(messageScope: "💾Salvando progresso..."),
   chanceUsed(messageScope: "{SOURCE}  usou um benefício."),

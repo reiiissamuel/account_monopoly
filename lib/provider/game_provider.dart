@@ -86,7 +86,7 @@ class GameProvider extends ChangeNotifier {
 
     peerService?.onPeerLeft.listen((peerId) {
       eventComposer(
-        type: EventType.lostConnection, 
+        type: EventType.leaveGame, 
         sourcePlayer: gameModelDTO?.othersPlayers[peerId]
       );
     });
@@ -183,7 +183,7 @@ class GameProvider extends ChangeNotifier {
         gameModelDTO!.ledger = event.gameData!.ledger; // Atualiza o ledger com os dados do evento para atualizar de uma vez todas as propriedades e o estado do mercado
         break;
       case EventType.endGame:
-        gameModelDTO!.winner = sourceplayer;
+        gameModelDTO!.winner = event.gameData!.winner;
         gameModelDTO!.othersPlayers = event.gameData!.othersPlayers; //subscrevendo lista de player com a lista ja rankeada vinda do evento
         break;
       case EventType.joinTable:
@@ -203,7 +203,7 @@ class GameProvider extends ChangeNotifier {
             _dealHostHandShakeEvent(event, destinationPlayer!, isNewPlayerAtTable);
         }
         break;
-      case EventType.lostConnection:
+      case EventType.leaveGame:
         sourceplayer.isOnline = false;
         _updateUserModel();
         break;
@@ -368,7 +368,7 @@ class GameProvider extends ChangeNotifier {
           event.gameData = gameModelDTO;
           _updateUserModel();
           break;
-        case EventType.lostConnection:
+        case EventType.leaveGame:
           event.sourcePlayer.isOnline = false;
           _updateUserModel();
           break;
@@ -468,10 +468,9 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> leaveGame() async {
-    notifyChanges(isLoading);
     try {
       if (peerService != null && peerService!.isPeerConnected) {
-        eventComposer(type: EventType.lostConnection);
+        eventComposer(type: EventType.leaveGame);
         await Future.delayed(const Duration(milliseconds: 300)); 
       }
     } catch (e) {

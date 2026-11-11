@@ -75,7 +75,7 @@ class WinnerDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 8.0),
                     Text(
-                      "${allPlayers[0].username} Você Venceu!",
+                      "${allPlayers[0].username} Venceu!",
                       style: const TextStyle(color: Colors.white, fontSize: 17.0, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -138,8 +138,8 @@ class WinnerDialog extends StatelessWidget {
                           ),
                           Text(
                             StringUtils.currencyFormat(netWorth),
-                            style: const TextStyle(
-                              color: Colors.greenAccent,
+                            style: TextStyle(
+                              color: netWorth >= 0 ? Colors.greenAccent : Colors.redAccent,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
@@ -182,11 +182,10 @@ class WinnerDialog extends StatelessWidget {
                 ),
                 child: const Text("Sair", style: TextStyle(fontSize: 16.0, color: Colors.white)),
                 onPressed: () async {
-                  await Navigator.of(context).pushReplacement(
+                  await gameProvider.leaveGame();
+                  Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  ).then((_) async {
-                    await gameProvider.leaveGame();
-                  });
+                  );
                 },
               ),
             ],
