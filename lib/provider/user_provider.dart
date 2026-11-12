@@ -168,8 +168,7 @@ class UserProvider extends ChangeNotifier{
       {required String name, required String username}
       ) async {
     try{
-      isLoading = true;
-      notifyListeners();
+      notifyChanges(true);
 
       UserModelDTO userModelDTO = UserModelDTO(
           name: name,
@@ -184,8 +183,7 @@ class UserProvider extends ChangeNotifier{
     } on Exception catch(e){
       throw Exception("${ConfigsConstants.newUserErrorMsg} ${e.toString()}");
     } finally {
-      isLoading = false;
-      notifyListeners();
+      notifyChanges(false);
     }
   }
 
@@ -195,29 +193,25 @@ class UserProvider extends ChangeNotifier{
 
   Future<void> updateUser() async {
     try{
-      isLoading = true;
-      notifyListeners();
+      notifyChanges(true);
       await userRepository.updateUser(user!);
     } on Exception catch(e) {
       log("Error updateUser: $e");
       rethrow;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      notifyChanges(false);
     }
   }
 
   Future<void> deleteUser(int userId) async {
-    isLoading = true;
-    notifyListeners();
+    notifyChanges(true);
     try {
       await userRepository.deleteUser(userId);
       await _getAllLocalUsers();
     } on Exception {
       rethrow;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      notifyChanges(false);
     }
   }
 
@@ -226,19 +220,16 @@ class UserProvider extends ChangeNotifier{
   }
 
   void signIn({required UserModelDTO userModelDTO}) {
-    isLoading = true;
-    notifyListeners();
+    notifyChanges(true);
 
     user = userModelDTO;
 
-    isLoading = false;
-    notifyListeners();
+    notifyChanges(false);
   }
 
   Future<void> signOut() async {
     try{
-      isLoading = true;
-      notifyListeners();
+      notifyChanges(true);
 
       user = null;
       await _getAllLocalUsers();
@@ -256,25 +247,21 @@ class UserProvider extends ChangeNotifier{
 
   Future<void> _loadCurrentUser() async {
     try{
-      isLoading = true;
-      notifyListeners();
+      notifyChanges(true);
       _getAllLocalUsers();
       user ??= await userRepository.getUserWithLatestLastLogged();
     } on Exception {
       rethrow;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      notifyChanges(false);
     }
   }
 
   Future<void> deleteGame(String gameId) async {
-    isLoading = true;
-    notifyListeners();
+    notifyChanges(true);
     user!.games.removeWhere((game) => game.id == gameId);
     await userRepository.updateUser(user!);
-    isLoading = false;
-    notifyListeners();
+    notifyChanges(false);
   }
 
   String checkPropertyIdExistsByIdThenChange(String versionId, String propertyId){
@@ -289,10 +276,9 @@ class UserProvider extends ChangeNotifier{
   }
 
   Future<void> newProperty(String versionId, Property property) async {
-    var propertiesVersion = user!.propertiesVersion!;
     try{
-      isLoading = true;
-      notifyListeners();
+      notifyChanges(true);
+      var propertiesVersion = user!.propertiesVersion!;
       if(propertiesVersion.containsKey(versionId)){
         if(propertiesVersion[versionId]!.any((p) => p.id == property.id)){
           final int index = propertiesVersion[versionId]!.indexWhere((p) => p.id == property.id);
@@ -308,27 +294,22 @@ class UserProvider extends ChangeNotifier{
       notifyListeners();
       rethrow;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      notifyChanges(false);
     }
   }
 
   Future<void> deletePropertiesCollection(String versionId) async {
-    isLoading = true;
-    notifyListeners();
+    notifyChanges(true);
     user!.propertiesVersion!.remove(versionId);
     await userRepository.updateUser(user!);
-    isLoading = false;
-    notifyListeners();
+    notifyChanges(false);
   }
 
   Future<void> deleteProperty(String versionId, String propertyid) async {
-    isLoading = true;
-    notifyListeners();
+    notifyChanges(true);
     user!.propertiesVersion![versionId]!.removeWhere((p) => p.id == propertyid);
     await userRepository.updateUser(user!);
-    isLoading = false;
-    notifyListeners();
+    notifyChanges(false);
   }
 
   GameModelDTO getGameById(String gameId) {

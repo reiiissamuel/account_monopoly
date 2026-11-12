@@ -54,6 +54,7 @@ class PropertyRegistrationForm extends StatefulWidget {
 
 class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
   final _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
 
   // Variáveis para armazenar os valores dos campos
   String _name = '';
@@ -189,7 +190,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     );
   }
 
-   Widget _buildIconSelector() {
+  Widget _buildIconSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -240,7 +241,6 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     );
   }
 
-
   // Dropdown para Tipo de Propriedade
   Widget _buildTypeDropdown({required PropertyType? initialValue}) {
     return Padding(
@@ -289,132 +289,181 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
     );
   }
 
+  ButtonStyle _getButtonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.grey,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
+  }
+
+  void _subirScrollViewAoTopo() {
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0.0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(20.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            _buildField(
-              label:'Versão do tabuleiro', 
-              onSave: (value) => _versionid = value,
-              digitsOnly: false,
-              alertMsg: "Nome sem caracteres especiais",
-              initialValue: _versionid,
-              enabled: widget.property == null
-            ),
-            _buildField(
-              label: 'Nome da Propriedade', 
-              onSave: (value) => _name = value,
-                digitsOnly: false,
-              alertMsg: "Nome sem caracteres especiais",
-              initialValue: _name
-            ),
-            _buildTypeDropdown(initialValue: _propertyType),
-
-            _propertyType == PropertyType.reit ? _buildColorSelector() : _buildIconSelector(),
-          
-            const Divider(color: Colors.white30, height: 40),
-            
-            // Campos INICIAIS (Não-finais, mas necessários para instanciar a classe)
-            const Text(
-              'Valores Iniciais', 
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
-            ),
-            const SizedBox(height: 16),
-            _buildField(
-              label: 'Preço Base', 
-              onSave: (value) => _basePrice = value,
-              digitsOnly: true,
-              alertMsg: "insira um número válido",
-              initialValue: _basePrice.toString()
-            ),
-            const SizedBox(height: 16),
-            _buildField(
-              label: 'Aluguel inicial', 
-              onSave: (value) => _rentPrice = value,
-              digitsOnly: true,
-              alertMsg: "insira um número válido",
-              initialValue: _rentPrice.toString()
-            ),
-            if(_propertyType == PropertyType.reit) ...[
-              _buildField(
-                  label: 'Custo de construção',
-                  onSave: (value) => _buildingCost = value,
-                  digitsOnly: true,
-                  alertMsg: "insira um número válido",
-                  initialValue: _buildingCost.toString()
-              )
-             ],
-
-            const SizedBox(height: 30),
-            
-            ElevatedButton.icon(
-              icon: const Icon(Icons.save),
-              label: Text(widget.property == null ? 'Cadastrar Propriedade' : 'Atualizar Propriedade'),
-              onPressed: () async {
-                try{
-                  final userProvider = Provider.of<UserProvider>(context, listen: false);
-
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-
-                    String propertyId;
-                    if(widget.property == null){
-                      propertyId = userProvider.checkPropertyIdExistsByIdThenChange(
-                          _versionid,
-                          StringUtils.generateAbrevCodeFromString(_name)
-                      );
-                    } else {
-                      propertyId = widget.property!.id;
-                    }
-
-                    // Crie o objeto Property
-                    final newProperty = Property(
-                        id: propertyId,
-                        name: _name,
-                        basePrice: StringUtils.currencyAsDouble(_basePrice),
-                        colorSignature: _colorSignature.toARGB32(),
-                        propertyType: _propertyType,
-                        iconSignature: _iconSignatureData.toKey(),
-                        currentRent: StringUtils.currencyAsDouble(_rentPrice),
-                        currentBuildingCost: _propertyType == PropertyType.reit ? StringUtils.currencyAsDouble(_buildingCost) : 0
-                    );
-
-                    await userProvider.newProperty(_versionid, newProperty);
-
-                    // Feedback visual
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Propriedade "$_name" concluída.'
-                        ),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.of(context).pop();
-                  }
-                } on Exception catch(e){
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Erro na tentativa de cadastro: $e'),
-                      backgroundColor: Colors.red,
+      child: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          return Stack(
+            children: [
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    _buildField(
+                      label:'Versão do tabuleiro', 
+                      onSave: (value) => _versionid = value,
+                      digitsOnly: false,
+                      alertMsg: "Nome sem caracteres especiais",
+                      initialValue: _versionid,
+                      enabled: widget.property == null
                     ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    _buildField(
+                      label: 'Nome da Propriedade', 
+                      onSave: (value) => _name = value,
+                        digitsOnly: false,
+                      alertMsg: "Nome sem caracteres especiais",
+                      initialValue: _name
+                    ),
+                    _buildTypeDropdown(initialValue: _propertyType),
+
+                    _propertyType == PropertyType.reit ? _buildColorSelector() : _buildIconSelector(),
+                  
+                    const Divider(color: Colors.white30, height: 40),
+                    
+                    // Campos INICIAIS (Não-finais, mas necessários para instanciar a classe)
+                    const Text(
+                      'Valores Iniciais', 
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
+                    ),
+                    const SizedBox(height: 16),
+                    _buildField(
+                      label: 'Preço Base', 
+                      onSave: (value) => _basePrice = value,
+                      digitsOnly: true,
+                      alertMsg: "insira um número válido",
+                      initialValue: _basePrice.toString()
+                    ),
+                    const SizedBox(height: 16),
+                    _buildField(
+                      label: 'Aluguel inicial', 
+                      onSave: (value) => _rentPrice = value,
+                      digitsOnly: true,
+                      alertMsg: "insira um número válido",
+                      initialValue: _rentPrice.toString()
+                    ),
+                    if(_propertyType == PropertyType.reit) ...[
+                      _buildField(
+                          label: 'Custo de construção',
+                          onSave: (value) => _buildingCost = value,
+                          digitsOnly: true,
+                          alertMsg: "insira um número válido",
+                          initialValue: _buildingCost.toString()
+                      )
+                    ],
+
+                    const SizedBox(height: 30),
+                    
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.save),
+                      label: const Text('Salvar e Fechar'),
+                      onPressed: () async { 
+                        _saveNewProperty(context, userProvider);
+                        Navigator.of(context).pop();
+                      },
+                      style: _getButtonStyle(),
+                    ),
+
+                    if(widget.property == null) ...[
+                      const SizedBox(height: 30),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.save),
+                        label: const Text('Salvar e Cadastrar Outra'),
+                        onPressed: () async { 
+                          _saveNewProperty(context, userProvider);
+                          _resetForm();
+                          _subirScrollViewAoTopo();
+                        },
+                        style: _getButtonStyle(),
+                      ),
+                    ]
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+              if (userProvider.isLoading) 
+                Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  void _resetForm() {
+    _formKey.currentState?.reset();
+  }
+
+  void _saveNewProperty(BuildContext context, UserProvider userProvider) async {
+    try{
+
+      if (_formKey.currentState!.validate()) {
+        _formKey.currentState!.save();
+
+        String propertyId;
+        if(widget.property == null){
+          propertyId = userProvider.checkPropertyIdExistsByIdThenChange(
+              _versionid,
+              StringUtils.generateAbrevCodeFromString(_name)
+          );
+        } else {
+          propertyId = widget.property!.id;
+        }
+
+        // Crie o objeto Property
+        final newProperty = Property(
+            id: propertyId,
+            name: _name,
+            basePrice: StringUtils.currencyAsDouble(_basePrice),
+            colorSignature: _colorSignature.toARGB32(),
+            propertyType: _propertyType,
+            iconSignature: _iconSignatureData.toKey(),
+            currentRent: StringUtils.currencyAsDouble(_rentPrice),
+            currentBuildingCost: _propertyType == PropertyType.reit ? StringUtils.currencyAsDouble(_buildingCost) : 0
+        );
+
+        await userProvider.newProperty(_versionid, newProperty);
+
+        // Feedback visual
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Propriedade "$_name" concluída.'
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on Exception catch(e){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro na tentativa de cadastro: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
