@@ -12,7 +12,7 @@ abstract final class TutorialFakeObjects {
 
   TutorialFakeObjects._();
 
-  static final Property _fakeStocksProperty = Property(
+  static final Property _fakeProperty = Property(
       id: "FAKE_PROPERTY",
       name: "Propriedade A",
       propertyType: PropertyType.stocks, basePrice: 200,
@@ -51,9 +51,9 @@ abstract final class TutorialFakeObjects {
      portfolio: {},
     );
 
-  static Property getFakeStocksProperty() {
-    _fakeStocksProperty.collectedRent = 45;
-    return _fakeStocksProperty;
+  static Property getFakeProperty() {
+    _fakeProperty.collectedRent = 45;
+    return _fakeProperty;
   }
 
 }

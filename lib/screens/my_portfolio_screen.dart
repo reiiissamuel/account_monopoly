@@ -152,8 +152,10 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
 
   // 2. TILE DE CADA ATIVO
   Widget _portfolioTile(BuildContext context, ShareHolder item, GameProvider gameProvider) {
-  // property é null no item de exemplo do tutorial
-  final Property property = gameProvider.ledger.properties[item.propertyId]!;
+  //verifica se o item é o fake do tutorial e usa a propriedade fake correspondente
+  final Property property = item.propertyId == TutorialFakeObjects.fakeShareHolder.propertyId
+   ? TutorialFakeObjects.getFakeProperty() : gameProvider.ledger.properties[item.propertyId]!;
+   
   final sharePrice = property.sharePrice;
   final Color baseColor = Color(property.colorSignature);
   final Color pnlColor = item.getProfitPercentage(sharePrice) >= 0 ? Colors.green : Colors.red;
