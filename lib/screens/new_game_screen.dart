@@ -27,9 +27,10 @@ class NewGameScreenState extends State<NewGameScreen> {
   final _initialCreditController = TextEditingController();
   final _bonusController = TextEditingController();
   final _sharesController = TextEditingController();
+  final _roundsLimitController = TextEditingController();
   String _selectedPropertyVersion = '';
   List<String> _propertiesVersionsOptions = [];
-  int dropdownValue = 3;
+  int limitPlayers = 3;
   GameLevel gameLevel = GameLevel.normal;
   List <int> spinnerItems = [2,3,4,5,6,7,8,9,10];
   bool isChanceSwitchEnabled = true;
@@ -44,9 +45,11 @@ class NewGameScreenState extends State<NewGameScreen> {
    _initialCreditController.text.isEmpty ? _initialCreditController.text = "200.000,00" : null;
    _bonusController.text.isEmpty ? _bonusController.text = "200.000,00" : null;
    _sharesController.text.isEmpty ? _sharesController.text = "1000" : null;
+   _roundsLimitController.text.isEmpty ? _roundsLimitController.text = "10" : null;
    _initialCreditController.selection = TextSelection.collapsed(offset: _initialCreditController.text.length);
    _bonusController.selection = TextSelection.collapsed(offset: _bonusController.text.length);
    _sharesController.selection = TextSelection.collapsed(offset: _sharesController.text.length);
+   _roundsLimitController.selection = TextSelection.collapsed(offset: _roundsLimitController.text.length);
     final availableVersions = Provider.of<UserProvider>(context, listen: false).user!.propertiesVersion!.keys.toList();
    _propertiesVersionsOptions = availableVersions;
     if (_propertiesVersionsOptions.isNotEmpty) {
@@ -111,7 +114,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   StringUtils(), // Aplica a formatação de moeda
                 ]
               ),
-              const SizedBox(height: 25.0),
+              const SizedBox(height: 20.0),
               TextField(
                 keyboardType: TextInputType.number,
                 controller: _bonusController,
@@ -125,7 +128,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   StringUtils(), // Aplica a formatação de moeda
                 ]
               ), 
-              const SizedBox(height: 25.0),
+              const SizedBox(height: 20.0),
               TextField(
                 keyboardType: TextInputType.number,
                 controller: _sharesController,
@@ -138,7 +141,32 @@ class NewGameScreenState extends State<NewGameScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                 ]
               ), 
-              const SizedBox(height: 25.0),
+              const SizedBox(height: 20.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    flex: 3,
+                    child: TextField(
+                      keyboardType: TextInputType.number,
+                      controller: _roundsLimitController,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 20.0),
+                      decoration: _buildInputDecoration(context, "Limite de Rodadas", icon: Icons.timer),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                    ),
+                  ),
+                  const Expanded(
+                      flex: 1,
+                      child: TipIconButton(title: "Limite de Rodadas", tip: TipsResourse.roundsLimitTip))
+                ],
+              ),
+              const SizedBox(height: 20.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -146,7 +174,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   Expanded(
                     flex: 3,
                     child: DropdownButtonFormField<int>(
-                      initialValue: dropdownValue,
+                      initialValue: limitPlayers,
                       decoration: _buildInputDecoration(context, "Limite de Jogadores"), 
                       dropdownColor: Colors.black, // Cor do menu dropdown para visibilidade
                       style: const TextStyle(
@@ -160,15 +188,15 @@ class NewGameScreenState extends State<NewGameScreen> {
                           child: Text(value.toString()),
                         );
                       }).toList(),
-                      onChanged: (data) => setState(() => dropdownValue = data ?? dropdownValue),
+                      onChanged: (data) => setState(() => limitPlayers = data ?? limitPlayers),
                     ),
                   ),
                   const Expanded(
                       flex: 1,
-                      child: TipIconButton(title: "Limite de Jogadores", tip: TipsResourse.PLAYERS_LIMIT_TIP))
+                      child: TipIconButton(title: "Limite de Jogadores", tip: TipsResourse.playersLimitTip))
                 ],
               ),
-              const SizedBox(height: 25.0),         
+              const SizedBox(height: 20.0),         
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -195,10 +223,10 @@ class NewGameScreenState extends State<NewGameScreen> {
                   ),
                   const Expanded(
                       flex: 1,
-                      child: TipIconButton(title: "Versão do tabuleiro", tip: TipsResourse.VERSION))
+                      child: TipIconButton(title: "Versão do tabuleiro", tip: TipsResourse.versionTip))
                 ],
               ),
-              const SizedBox(height: 25.0),
+              const SizedBox(height: 20.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -230,7 +258,7 @@ class NewGameScreenState extends State<NewGameScreen> {
                   ),
                   const Expanded(
                       flex:1,
-                      child: TipIconButton(title: "Nível dos juros:", tip: TipsResourse.LOAN_TAX_TIP))
+                      child: TipIconButton(title: "Nível dos juros:", tip: TipsResourse.loanTaxTip))
                 ],
               ),
               const SizedBox(height: 25.0),
@@ -319,7 +347,7 @@ class NewGameScreenState extends State<NewGameScreen> {
               children: [
                 const Divider(color: Colors.white70),
                 Text(
-                    "Saldo inicial: \$ ${_initialCreditController.text}\nLimite de Jogadores: $dropdownValue\nBônus da rodada: ${_bonusController.text}\n"
+                    "Saldo inicial: \$ ${_initialCreditController.text}\nLimite de Jogadores: $limitPlayers\nBônus da rodada: ${_bonusController.text}\n"
                         "Nível: ${gameLevel.description}\n\nDeseja confirmar as configurações?",
                     style: const TextStyle(color: Colors.white)),
               ],
@@ -369,10 +397,11 @@ class NewGameScreenState extends State<NewGameScreen> {
                   GameModelDTO gameData = GameModelDTO(
                       ledger: ledger,
                       id: StringUtils.generateUUID(size: 8),
-                      limitPlayer: dropdownValue,
+                      limitPlayer: limitPlayers,
                       initalGameCredit: StringUtils.currencyAsDouble(_initialCreditController.text),
                       chancesEnabled: isChanceSwitchEnabled,
-                      loanEnabled: isLoanEnabled
+                      loanEnabled: isLoanEnabled,
+                      roundsLimit: int.tryParse(_roundsLimitController.text)
                   );
                   gameProvider.userModelController = Provider.of<UserProvider>(context, listen: false);
                   await gameProvider.createNewGame(game: gameData);

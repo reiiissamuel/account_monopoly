@@ -83,7 +83,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               actions: [
                 TipIconButton(
                   title: "Detalhes da Propriedade",
-                  tip: TipsResourse.PROPERTY_DETAILS_SCREEN,
+                  tip: TipsResourse.propertyDetailsScreenTip,
                   onConfirm: () {
                     gameProvider.userModelController.setOnBoardedOnScreen(isPropertyDetailsScreenOnBoarded: false);
                     gameProvider.notifyChanges(false);
@@ -364,7 +364,7 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
  void _processBuildingPurchase(BuildContext context, Property property, GameProvider gameProvider) {
     final TextEditingController quantityController = TextEditingController();
     final TextEditingController newRentController = TextEditingController();
-    double _dialogReserveUsage = _propertyReserveUsage;
+    double dialogReserveUsage = _propertyReserveUsage;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -462,14 +462,14 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
                       label: "${_propertyReserveUsage.toStringAsFixed(0)} %",
                       onChanged: (double newValue) {
                         dialogSetState(() {
-                          _dialogReserveUsage = newValue; // Atualiza a variável local para o rebuild
+                          dialogReserveUsage = newValue; // Atualiza a variável local para o rebuild
                         });
                         // 4. Atualiza a variável da classe State principal (_propertyReserveUsage) para persistência
                         _propertyReserveUsage = newValue;
                       },
                     ),
                     const SizedBox(height: 5),
-                    const Center(child: TipIconButton(title: "Construções", tip: TipsResourse.BUILDINGS, width: 25.0, height: 25.0, iconSize: 19.0))
+                    const Center(child: TipIconButton(title: "Construções", tip: TipsResourse.buildingsTip, width: 25.0, height: 25.0, iconSize: 19.0))
                   ],
                 )
               );
@@ -485,9 +485,9 @@ Widget _buildHistoryPlaceholder(BuildContext context, Property property) {
               onPressed: () {
                 try{
                   final int? quantity = int.tryParse(quantityController.text);
-                  final double? newRent = StringUtils.currencyAsDouble(newRentController.text);
+                  final double newRent = StringUtils.currencyAsDouble(newRentController.text);
                   
-                  if(quantity == null || newRent == null || quantity <= 0 || newRent <= 0) throw MissValueException("Valores inválidos. Tente novamente.");
+                  if(quantity == null || newRent == 0.0 || quantity <= 0 || newRent <= 0) throw MissValueException("Valores inválidos. Tente novamente.");
                   if(quantity > 2) throw MissValueException("A quantidade máxima de construções por rodada é 2.");
                   
                   gameProvider.eventComposer(

@@ -65,7 +65,7 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
                   actions: [
                     TipIconButton(
                       title: "Lista de Beneficiários",
-                      tip: TipsResourse.BENEFICIARIES_SCREEN,
+                      tip: TipsResourse.beneficiariesScreenTip,
                       onConfirm: () {
                         gameProvider.userModelController
                             .setOnBoardedOnScreen(isPlayersScreenOnBoarded: false);

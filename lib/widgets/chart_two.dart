@@ -38,7 +38,7 @@ class ChartTwo extends StatelessWidget {
 
   void _buildChartSources(PieChartType type, GameProvider gameProvider) {
     // 1. Inicializa a lista de fontes (gastos ou lucros)
-    if (type == PieChartType.GENERAL_EXPANSES || type == PieChartType.ROUND_EXPANSES) {
+    if (type == PieChartType.generalExpanses || type == PieChartType.roundExpanses) {
       sources = [
         ChartSource(indice: "Transferencia", value: 0, color: _palette["transferOut"]!),
         ChartSource(indice: "Compras", value: 0, color: _palette["buyShares"]!),
@@ -60,7 +60,7 @@ class ChartTwo extends StatelessWidget {
 
     // 2. Preenche os valores
     switch (type) {
-      case PieChartType.GENERAL_EXPANSES:
+      case PieChartType.generalExpanses:
         for (Balance ba in gameProvider.gameModelDTO!.player.financialReport.historicalBalances.values) {
           sources[0].value += ba.transferOut;
           sources[1].value += ba.sharePurchasesOut;
@@ -70,7 +70,7 @@ class ChartTwo extends StatelessWidget {
           sources[5].value += ba.otherOut;
         }
         break;
-      case PieChartType.GENERAL_PROFIT:
+      case PieChartType.generalProfit:
         for (Balance ba in gameProvider.gameModelDTO!.player.financialReport.historicalBalances.values) {
           sources[0].value += ba.transferIn;
           sources[1].value += ba.bonusIn;
@@ -80,8 +80,8 @@ class ChartTwo extends StatelessWidget {
           sources[5].value += ba.otherIn;
         }
         break;
-      case PieChartType.ROUND_PROFIT:
-        Balance ba = gameProvider!.currentPlayer.roundBalance;
+      case PieChartType.roundExpanses:
+        Balance ba = gameProvider.currentPlayer.roundBalance;
         sources[0].value += ba.transferOut;
         sources[1].value += ba.sharePurchasesOut;
         sources[2].value += ba.buildingPurchasesOut;
@@ -89,8 +89,8 @@ class ChartTwo extends StatelessWidget {
         sources[4].value += ba.incomeTaxOut;
         sources[5].value += ba.otherOut;
         break;
-      case PieChartType.ROUND_EXPANSES:
-        Balance ba = gameProvider!.currentPlayer.roundBalance;
+      case PieChartType.roundProfit:
+        Balance ba = gameProvider.currentPlayer.roundBalance;
         sources[0].value += ba.transferIn;
         sources[1].value += ba.bonusIn;
         sources[2].value += ba.eventIn;
@@ -108,7 +108,6 @@ class ChartTwo extends StatelessWidget {
   // Converte a lista de ChartSource (filtrada) em PieChartSectionData
   List<PieChartSectionData> _createSections(BuildContext context) {
     return sources.asMap().entries.map((entry) {
-      final int index = entry.key;
       final ChartSource data = entry.value;
 
       return PieChartSectionData(
@@ -212,8 +211,8 @@ class ChartTwo extends StatelessWidget {
                           sections: sections,
                           pieTouchData: PieTouchData(enabled: false), // Desabilita o toque para simplicidade
                         ),
-                        swapAnimationDuration: const Duration(milliseconds: 150),
-                        swapAnimationCurve: Curves.linear,
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.linear
                       ),
                     ),
                     const SizedBox(width: 16),

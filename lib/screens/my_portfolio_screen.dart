@@ -71,7 +71,7 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
               actions: [
                 TipIconButton(
                   title: "Meu portfólio",
-                  tip: TipsResourse.BENEFICIARIES_SCREEN,
+                  tip: TipsResourse.myPortfolioScreenTip,
                   onConfirm: () {
                     gameProvider.userModelController
                         .setOnBoardedOnScreen(isMyPortfolioScreenOnBoarded: false);
@@ -152,8 +152,10 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
 
   // 2. TILE DE CADA ATIVO
   Widget _portfolioTile(BuildContext context, ShareHolder item, GameProvider gameProvider) {
-  // property é null no item de exemplo do tutorial
-  final Property property = gameProvider.ledger.properties[item.propertyId]!;
+  //verifica se o item é o fake do tutorial e usa a propriedade fake correspondente
+  final Property property = item.propertyId == TutorialFakeObjects.fakeShareHolder.propertyId
+   ? TutorialFakeObjects.getFakeProperty() : gameProvider.ledger.properties[item.propertyId]!;
+   
   final sharePrice = property.sharePrice;
   final Color baseColor = Color(property.colorSignature);
   final Color pnlColor = item.getProfitPercentage(sharePrice) >= 0 ? Colors.green : Colors.red;
@@ -389,10 +391,10 @@ class _MyPortfolioScreenState extends State<MyPortfolioScreen> {
               onPressed: () {
                 try {
                   final int? quantity = int.tryParse(quantityController.text);
-                  final double? price = StringUtils.currencyAsDouble(priceController.text);
+                  final double price = StringUtils.currencyAsDouble(priceController.text);
                   final int? turns = int.tryParse(turnController.text);
                   
-                  if (quantity == null || price == null || turns == null || turns <= 0 || price <= 0|| quantity <= 0) {
+                  if (quantity == null || price == 0.0 || turns == null || turns <= 0 || price <= 0|| quantity <= 0) {
                     throw MissValueException("Você não preencheu os campos ou a quantidade é inválida.");
                   }
                   final offer = TradeOffer(

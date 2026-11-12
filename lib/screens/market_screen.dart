@@ -42,7 +42,7 @@ class _MarketScreenState extends State<MarketScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final rawList = gameProvider.getAllMarketListings();
+        final rawList = gameProvider.ledger.getAllMarketListings();
         availableStocks = _searchText.isEmpty
             ? List.from(rawList)
             : rawList
@@ -79,7 +79,7 @@ class _MarketScreenState extends State<MarketScreen> {
               actions: [
                 TipIconButton(
                   title: "Compra de ativos",
-                  tip: TipsResourse.MARKET_SCREEN,
+                  tip: TipsResourse.marketScreenTip,
                   onConfirm: () {
                     gameProvider.userModelController.setOnBoardedOnScreen(isMarketScreenOnBoarded: false);
                     gameProvider.notifyChanges(false);

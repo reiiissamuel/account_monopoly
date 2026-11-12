@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:account_monopoly/domain/enums/loan_type.dart';
-import 'package:account_monopoly/domain/enums/offer_type.dart';
 import 'package:account_monopoly/domain/model/event_dto.dart';
 import 'package:account_monopoly/domain/model/game.dart';
 import 'package:account_monopoly/domain/model/ledger.dart';
@@ -25,7 +24,8 @@ class GameProvider extends ChangeNotifier {
   bool isLoading = false;
   List<EventDTO> events = [];
   EventDTO? lastEventReceived;
-  String? any;
+
+  bool toogleNegativeBalanceAlert = true;
 
   GameProvider({required this.userModelController});
 
@@ -42,7 +42,7 @@ class GameProvider extends ChangeNotifier {
   Ledger get ledger => gameModelDTO!.ledger;
   Player get currentPlayer => gameModelDTO!.player;
   Map<String, Player> get otherPlayers => gameModelDTO!.othersPlayers;
-  int get currentRound => gameModelDTO!.player.financialReport.historicalBalances.length + 1;
+  int get currentRound => gameModelDTO!.currentPlayerRound;
   bool get isHost => peerService?.isHost ?? false;
   
   void cleanGameData(){
@@ -86,7 +86,7 @@ class GameProvider extends ChangeNotifier {
 
     peerService?.onPeerLeft.listen((peerId) {
       eventComposer(
-        type: EventType.lostConnection, 
+        type: EventType.leaveGame, 
         sourcePlayer: gameModelDTO?.othersPlayers[peerId]
       );
     });
@@ -128,8 +128,6 @@ class GameProvider extends ChangeNotifier {
 
     Player sourceplayer = event.sourcePlayer;
     
-    double? price = event.price;
-    int? quantity = event.quantity;
     Player? destinationPlayer = event.destinationPlayer;
 
     switch (event.type) {
@@ -138,8 +136,8 @@ class GameProvider extends ChangeNotifier {
         break;
       case EventType.transfer:
         if(destinationPlayer!.id == currentPlayer.id){
-          currentPlayer.roundBalance.transferIn += price!;
-          currentPlayer.receiveCredit(price, ledger.incomeTaxRate);
+          currentPlayer.roundBalance.transferIn += event.price!;
+          currentPlayer.receiveCredit(event.price!, ledger.incomeTaxRate);
         } 
         break;
       case EventType.build || EventType.propertyUpdatePayout || EventType.payRent:
@@ -168,7 +166,7 @@ class GameProvider extends ChangeNotifier {
         ledger.bankPortfolio[event.property!.id] = ShareHolder(
             playerId: sourceplayer.id,
             propertyId: event.property!.id,
-            sharesOwned: quantity!,
+            sharesOwned: event.quantity!,
             investmentValue: 0,
             saleCapitalGain: 0);
         ledger.properties[event.property!.id] = event.property!;
@@ -181,11 +179,12 @@ class GameProvider extends ChangeNotifier {
       case EventType.saveGame:
         _updateUserModel();
         break;
-      case EventType.bankruptcy:
-        //TODO vericar: caso seja proximo na lista de conexão, abre host, caso contrario tenta se conectar com proximo horst
+      case EventType.bankruptcy || EventType.negativeBalanceRecovery:
+        gameModelDTO!.ledger = event.gameData!.ledger; // Atualiza o ledger com os dados do evento para atualizar de uma vez todas as propriedades e o estado do mercado
         break;
-      case EventType.iwon:
-        gameModelDTO!.winner = sourceplayer;
+      case EventType.endGame:
+        gameModelDTO!.winner = event.gameData!.winner;
+        gameModelDTO!.othersPlayers = event.gameData!.othersPlayers; //subscrevendo lista de player com a lista ja rankeada vinda do evento
         break;
       case EventType.joinTable:
         sourceplayer.isOnline = true;
@@ -204,7 +203,7 @@ class GameProvider extends ChangeNotifier {
             _dealHostHandShakeEvent(event, destinationPlayer!, isNewPlayerAtTable);
         }
         break;
-      case EventType.lostConnection:
+      case EventType.leaveGame:
         sourceplayer.isOnline = false;
         _updateUserModel();
         break;
@@ -213,8 +212,8 @@ class GameProvider extends ChangeNotifier {
     }
     
     gameModelDTO!.updateOtherPlayers(sourceplayer); //atualiza o estado do jogador que enviou o evento
-    gameModelDTO!.updateOtherPlayers(destinationPlayer); //atualiza o estado do jogador que recebeu o evento
-    gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
+    gameModelDTO!.updateOtherPlayers(destinationPlayer); //atualiza o estado do jogador destinatario do evento
+    gameModelDTO!.addGameEventsLog(event.getEventLog(currentPlayer));
   }
 
   void processRoundEnding() {
@@ -223,7 +222,22 @@ class GameProvider extends ChangeNotifier {
       eventComposer(type: EventType.dividendsCalculation);
       currentPlayer.financialReport.addRoundBalance(currentRound, currentPlayer.roundBalance.copyAndReset());
 
-      List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(gameModelDTO!.player);
+      if(currentPlayer.currentCredit < 0) {
+        ledger.liquidateSharesToPayPlayerDebit(currentPlayer);
+        if(currentPlayer.youBankrupt) {
+          eventComposer(type: EventType.bankruptcy);
+          eventComposer(type: EventType.saveGame);
+        } else {
+          eventComposer(type: EventType.negativeBalanceRecovery);
+        }
+      }
+
+      if(gameModelDTO!.checkForAWinner()){
+        eventComposer(type: EventType.endGame);
+        return;
+      }
+
+      List<Loan> foreclosureLoans = gameModelDTO!.ledger.managePlayerLoans(currentPlayer);
       if(foreclosureLoans.isNotEmpty){
         for(var loan in foreclosureLoans){
           if(loan.type == LoanType.bankLoan){
@@ -235,7 +249,7 @@ class GameProvider extends ChangeNotifier {
         }
       }
 
-      if (ledger.badCreditList.containsKey(currentPlayer.id)){
+      if (ledger.badCreditList.containsKey(currentPlayer.id) && ledger.badCreditList[currentPlayer.id]!.roundsInBlacklist <= 0){
         eventComposer(type: EventType.bankBlacklisted);
       }
 
@@ -244,10 +258,12 @@ class GameProvider extends ChangeNotifier {
         eventComposer(type: EventType.removeTradeOffer, tradeOffer: offer);
       }
       
-      eventComposer(type: EventType.saveGame);
+      
     } on Exception{
-      notifyChanges(false);
       rethrow;
+    } finally {
+      eventComposer(type: EventType.saveGame);
+      notifyChanges(false);
     }
   }
 
@@ -285,7 +301,7 @@ class GameProvider extends ChangeNotifier {
           ledger.processRoundBonus(currentPlayer);
           break;
         case EventType.payBank:
-          currentPlayer.payDebit(price!);
+          currentPlayer.payDebit(price!, false);
           currentPlayer.roundBalance.otherOut += price;
           break;
         case EventType.receiveFromBank:
@@ -293,7 +309,7 @@ class GameProvider extends ChangeNotifier {
           currentPlayer.roundBalance.otherIn += price;
           break;
         case EventType.transfer:
-          currentPlayer.payDebit(price!);
+          currentPlayer.payDebit(price!, false);
           currentPlayer.roundBalance.transferOut += price;
           destinationPlayer!.receiveCredit(price, ledger.incomeTaxRate);
           destinationPlayer.roundBalance.transferIn += price;
@@ -337,16 +353,22 @@ class GameProvider extends ChangeNotifier {
           _updateUserModel();
           break;
         case EventType.bankruptcy:
-          //
+          if(currentPlayer.portfolio.isNotEmpty){
+            ledger.removeAllSharesFromPlayer(currentPlayer);
+          }
+          event.gameData = gameModelDTO; //passando game model inteiro para enviar o ledger atualizado junto com o evento
           break;
-        case EventType.iwon:
-          gameModelDTO!.winner = currentPlayer;
+        case EventType.negativeBalanceRecovery:
+          event.gameData = gameModelDTO;
+          break;
+        case EventType.endGame:
+          event.gameData = gameModelDTO;
           break;
         case EventType.serverHandShake:
           event.gameData = gameModelDTO;
           _updateUserModel();
           break;
-        case EventType.lostConnection:
+        case EventType.leaveGame:
           event.sourcePlayer.isOnline = false;
           _updateUserModel();
           break;
@@ -358,7 +380,11 @@ class GameProvider extends ChangeNotifier {
       gameModelDTO!.updateOtherPlayers(sourcePlayer);
        _sendEvent(event);
 
-      gameModelDTO!.logs.add(event.getEventLog(currentPlayer));
+       if(currentPlayer.currentCredit < 0 && !toogleNegativeBalanceAlert) {
+         toogleNegativeBalanceAlert = true;
+       }
+
+      gameModelDTO!.addGameEventsLog(event.getEventLog(currentPlayer));
       notifyChanges(false);
     } on PropertiesAlreadyUpdateException{
       notifyChanges(false);
@@ -367,78 +393,6 @@ class GameProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
-  List<TradeOffer> getAllMarketListings() {
-  final List<TradeOffer> listings = [];
-
-  // -------------------------------------------------------------
-  // A. IPO / FUNDO (Property.availableShares)
-  // -------------------------------------------------------------
-  for (var property in ledger.properties.values) {
-    if (property.availableShares > 0) {
-      listings.add(TradeOffer(
-        offerId: property.id,
-        propertyId: property.id,
-        sellerName: ledger.bankId,
-        sellerPlayerId: ledger.bankId,
-        sharesAmount: property.availableShares,
-        askingPrice: property.sharePrice,
-        source: OfferSource.fundIPO,
-        currentMarketPrice: property.sharePrice,
-        colorSignature: property.colorSignature,
-        propertyName: property.name,
-        turnsToEnd: 1
-      ));
-    }
-  }
-
-  // -------------------------------------------------------------
-  // B. ATIVOS RECUPERADOS DO BANCO (Ledger.bankPortfolio)
-  // -------------------------------------------------------------
-  for (var entry in ledger.bankPortfolio.entries) {
-    final propertyId = entry.key;
-    final bankShare = entry.value;
-    final property = ledger.properties[propertyId]!;
-    
-    if (bankShare.sharesOwned > 0) {
-      listings.add(TradeOffer(
-        offerId: propertyId,
-        propertyId: propertyId,
-        sellerPlayerId: ledger.bankId,
-        sellerName: ledger.bankId,
-        sharesAmount: bankShare.sharesOwned,
-        askingPrice: property.sharePrice - (property.sharePrice * 0.1),
-        source: OfferSource.bankForeclosed,
-        currentMarketPrice: property.sharePrice,
-        colorSignature: property.colorSignature, // Cor ligeiramente diferente
-        propertyName: '${property.name} (Recup.)',
-        turnsToEnd: 1
-      ));
-    }
-  }
-
-  // -------------------------------------------------------------
-  // C. MERCADO SECUNDÁRIO (P2P - Ofertas de Jogadores)
-  // -------------------------------------------------------------
-  for (var offer in ledger.tradeOffers.values) {
-    final property = ledger.properties[offer.propertyId];
-    listings.add(TradeOffer(
-      offerId: offer.offerId,
-      propertyId: offer.propertyId,
-      sellerPlayerId: offer.sellerPlayerId,
-      sellerName: offer.sellerName,
-      sharesAmount: offer.sharesAmount,
-      askingPrice: offer.askingPrice,
-      turnsToEnd: offer.turnsToEnd,
-      source: OfferSource.playerMarket,
-      currentMarketPrice: property!.sharePrice,
-      colorSignature: property.colorSignature,
-      propertyName: '${property.name} (Venda P2P)',
-    ));
-  }
-  
-  return listings;
-}
 
   Future<void> createNewGame({required GameModelDTO game}) async {
     try{
@@ -514,10 +468,9 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> leaveGame() async {
-    notifyChanges(isLoading);
     try {
       if (peerService != null && peerService!.isPeerConnected) {
-        eventComposer(type: EventType.lostConnection);
+        eventComposer(type: EventType.leaveGame);
         await Future.delayed(const Duration(milliseconds: 300)); 
       }
     } catch (e) {
@@ -556,4 +509,5 @@ class GameProvider extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
+
 }

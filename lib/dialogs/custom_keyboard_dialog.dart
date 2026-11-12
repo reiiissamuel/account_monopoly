@@ -119,7 +119,7 @@ class CustomKeyboardState extends State<CustomKeyboard> {
 
     if(widget.eventType == EventType.receiveFromBank) {
       showDialog(context: context, builder: (BuildContext context){
-        return ConfirmActionDialog(title: "Alerta de Rebebimento!", textContent: "Você Confirma o recebimento de $value?", onConfirm: (){
+        return ConfirmActionDialog(title: "Alerta de Recebimento!", textContent: "Você Confirma o recebimento de $value?", onConfirm: (){
           Navigator.of(context).pop();
           Navigator.of(context).pop();
           Navigator.of(context).pop();

@@ -52,7 +52,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
           ),
           centerTitle: true,
           actions: [
-            const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.PROPERTIES)
+            const TipIconButton(title: "Cadastro de propriedades", tip: TipsResourse.propertiesTip)
           ],
         ),
         backgroundColor: Colors.black,
@@ -95,7 +95,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                   child: summary.isEmpty
                       ? const Center(
                           child: Text(
-                            "Nenhuma lote de propriedades cadastrado.",
+                            "Nenhum lote de propriedades cadastrado.",
                             style: TextStyle(color: Colors.white70, fontSize: 16),
                           ),
                         )

@@ -62,7 +62,7 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
               actions: [
                 TipIconButton(
                   title: "Compra de ativos",
-                  tip: TipsResourse.PLAYER_SUMMARY_SCREEN,
+                  tip: TipsResourse.playerSummaryScreenTip,
                   onConfirm: () {
                     gameProvider.userModelController.setOnBoardedOnScreen(isMyFinancialScreenOnBoarded: false);
                     gameProvider.notifyChanges(false);
@@ -99,11 +99,12 @@ class _PlayerSummaryScreenState extends State<PlayerSummaryScreen> {
                                 title: "Minha carteira",
                                 textFontSize: 13,
                                 onPressed: (){
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => MyPortfolioScreen()));
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPortfolioScreen()));
                                 }
                             ),
 
                             GameIconButtonBuilder(
+                                disableClick: player.youBankrupt,
                                 imgPath: "icons/pay.png",
                                 title: "Transferir",
                                 onPressed: (){

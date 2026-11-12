@@ -1,5 +1,4 @@
 import 'package:account_monopoly/domain/enums/offer_type.dart';
-import 'package:flutter/material.dart';
 
 class TradeOffer {
   final String offerId;

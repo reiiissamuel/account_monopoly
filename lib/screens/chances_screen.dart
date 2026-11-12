@@ -30,7 +30,7 @@ class ChancesScreen extends StatelessWidget {
                     builder: (BuildContext context) {
                       return const TipIconButton(
                           title: "Tela de Benefícios",
-                          tip: TipsResourse.BENEFITS_SCREEN);
+                          tip: TipsResourse.benefitsScreenTip);
                     });
               },
             )
@@ -121,7 +121,7 @@ class ChancesScreen extends StatelessWidget {
                                               (b) => b.id == chance.id);
                                       Provider.of<GameProvider>(context)
                                           .eventComposer(
-                                              type: EventType.CHANCE_USED);
+                                              type: EventType.chanceUsed);
                                       Navigator.pop(context);
                                     });
                               });

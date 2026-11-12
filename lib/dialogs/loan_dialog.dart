@@ -128,7 +128,7 @@ class LoanDialogState extends State<LoanDialog> {
                     const Spacer(), 
                     TipIconButton(
                       title: "Empréstimos",
-                      tip: TipsResourse.LOAN_DIALOG,
+                      tip: TipsResourse.loanDialogTip,
                       onConfirm: () {
                         gameProvider.userModelController.setOnBoardedOnScreen(isLoanDialogOnBoarded: false);
                         gameProvider.notifyChanges(false);

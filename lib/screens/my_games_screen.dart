@@ -1,5 +1,6 @@
 
 import 'package:account_monopoly/domain/model/game.dart';
+import 'package:account_monopoly/domain/model/player.dart';
 import 'package:account_monopoly/provider/user_provider.dart';
 import 'package:account_monopoly/utils/tips_resourse.dart';
 import 'package:account_monopoly/widgets/tip_icon_button.dart';
@@ -32,7 +33,7 @@ class MyGamesScreen extends StatelessWidget {
               letterSpacing: 2)),
           centerTitle: true,
           actions: [
-            const TipIconButton(title: "Meus Jogos", tip: TipsResourse.MY_GAMES_SCREEN_TIP)
+            const TipIconButton(title: "Meus Jogos", tip: TipsResourse.myGamesScreenTip)
           ],
         ),
         backgroundColor: Colors.black,
@@ -67,11 +68,13 @@ class MyGamesScreen extends StatelessWidget {
 
   Widget _gameTile(BuildContext context, GameModelDTO game){
     UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
+    Player player = game.player;
+    Color cardColor = player.youBankrupt ? Colors.grey : Theme.of(context).primaryColor;
     return Container(
       margin: const EdgeInsets.only(bottom: 8.0),
       height: 210.0,
       decoration: BoxDecoration(
-        color:  Theme.of(context).primaryColor.withValues(alpha: .3),
+        color:  cardColor.withValues(alpha: .3),
         borderRadius: const BorderRadius.all(Radius.circular(15.0)),
       ),
       child: Container(
@@ -79,7 +82,7 @@ class MyGamesScreen extends StatelessWidget {
         margin: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.all(Radius.circular(15.0)),
-          color: Theme.of(context).primaryColor,
+          color: cardColor,
         ),
         child: Stack(
           children: <Widget>[
@@ -92,8 +95,7 @@ class MyGamesScreen extends StatelessWidget {
             ),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                "Saldo atual: ${StringUtils.currencyFormat(game.player.currentCredit)} R\$",
+              child: Text( _getTileText(game),
                 style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontSize: 20.0),
               ),
             ),
@@ -105,14 +107,13 @@ class MyGamesScreen extends StatelessWidget {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
-                        backgroundColor: Theme.of(context).primaryColor.withValues(alpha: .3),
+                        backgroundColor: cardColor.withValues(alpha: .3),
                       ),
                       onPressed: () {
                         try{
                           Provider.of<GameProvider>(context, listen: false).enterGameRequest(game: game);
                           Navigator.of(_scafoldKey.currentState!.context).pop();
                           Navigator.pushReplacement(_scafoldKey.currentState!.context, MaterialPageRoute(builder: (context) => const GameScreen()));
-                          //.then((value) => GameModel.of(_scafoldKey.currentState!.context).exitGame());
                         } on Exception{
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text("Houve um erro interno na tentativa de carregar um jogo"), backgroundColor: Colors.red));
@@ -130,7 +131,7 @@ class MyGamesScreen extends StatelessWidget {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
-                        backgroundColor: Theme.of(context).primaryColor.withValues(alpha: .3),
+                        backgroundColor: cardColor.withValues(alpha: .3),
                       ),
                       onPressed: () async {
                         showDialog(context: context, builder: (BuildContext context){
@@ -157,5 +158,25 @@ class MyGamesScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getTileText(GameModelDTO game){
+    final player = game.player;
+    if (game.winner != null) {
+    // 1. A partida já terminou e tem um vencedor definido
+    if (game.winner!.id == player.id) {
+      return "Você venceu a partida na rodada ${player.financialReport.historicalBalances.length}!";
+    } else {
+      // Cobre tanto o player que perdeu jogando quanto o que já estava falido
+      return "A partida foi vencida por ${game.winner!.username} na rodada ${player.financialReport.historicalBalances.length}!";
+    }
+    } else {
+      // 2. A partida ainda está a decorrer (game.winner == null)
+      if (player.youBankrupt) {
+        return "Você faliu e está a assistir à partida."; // Ou mantém a tua mensagem original de falência
+      } else {
+        return "Saldo atual: ${StringUtils.currencyFormat(player.currentCredit)} R\$";
+      }
+    }
   }
 }

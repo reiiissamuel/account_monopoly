@@ -198,7 +198,7 @@ class GamePeerService {
       log("Erro ao enviar dados: StarHub não está conectado.");
       return;
     }
-    if (isHost || event.type == EventType.lostConnection) {
+    if (isHost || event.type == EventType.leaveGame) {
       _sendWithNoCallback(event);
     } else {
       _sendWithCallback(event);
@@ -241,6 +241,7 @@ class GamePeerService {
 
   /// Sai da rede. A ordem é o que faz funcionar.
   Future<void> destroy() async {
+    log("Iniciando fechamento da conexão");
     if (_destroyed) return;
     _destroyed = true;
 
@@ -280,5 +281,6 @@ class GamePeerService {
     await _peerLeftController.close();
     await _newHostController.close();
     await _hostDeadController.close();
+    log("Conexão fechada com sucesso");
   }
 }

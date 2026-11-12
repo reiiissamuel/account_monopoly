@@ -29,7 +29,7 @@ class _PayRentDialogState extends State<PayRentDialog> {
   int _multiplier = 2; 
   late double _rentToPay;
 
-  int _minMultiplier = 2; 
+  final int _minMultiplier = 2; 
 
   @override
   void initState() {
@@ -83,7 +83,7 @@ class _PayRentDialogState extends State<PayRentDialog> {
         // O multiplicador só existe em propriedades stocks. Sem uma delas, o passo
         // do multiplicador ficaria sem alvo, então entra a fake.
         if (!_properties.any((p) => p.propertyType == PropertyType.stocks)) {
-          _properties.insert(0, TutorialFakeObjects.getFakeStocksProperty());
+          _properties.insert(0, TutorialFakeObjects.getFakeProperty());
         }
         _selectedProperty = _properties.firstWhere((p) => p.propertyType == PropertyType.stocks);
         _multiplier = _minMultiplier;

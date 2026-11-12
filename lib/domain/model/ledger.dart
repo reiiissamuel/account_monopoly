@@ -1,5 +1,7 @@
 
 import 'dart:math';
+import 'package:account_monopoly/domain/enums/offer_type.dart';
+import 'package:account_monopoly/domain/model/blacklisted_player_dto.dart';
 
 import 'package:account_monopoly/domain/enums/loan_type.dart';
 import 'package:account_monopoly/domain/model/loan.dart';
@@ -25,7 +27,7 @@ class Ledger {
   double propertyTaxRate;
   double lateFeeRate = 0.05;
   double incomeTaxRate = 0.10;
-  Map<String, Player> badCreditList = {};
+  Map<String, BlacklistedPlayerDto> badCreditList = {};
   Map<String, TradeOffer> tradeOffers; 
   
   Map<String, ShareHolder> bankPortfolio = {}; // ações adiquirdas pelo banco através de execuções hipotecárias
@@ -65,7 +67,7 @@ class Ledger {
     double totalDividends = 0;
     for(ShareHolder shareHolder in portfolio.values){
       double currentShareCost = properties[shareHolder.propertyId]!.sharePrice;
-      totalPortfolioValue += shareHolder.portfolioValue(currentShareCost);
+      totalPortfolioValue += shareHolder.currentValue(currentShareCost);
       totalInvested += shareHolder.investmentValue;
       totalDividends += shareHolder.dividendsReceived;
     }
@@ -80,13 +82,14 @@ class Ledger {
 
   double calculateShareHolderValue(ShareHolder item){
     final shareCurrentCost = properties[item.propertyId]!.sharePrice;
-    return item.portfolioValue(shareCurrentCost);
+    return item.currentValue(shareCurrentCost);
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DOS PAGAMENTOS
+
   Property processRentPayment(Player player, String propertyId, double rentToPay) {
     final property = properties[propertyId];
-    player.payDebit(rentToPay);
+    player.payDebit(rentToPay, true);
     property!.collectedRent += rentToPay;
     return property;
   }
@@ -94,7 +97,7 @@ class Ledger {
   void processIncomeTaxPayment(Player player) {
     final taxAmount = player.incomeTax;
     final refund = taxAmount * (Random().nextDouble() * 0.3); // 10% a 30% de reembolso
-    player.payDebit(taxAmount);
+    player.payDebit(taxAmount, false);
     player.taxRefund = refund;
     player.incomeTax = 0.0;
     player.roundBalance.incomeTaxOut += taxAmount;
@@ -127,7 +130,7 @@ class Ledger {
     var loan = player.loans.firstWhere((l) => l.id == loandId);
 
     final payment = paymentAmount > loan.remainingDebt ? loan.remainingDebt : paymentAmount;
-    player.payDebit(paymentAmount);
+    player.payDebit(paymentAmount, false);
     player.roundBalance.otherOut += payment;
     loan.principalPaid += payment;
 
@@ -144,10 +147,83 @@ class Ledger {
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DAS AÇÔES E NEGOCIAÇÕES
+
+  List<TradeOffer> getAllMarketListings() {
+    final List<TradeOffer> listings = [];
+
+    // -------------------------------------------------------------
+    // A. IPO / FUNDO (Property.availableShares)
+    // -------------------------------------------------------------
+    for (var property in properties.values) {
+      if (property.availableShares > 0) {
+        listings.add(TradeOffer(
+          offerId: property.id,
+          propertyId: property.id,
+          sellerName: bankId,
+          sellerPlayerId: bankId,
+          sharesAmount: property.availableShares,
+          askingPrice: property.sharePrice,
+          source: OfferSource.fundIPO,
+          currentMarketPrice: property.sharePrice,
+          colorSignature: property.colorSignature,
+          propertyName: property.name,
+          turnsToEnd: 1
+        ));
+      }
+    }
+
+    // -------------------------------------------------------------
+    // B. ATIVOS RECUPERADOS DO BANCO (bankPortfolio)
+    // -------------------------------------------------------------
+    for (var entry in bankPortfolio.entries) {
+      final propertyId = entry.key;
+      final bankShare = entry.value;
+      final property = properties[propertyId]!;
+      
+      if (bankShare.sharesOwned > 0) {
+        listings.add(TradeOffer(
+          offerId: propertyId,
+          propertyId: propertyId,
+          sellerPlayerId: bankId,
+          sellerName: bankId,
+          sharesAmount: bankShare.sharesOwned,
+          askingPrice: property.sharePrice - (property.sharePrice * 0.1),
+          source: OfferSource.bankForeclosed,
+          currentMarketPrice: property.sharePrice,
+          colorSignature: property.colorSignature, // Cor ligeiramente diferente
+          propertyName: '${property.name} (Recup.)',
+          turnsToEnd: 1
+        ));
+      }
+    }
+
+    // -------------------------------------------------------------
+    // C. MERCADO SECUNDÁRIO (P2P - Ofertas de Jogadores)
+    // -------------------------------------------------------------
+    for (var offer in tradeOffers.values) {
+      final property = properties[offer.propertyId];
+      listings.add(TradeOffer(
+        offerId: offer.offerId,
+        propertyId: offer.propertyId,
+        sellerPlayerId: offer.sellerPlayerId,
+        sellerName: offer.sellerName,
+        sharesAmount: offer.sharesAmount,
+        askingPrice: offer.askingPrice,
+        turnsToEnd: offer.turnsToEnd,
+        source: OfferSource.playerMarket,
+        currentMarketPrice: property!.sharePrice,
+        colorSignature: property.colorSignature,
+        propertyName: '${property.name} (Venda P2P)',
+      ));
+    }
+    
+    return listings;
+  }
+
   Property buyFromIPO(Player buyer, String propertyId, int sharesAmount) {
     if(isBlacklisted(buyer.id)) throw(Exception(ConfigsConstants.blackListErrorMsg));
     final totalCost = properties[propertyId]!.sharePrice * sharesAmount;
-    buyer.payDebit(totalCost);
+    buyer.payDebit(totalCost, false);
     buyer.roundBalance.sharePurchasesOut += totalCost;
 
     properties[propertyId]!.availableShares -= sharesAmount;
@@ -157,9 +233,14 @@ class Ledger {
   }
 
   void setTradeOffer(Player player, TradeOffer offer) {
+    bool isMortgagedProperty = player.loans.any((l) => l.collateralId == offer.propertyId && !l.isPaidOff);
+    if (isMortgagedProperty){
+      throw MortgagedPropertyException(ConfigsConstants.mortgagedPropertyErrorMsg);
+    }
+    
     int alreadyOffered = tradeOffers.values.where((o) => o.propertyId == offer.propertyId && o.sellerPlayerId == player.id).fold(0, (sum, o) => sum + o.sharesAmount);
-    final isAbleToTrade = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount + alreadyOffered);
-    if (isAbleToTrade) {
+    final hasAmount = player.portfolio.values.any((s) => s.propertyId == offer.propertyId && s.sharesOwned >= offer.sharesAmount + alreadyOffered);
+    if (hasAmount) {
       tradeOffers[offer.offerId] = offer;
     } else {
       throw NotEnoughSharesToTradeException(ConfigsConstants.notEnoughSharesToTradeErrorMsg);
@@ -173,7 +254,7 @@ class Ledger {
     final amount = tradeOffer.sharesAmount;
     final propertyId = tradeOffer.propertyId;
 
-    buyer.payDebit(totalCost);
+    buyer.payDebit(totalCost, false);
     buyer.roundBalance.sharePurchasesOut += totalCost;
 
     if(seller != null){
@@ -336,17 +417,25 @@ class Ledger {
   }
 
   // FUNÇÔES AUXILIAR: GESTÃO DAS DÍVIDAS
+
+  void _setPlayerAsBadCredit(Player player, Loan loan) {
+    if (badCreditList.containsKey(player.id)) {
+      badCreditList[player.id]!.incrementRoundsInBlacklist();
+    }
+    badCreditList[player.id] = BlacklistedPlayerDto(player: player, openLoan: loan);
+  }
+
   List<Loan> managePlayerLoans(Player player) {
     List<Loan> foreclosuredLoans = List<Loan>.empty(growable: true);
     if (player.loans.isEmpty) return foreclosuredLoans;
 
     for (var loan in player.loans) {
       if (loan.isPaidOff) continue;
-      loan.reduceTerm(); 
+      loan.reduceTerm();
+
       if (loan.roundsToPayOff <= 0) {
         _handleLoan(player, loan, foreclosuredLoans);
       }
-      _handleLoanLate(player, loan, foreclosuredLoans);
     }
     player.loans.removeWhere((loan) => loan.isPaidOff);
     return foreclosuredLoans;
@@ -357,25 +446,21 @@ class Ledger {
       _executeMortgage(player, loan, foreclosuredLoans);
       loan.totalDue = 0;
     } else if (loan.type == LoanType.bankLoan) {
-      _applyLateFee(player, loan);
+      loan.applyLateFee(lateFeeRate);
+      _setPlayerAsBadCredit(player, loan); // Adiciona à lista de mau crédito
+      if (loan.roundsToPayOff <= -2) {
+        _executeLoanDebtValueCompulsorily(player, loan, foreclosuredLoans);
+      }
     }
   }
 
-  void _handleLoanLate(Player player, Loan loan, List<Loan> foreclosuredLoans) {
-
-    if (loan.roundsToPayOff <= -2) {
-      if (player.currentCredit >= loan.totalDue) {
-        player.payDebit(loan.totalDue);
-        player.roundBalance.otherOut += loan.totalDue;
-        badCreditList.remove(player.id);
-        foreclosuredLoans.add(loan);
-        loan.applyPayment(loan.totalDue);
-        print('✅ ${player.username} teve o empréstimo ${loan.id} pago forçadamente.');
-      } else {
-        player.youBankrupt = true;
-        print('❌ ${player.username} está em falência e não pode cobrir o empréstimo ${loan.id}.');
-      }
-    }
+  void _executeLoanDebtValueCompulsorily(Player player, Loan loan, List<Loan> foreclosuredLoans) {
+    player.payDebit(loan.totalDue, true);
+    player.roundBalance.otherOut += loan.totalDue;
+    badCreditList.remove(player.id);
+    foreclosuredLoans.add(loan);
+    loan.applyPayment(loan.totalDue);
+    print('✅ ${player.username} teve o empréstimo ${loan.id} pago forçadamente.');
   }
 
   void _executeMortgage(Player player, Loan loan,  List<Loan> foreclosuredLoans) {
@@ -396,10 +481,38 @@ class Ledger {
     }
   }
 
-  void _applyLateFee(Player player, Loan loan) {
-    loan.totalDue *= (1.0 + lateFeeRate); // Aplica multa (lateFeeRate deve ser um atributo/constante)
-    badCreditList[player.id] = player; // Adiciona à lista de mau crédito
-    print('⚠️ ${player.username} sofreu multa no empréstimo ${loan.id}. Novo total: ${loan.totalDue.toStringAsFixed(2)}');
+  void liquidateSharesToPayPlayerDebit(Player player){
+    tradeOffers.removeWhere((key, offer) => offer.sellerPlayerId == player.id); //Remove all trade offers by the player before liquidation
+    for (var entry in player.portfolio.entries) {
+      if(player.currentCredit >= 0) break; // Stop liquidation if player has non-negative credit
+      double totalDebit = -1 *(player.currentCredit);
+      Property property = properties[entry.key]!;
+      ShareHolder shareHolder = entry.value;
+      double sharesValue = shareHolder.sharesOwned * property.sharePrice;
+      if (sharesValue <= 0) continue;
+      int sharesToLiquidate = (totalDebit / property.sharePrice).ceil();
+      if (sharesToLiquidate > shareHolder.sharesOwned) sharesToLiquidate = shareHolder.sharesOwned;
+
+      property.availableShares += sharesToLiquidate;
+      shareHolder.sharesOwned -= sharesToLiquidate;
+      checkForMajorOwner(player, property.id);
+      player.receiveCredit(sharesToLiquidate * property.sharePrice, incomeTaxRate);
+      player.roundBalance.otherIn += sharesToLiquidate * property.sharePrice;
+    }
+    if (player.currentCredit < 0) {
+      player.youBankrupt = true;
+    }
+  }
+
+  void removeAllSharesFromPlayer(Player player) {
+    tradeOffers.removeWhere((key, offer) => offer.sellerPlayerId == player.id); //Remove all trade offers by the player before liquidation
+    for (var entry in player.portfolio.entries) {
+      Property property = properties[entry.key]!;
+      ShareHolder shareHolder = entry.value;
+      property.availableShares += shareHolder.sharesOwned;
+      shareHolder.sharesOwned = 0;
+      checkForMajorOwner(player, property.id);
+    }
   }
 
 // FUNÇÔES AUXILIAR: GESTÃO DE CONSTRUÇÔES
@@ -412,7 +525,7 @@ class Ledger {
       if(isBlacklisted(player.id)) throw(BlackListedException(ConfigsConstants.blackListErrorMsg));
       property.checkIfEnoughReserve(reserveUsageCost);
       
-      player.payDebit(playerCost);
+      player.payDebit(playerCost, false);
       property.addBuilding(buildingRentIncrease, newBuildings, reserveUsageCost);
       player.roundBalance.buildingPurchasesOut += playerCost;
       logger.i('🏗️ ${player.username} construiu em ${property.name}.');
@@ -447,8 +560,8 @@ class Ledger {
       return data.map((k, v) => MapEntry(k, Property.fromMap(v as Map<String, dynamic>)));
     }
 
-    Map<String, Player> deserializePlayers(Map<String, dynamic> data) {
-      return data.map((k, v) => MapEntry(k, Player.fromMap(v as Map<String, dynamic>)));
+    Map<String, BlacklistedPlayerDto> deserializeBlacklistedPlayers(Map<String, dynamic> data) {
+      return data.map((k, v) => MapEntry(k, BlacklistedPlayerDto.fromMap(v as Map<String, dynamic>)));
     }
 
     Map<String, ShareHolder> deserializeShareHolders(Map<String, dynamic> data) {
@@ -470,7 +583,7 @@ class Ledger {
     // População de campos mutáveis (não-finais) após a instanciação
     
     // badCreditList (Map mutável)
-    ledger.badCreditList.addAll(deserializePlayers((map['badCreditList'] as Map<String, dynamic>? ?? {})));
+    ledger.badCreditList.addAll(deserializeBlacklistedPlayers((map['badCreditList'] as Map<String, dynamic>? ?? {})));
 
     // bankPortfolio (Map final/mutável)
     ledger.bankPortfolio.addAll(deserializeShareHolders((map['bankPortfolio'] as Map<String, dynamic>? ?? {})));

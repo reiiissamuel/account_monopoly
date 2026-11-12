@@ -38,6 +38,10 @@ class Loan {
   void reduceTerm() {
       roundsToPayOff -= 1;
   }
+
+  void applyLateFee(double lateFeeRate) {
+    totalDue *= (1.0 + lateFeeRate); // Aplica multa (lateFeeRate deve ser um atributo/constante)
+  }
   
   Map<String, dynamic> toMap(){
     return {

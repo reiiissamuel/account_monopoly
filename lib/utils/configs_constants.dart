@@ -5,7 +5,7 @@ abstract final class ConfigsConstants {
   static const String notEnoughCreditErrorMsg = "Você não possui credito suficiente.";
   static const String notEnoughReserveErrorMsg = "A propriedade não tem capital suficiente para opiar esta operação";
   static const String blackListErrorMsg = "O banco não autorizou essa operação. Cheque se tem dívidas vencidas";
-  static const String mortgagedPropertyErrorMsg = "Suas ações desta propriedade ja estão hipotecadas.";
+  static const String mortgagedPropertyErrorMsg = "Existe um processo de hipoteca em andamento para suas ações desta propriedade.";
   static const String notEnoughSharesToTradeErrorMsg = "Você não tem ações disponíveis para criar esta oferta";
   
   // CORREÇÃO: Mudado de 'static final' para 'static const'
