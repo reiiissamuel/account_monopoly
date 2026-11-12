@@ -95,7 +95,7 @@ class AllPropertiesVesionsScreen extends StatelessWidget {
                   child: summary.isEmpty
                       ? const Center(
                           child: Text(
-                            "Nenhuma lote de propriedades cadastrado.",
+                            "Nenhum lote de propriedades cadastrado.",
                             style: TextStyle(color: Colors.white70, fontSize: 16),
                           ),
                         )
