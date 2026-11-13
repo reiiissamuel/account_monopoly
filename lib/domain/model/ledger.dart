@@ -221,15 +221,19 @@ class Ledger {
   }
 
   Property buyFromIPO(Player buyer, String propertyId, int sharesAmount) {
-    if(isBlacklisted(buyer.id)) throw(Exception(ConfigsConstants.blackListErrorMsg));
-    final totalCost = properties[propertyId]!.sharePrice * sharesAmount;
+    if(isBlacklisted(buyer.id)) throw(BlackListedException(ConfigsConstants.blackListErrorMsg));
+
+    final Property property = properties[propertyId]!;
+    if (sharesAmount > property.availableShares || sharesAmount < 1) throw(InvalidSharesAmountException());
+
+    final totalCost = property.sharePrice * sharesAmount;
     buyer.payDebit(totalCost, false);
     buyer.roundBalance.sharePurchasesOut += totalCost;
 
-    properties[propertyId]!.availableShares -= sharesAmount;
+    property.availableShares -= sharesAmount;
     buyer.upgradePortfolio(propertyId, sharesAmount, totalCost);
     logger.i('✅ ${buyer.username} adquiriu $sharesAmount ações de $propertyId por ${totalCost.toStringAsFixed(2)}');
-    return properties[propertyId]!;
+    return property;
   }
 
   void setTradeOffer(Player player, TradeOffer offer) {
