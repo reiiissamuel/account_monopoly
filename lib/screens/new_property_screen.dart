@@ -108,13 +108,14 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
 
   // Helper para criar TextFormFields para texto (String)
   Widget _buildField({required String label, required ValueChanged<dynamic> onSave, required bool digitsOnly,
-   required String alertMsg, bool? enabled, int? maxLength, String? initialValue}) {
+   required String alertMsg, bool? enabled, int? maxLength, String? initialValue, required TextInputType keyboardType}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         enabled: enabled,
         maxLength: maxLength,
         initialValue: initialValue,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70),
@@ -324,12 +325,14 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
                       digitsOnly: false,
                       alertMsg: "Nome sem caracteres especiais",
                       initialValue: _versionid,
-                      enabled: widget.property == null
+                      enabled: widget.property == null,
+                      keyboardType: TextInputType.text,
                     ),
                     _buildField(
                       label: 'Nome da Propriedade', 
                       onSave: (value) => _name = value,
                         digitsOnly: false,
+                        keyboardType: TextInputType.text,
                       alertMsg: "Nome sem caracteres especiais",
                       initialValue: _name
                     ),
@@ -349,6 +352,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
                       label: 'Preço Base', 
                       onSave: (value) => _basePrice = value,
                       digitsOnly: true,
+                      keyboardType: TextInputType.number,
                       alertMsg: "insira um número válido",
                       initialValue: _basePrice.toString()
                     ),
@@ -357,6 +361,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
                       label: 'Aluguel inicial', 
                       onSave: (value) => _rentPrice = value,
                       digitsOnly: true,
+                      keyboardType: TextInputType.number,
                       alertMsg: "insira um número válido",
                       initialValue: _rentPrice.toString()
                     ),
@@ -365,6 +370,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
                           label: 'Custo de construção',
                           onSave: (value) => _buildingCost = value,
                           digitsOnly: true,
+                          keyboardType: TextInputType.number,
                           alertMsg: "insira um número válido",
                           initialValue: _buildingCost.toString()
                       )
@@ -439,7 +445,7 @@ class _PropertyRegistrationFormState extends State<PropertyRegistrationForm> {
             id: propertyId,
             name: _name,
             basePrice: StringUtils.currencyAsDouble(_basePrice),
-            colorSignature: _colorSignature.toARGB32(),
+            colorSignature: _propertyType == PropertyType.stocks ? Colors.grey.toARGB32() : _colorSignature.toARGB32(),
             propertyType: _propertyType,
             iconSignature: _iconSignatureData.toKey(),
             currentRent: StringUtils.currencyAsDouble(_rentPrice),

@@ -46,3 +46,9 @@ class UserExistsException extends DomainException {
 class PropertiesAlreadyUpdateException extends DomainException {
   PropertiesAlreadyUpdateException(super.message);
 }
+
+class InvalidSharesAmountException extends DomainException {
+  static const String defaultMessage = "Quantidade de ações indisponível.";
+
+  InvalidSharesAmountException([super.message = defaultMessage]);
+}
