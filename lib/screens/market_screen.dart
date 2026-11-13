@@ -454,6 +454,7 @@ class _MarketScreenState extends State<MarketScreen> {
                       onChanged: (text) {
                         setState(() {});
                       },
+                      keyboardType: TextInputType.number,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                       ],
